@@ -1,0 +1,27 @@
+.DS_store
+.project
+.cproject
+build
+*.so
+MonetDBLite_*.t*
+
+# MonetDB compilation files
+src/sql/server/sql_parser.tab.c
+src/sql/server/sql_parser.tab.h
+src/monetdb_config.h
+
+# MonetDBJavaLite
+monetdb-java-lite/target/
+monetdb-java-lite/.gradle/
+monetdb-java-lite/src/main/resources/
+monetdb-java-lite/hs_err_*
+
+# IDE stuff
+.idea/
+cmake-build-debug/
+CMakeLists.txt
+
+# The decrypted files!
+monetdb-java-lite/gradle.properties
+monetdb-java-lite/secring.gpg
+id_monetdb

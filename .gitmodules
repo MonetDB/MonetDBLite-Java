@@ -1,0 +1,3 @@
+[submodule "src/monetdblite"]
+	path = src/monetdblite
+	url = git@github.com:hannesmuehleisen/MonetDBLite-C.git

@@ -1,0 +1,140 @@
+buildscript {
+    repositories {
+        jcenter()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.4'
+        classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0-M3'
+        classpath 'io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.9.0'
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+apply plugin: 'java'
+apply plugin: 'maven'
+apply plugin: 'signing'
+apply plugin: 'io.codearte.nexus-staging'
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'org.junit.platform.gradle.plugin'
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+ext.junitPlatformVersion = '1.0.0-M4'
+ext.junitJupiterVersion  = '5.0.0-M4'
+ext.junitVintageVersion  = '4.12.0-M4'
+ext.log4jVersion         = '2.8.2'
+version = '2.32'
+ext.version = version
+group = 'monetdb'
+ext.group = group
+archivesBaseName = 'monetdb-java-lite'
+ext.archivesBaseName = archivesBaseName
+ext.packaging = 'jar'
+
+dependencies {
+    compile group: "${group}", name: 'monetdb-jdbc-new', version: '2.31'
+    runtime group: "${group}", name: 'monetdb-jdbc-new', version: '2.31'
+
+    // JUnit Jupiter API and TestEngine implementation
+    testCompile("org.junit.jupiter:junit-jupiter-api:${junitJupiterVersion}")
+    testRuntime("org.junit.jupiter:junit-jupiter-engine:${junitJupiterVersion}")
+
+    //Log using log4j
+    testRuntime("org.apache.logging.log4j:log4j-core:${log4jVersion}")
+    testRuntime("org.apache.logging.log4j:log4j-jul:${log4jVersion}")
+}
+
+junitPlatform { //configurations for JUnit5 tests
+    platformVersion "${junitPlatformVersion}"
+    logManager 'org.apache.logging.log4j.jul.LogManager'
+    reportsDir 'build/test-results/junit-platform'
+    enableStandardTestTask false
+}
+
+jar {
+    manifest {
+        attributes 'Description': 'Serveless version of the MonetDB database in the JVM - JDBC compliant'
+    }
+}
+
+shadowJar { //Build instruction to the shadowJar (a jar which includes both the JDBC and MonetDBJavaLite jars)
+    manifest {
+        inheritFrom project.jar.manifest
+    }
+    destinationDir = file("./build/shadowJar")
+}
+
+task wrapper(type: Wrapper) { //Set the gradle wrapper, so users don't have to install Gradle
+    gradleVersion = '3.5'
+}
+
+task javadocJar(type: Jar) { //Generate the javadocs jar
+    classifier = 'javadoc'
+    from javadoc
+}
+
+task sourcesJar(type: Jar) { //Generate the sources jar
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives javadocJar, sourcesJar
+}
+
+signing {
+    sign configurations.archives
+}
+
+uploadArchives { //do gradle uploadArchives
+    repositories {
+        mavenDeployer {
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+            repository(url: 'https://oss.sonatype.org/service/local/staging/deploy/maven2/') {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots/') {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            pom.project {
+                name 'monetdb-java-lite'
+                artifactId 'monetdb-java-lite'
+                packaging 'jar'
+                description 'Serveless version of the MonetDB database in the JVM - JDBC compliant'
+                url 'https://github.com/hannesmuehleisen/MonetDBLite/tree/Jul2017Lite-Java'
+
+                scm {
+                    url 'https://github.com/hannesmuehleisen/MonetDBLite/tree/Jul2017Lite-Java'
+                    connection 'scm:git:git://github.com/hannesmuehleisen/MonetDBLite.git'
+                    developerConnection 'scm:git:git@github.com:hannesmuehleisen/MonetDBLite.git'
+                }
+
+                licenses {
+                    license {
+                        name 'Mozilla Public License, Version 2.0'
+                        url 'https://www.mozilla.org/MPL/2.0/'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'ferreira'
+                        name 'Pedro Ferreira'
+                        email 'pedro.ferreira@monetdbsolutions.com'
+                    }
+                }
+            }
+        }
+    }
+}
+
+nexusStaging { //do gradle closeAndReleaseRepository
+    packageGroup = "${group}.${archivesBaseName}"
+}
