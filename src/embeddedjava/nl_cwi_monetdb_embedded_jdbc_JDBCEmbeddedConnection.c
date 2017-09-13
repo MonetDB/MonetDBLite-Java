@@ -82,12 +82,11 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection_
 	(JNIEnv *env, jobject jdbccon, jlong connectionPointer, jstring query, jboolean execute) {
 	long rowCount = 0, prepareID = 0;
 	size_t lastId = 0;
-	int lineResponseCounter = 0, query_type = 0, autoCommitStatus = 1, numberOfRows = 0;
+	int lineResponseCounter = 0, query_type = 0, autoCommitStatus = 1;
 	jint nextResponses[4], responseParameters[3];
 	const char *query_string_tmp;
 	char *err = NULL;
 	monetdb_result *output = NULL;
-	BAT* dearBat;
 	jintArray lineResponse, lastServerResponseParameters;
 	jobject result;
 	monetdb_connection conn = (monetdb_connection) connectionPointer;
@@ -129,7 +128,7 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection_
 		case Q_BLOCK: //BLOCK
 			//set the Table Headers values
 			if(output) {
-				responseParameters[0] = (query_type == Q_PREPARE) ? (int) prepareID : lastId;
+				responseParameters[0] = (query_type == Q_PREPARE) ? (int) prepareID : (int) lastId;
 				responseParameters[1] = output->nrows; //number of rows
 			} else {
 				responseParameters[0] = -1;

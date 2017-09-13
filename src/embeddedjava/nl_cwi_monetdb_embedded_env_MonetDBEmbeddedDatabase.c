@@ -12,61 +12,84 @@
 #include "embeddedjvm.h"
 #include "javaids.h"
 #include "converters.h"
+#include "mal_linker.h"
 
 JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedDatabase_startDatabaseInternal
 	(JNIEnv *env, jclass monetDBEmbeddedDatabase, jstring dbDirectory, jboolean silentFlag, jboolean sequentialFlag) {
-	const char *dbdir_string_tmp;
-	const char *loadPath_tmp;
+	const char *dbdir_string_tmp = NULL;
+	const char *loadPath_tmp = NULL;
 	char *err;
-	jclass exceptionCls, loaderCls;
+	jclass exceptionCls, loaderCls = NULL;
 	jfieldID pathID;
-	jstring loadPath;
+	jstring loadPath = NULL;
+	jobject result = NULL;
 
-	dbdir_string_tmp = (*env)->GetStringUTFChars(env, dbDirectory, NULL);
-	if(dbDirectory != NULL && dbdir_string_tmp == NULL) {
-		exceptionCls = (*env)->FindClass(env, "nl/cwi/monetdb/embedded/env/MonetDBEmbeddedException");
-		(*env)->ThrowNew(env, exceptionCls, "System went out of memory!");
-		return NULL;
+	if(dbDirectory) {
+		dbdir_string_tmp = (*env)->GetStringUTFChars(env, dbDirectory, NULL);
+		if(!dbdir_string_tmp) {
+			exceptionCls = (*env)->FindClass(env, "nl/cwi/monetdb/embedded/env/MonetDBEmbeddedException");
+			(*env)->ThrowNew(env, exceptionCls, "System out of memory!");
+			goto endofinit;
+		}
 	}
-
 	if(!monetdb_is_initialized()) {
 		//initialize the java ID fields for faster Java data loading later on
-		initializeIDS(env);
-
+		if(!initializeIDS(env)) {
+			exceptionCls = (*env)->FindClass(env, "nl/cwi/monetdb/embedded/env/MonetDBEmbeddedException");
+			(*env)->ThrowNew(env, exceptionCls, "System out of memory!");
+			goto endofinit;
+		}
 		//because of the dlopen stuff, this step has to be done before the monetdb_startup call
 		loaderCls = (*env)->FindClass(env, "nl/cwi/monetdb/embedded/env/MonetDBJavaLiteLoader");
 		pathID = (*env)->GetStaticFieldID(env, loaderCls, "loadedLibraryFullPath", "Ljava/lang/String;");
 		loadPath = (jstring) (*env)->GetStaticObjectField(env, loaderCls, pathID);
+		if(!loadPath) {
+			exceptionCls = (*env)->FindClass(env, "nl/cwi/monetdb/embedded/env/MonetDBEmbeddedException");
+			(*env)->ThrowNew(env, exceptionCls, "System out of memory!");
+			goto endofinit;
+		}
 		loadPath_tmp = (*env)->GetStringUTFChars(env, loadPath, NULL);
 		if(!loadPath_tmp) {
-			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System went out of memory!");
-			return NULL;
+			exceptionCls = (*env)->FindClass(env, "nl/cwi/monetdb/embedded/env/MonetDBEmbeddedException");
+			(*env)->ThrowNew(env, exceptionCls, "System out of memory!");
+			goto endofinit;
 		}
-		if(!setMonetDB5LibraryPathEmbedded(loadPath_tmp)) {
-			(*env)->ReleaseStringUTFChars(env, loadPath, loadPath_tmp);
-			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System went out of memory!");
-			return NULL;
+		if(!setMonetDB5LibraryPath(loadPath_tmp)) {
+			exceptionCls = (*env)->FindClass(env, "nl/cwi/monetdb/embedded/env/MonetDBEmbeddedException");
+			(*env)->ThrowNew(env, exceptionCls, "System out of memory!");
+			goto endofinit;
 		}
-		(*env)->ReleaseStringUTFChars(env, loadPath, loadPath_tmp);
-		(*env)->DeleteLocalRef(env, loaderCls);
-		(*env)->DeleteLocalRef(env, loadPath);
-
 		err = monetdb_startup((char*) dbdir_string_tmp, (char) silentFlag, (char) sequentialFlag);
-		if(dbdir_string_tmp) {
-			(*env)->ReleaseStringUTFChars(env, dbDirectory, dbdir_string_tmp);
-		}
-		if (err != NULL) {
-			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), err);
+		if (err) {
+			exceptionCls = (*env)->FindClass(env, "nl/cwi/monetdb/embedded/env/MonetDBEmbeddedException");
+			(*env)->ThrowNew(env, exceptionCls, err);
 			GDKfree(err);
-			return NULL;
+			goto endofinit;
 		}
-		return (*env)->NewObject(env, monetDBEmbeddedDatabase, getMonetDBEmbeddedDatabaseConstructorID(), dbDirectory,
-								silentFlag, sequentialFlag);
+		result = (*env)->NewObject(env, monetDBEmbeddedDatabase, getMonetDBEmbeddedDatabaseConstructorID(), dbDirectory,
+								   silentFlag, sequentialFlag);
+		if(!result) {
+			exceptionCls = (*env)->FindClass(env, "nl/cwi/monetdb/embedded/env/MonetDBEmbeddedException");
+			(*env)->ThrowNew(env, exceptionCls, "System out of memory!");
+		}
 	} else {
 		exceptionCls = (*env)->FindClass(env, "nl/cwi/monetdb/embedded/env/MonetDBEmbeddedException");
 		(*env)->ThrowNew(env, exceptionCls, "Only one MonetDB Embedded database is allowed per process!");
-		return NULL;
 	}
+endofinit:
+	if(dbdir_string_tmp) {
+		(*env)->ReleaseStringUTFChars(env, dbDirectory, dbdir_string_tmp);
+	}
+	if(loadPath_tmp) {
+		(*env)->ReleaseStringUTFChars(env, loadPath, loadPath_tmp);
+	}
+	if(loaderCls) {
+		(*env)->DeleteLocalRef(env, loaderCls);
+	}
+	if(loadPath) {
+		(*env)->DeleteLocalRef(env, loadPath);
+	}
+	return result;
 }
 
 JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedDatabase_stopDatabaseInternal
@@ -79,7 +102,7 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedDatabase_
 		//release the java ID fields
 		releaseIDS(env);
 		//release the dlopen string
-		freeMonetDB5LibraryPathEmbedded();
+		freeMonetDB5LibraryPath();
 		monetdb_shutdown();
 	} else {
 		exceptionCls = (*env)->FindClass(env, "nl/cwi/monetdb/embedded/env/MonetDBEmbeddedException");
@@ -90,43 +113,53 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedDatabase_
 JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedDatabase_createConnectionInternal
 	(JNIEnv *env, jobject database) {
 	jclass exceptionCls;
-	char* error;
 	monetdb_connection conn = NULL;
+	jobject result = NULL;
 	(void) database;
 
 	if(monetdb_is_initialized()) {
 		conn = monetdb_connect();
 		if(!conn) {
-			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The connection initialization failed!");
-			return NULL;
+			exceptionCls = (*env)->FindClass(env, "nl/cwi/monetdb/embedded/env/MonetDBEmbeddedException");
+			(*env)->ThrowNew(env, exceptionCls, "The connection initialization failed!");
+		} else {
+			result = (*env)->NewObject(env, getMonetDBEmbeddedConnectionClassID(),
+									   getMonetDBEmbeddedConnectionConstructorID(), (jlong) conn);
+			if(!result) {
+				exceptionCls = (*env)->FindClass(env, "nl/cwi/monetdb/embedded/env/MonetDBEmbeddedException");
+				(*env)->ThrowNew(env, exceptionCls, "System out of memory!");
+			}
 		}
-		return (*env)->NewObject(env, getMonetDBEmbeddedConnectionClassID(),
-								getMonetDBEmbeddedConnectionConstructorID(), (jlong) conn);
 	} else {
 		exceptionCls = (*env)->FindClass(env, "nl/cwi/monetdb/embedded/env/MonetDBEmbeddedException");
 		(*env)->ThrowNew(env, exceptionCls, "The MonetDB Embedded database is not running!");
-		return NULL;
 	}
+	return result;
 }
 
 JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedDatabase_createJDBCEmbeddedConnectionInternal
 	(JNIEnv *env, jobject database) {
 	jclass exceptionCls;
-	char* error;
 	monetdb_connection conn = NULL;
+	jobject result = NULL;
 	(void) database;
 
 	if(monetdb_is_initialized()) {
 		conn = monetdb_connect();
 		if(!conn) {
-			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The connection initialization failed!");
-			return NULL;
+			exceptionCls = (*env)->FindClass(env, "nl/cwi/monetdb/embedded/env/MonetDBEmbeddedException");
+			(*env)->ThrowNew(env, exceptionCls, "The connection initialization failed!");
+		} else {
+			result = (*env)->NewObject(env, getJDBCEmbeddedConnectionClassID(),
+									   getJDBCDBEmbeddedConnectionConstructorID(), (jlong) conn);
+			if(!result) {
+				exceptionCls = (*env)->FindClass(env, "nl/cwi/monetdb/embedded/env/MonetDBEmbeddedException");
+				(*env)->ThrowNew(env, exceptionCls, "System out of memory!");
+			}
 		}
-		return (*env)->NewObject(env, getJDBCEmbeddedConnectionClassID(), getJDBCDBEmbeddedConnectionConstructorID(),
-								(jlong) conn);
 	} else {
 		exceptionCls = (*env)->FindClass(env, "nl/cwi/monetdb/embedded/env/MonetDBEmbeddedException");
 		(*env)->ThrowNew(env, exceptionCls, "The MonetDB Embedded database is not running!");
-		return NULL;
 	}
+	return result;
 }

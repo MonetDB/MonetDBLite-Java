@@ -11,7 +11,7 @@
 
 #include <jni.h>
 
-void initializeIDS(JNIEnv *env);
+int initializeIDS(JNIEnv *env);
 void releaseIDS(JNIEnv *env);
 
 /* Embedded database environment Classes */

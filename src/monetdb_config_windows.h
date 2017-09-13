@@ -1098,9 +1098,13 @@ typedef __uint128_t uhge;
 #define _MSC_EXTENSIONS 1
 /* #undef HAVE_CTIME_R */
 #include "embedded/undef.h"
-#else
-#define HAVE_MAPI 1
 #endif
+
+/* NOTE Added to compile MonetDBJavaLite on MinGW64 */
+#define __CRT__NO_INLINE /* MinGW64 */
+#define _Printf_format_string_
+#define _In_z_
+#define HAVE_GETTIMEOFDAY
 
 #define PROMPT1		"\001\001\n"	/* prompt: ready for new query */
 #define PROMPT2		"\001\002\n"	/* prompt: more data needed */

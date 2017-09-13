@@ -34,7 +34,4 @@ void sendReplySizeCommand(monetdb_connection conn, lng size);
 int getAutocommitFlag(monetdb_connection conn);
 void setAutocommitFlag(monetdb_connection conn, int autoCommit);
 
-int setMonetDB5LibraryPathEmbedded(const char* path);
-void freeMonetDB5LibraryPathEmbedded(void);
-
 #endif

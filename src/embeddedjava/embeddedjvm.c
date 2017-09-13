@@ -111,11 +111,3 @@ void setAutocommitFlag(monetdb_connection conn, int autoCommit) {
 	}
 	SQLautocommit(connection, m);
 }
-
-int setMonetDB5LibraryPathEmbedded(const char* path) {
-	return setMonetDB5LibraryPath(path);
-}
-
-void freeMonetDB5LibraryPathEmbedded(void) {
-	freeMonetDB5LibraryPath();
-}
