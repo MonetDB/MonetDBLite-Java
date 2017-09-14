@@ -12,7 +12,7 @@
 #include "embeddedjvm.h"
 #include "javaids.h"
 #include "converters.h"
-#include "mal_linker.h"
+#include "gdk_posix.h"
 
 JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedDatabase_startDatabaseInternal
 	(JNIEnv *env, jclass monetDBEmbeddedDatabase, jstring dbDirectory, jboolean silentFlag, jboolean sequentialFlag) {

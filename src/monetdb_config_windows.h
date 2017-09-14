@@ -1095,16 +1095,16 @@ typedef __uint128_t uhge;
 #define PTRFMTCAST
 
 #ifdef HAVE_EMBEDDED
-#define _MSC_EXTENSIONS 1
-/* #undef HAVE_CTIME_R */
-#include "embedded/undef.h"
+#include "monetdblite/src/embedded/undef.h"
 #endif
 
 /* NOTE Added to compile MonetDBJavaLite on MinGW64 */
 #define __CRT__NO_INLINE /* MinGW64 */
 #define _Printf_format_string_
 #define _In_z_
-#define HAVE_GETTIMEOFDAY
+#define HAVE_GETTIMEOFDAY 1
+#define HAVE_PTHREAD_H 1
+#define HAVE_DIRENT_H 1
 
 #define PROMPT1		"\001\001\n"	/* prompt: ready for new query */
 #define PROMPT2		"\001\002\n"	/* prompt: more data needed */

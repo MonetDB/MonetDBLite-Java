@@ -17,7 +17,7 @@ if [ ! -z $TRAVIS  ] ; then
         *)
             # Install MonetDB compilation dependencies
             apt-get -qq update && apt-get -qq -y install pkg-config pkgconf flex bison byacc
-            if [ $1 == "macosx" ] ; then
+            if [[ $1 == "macosx" ]] ; then
                 export OS=Darwin
             else
                 export OS=Linux
@@ -65,7 +65,7 @@ mkdir -p monetdb-java-lite/src/main/resources/libs/$BUILDSYS
 mv build/$BUILDSYS/$BUILDLIBRARY monetdb-java-lite/src/main/resources/libs/$BUILDSYS/$BUILDLIBRARY
 
 # Windows again damm!
-if [ $1 == "windows" ] ; then
+if [[ $1 == "windows" ]] ; then
     BITS=64
     cp -rf src/embeddedjava/windows/msvcr100win$BITS/msvcr100-$BITS.dll monetdb-java-lite/src/main/resources/libs/$BUILDSYS/msvcr100.dll
 fi

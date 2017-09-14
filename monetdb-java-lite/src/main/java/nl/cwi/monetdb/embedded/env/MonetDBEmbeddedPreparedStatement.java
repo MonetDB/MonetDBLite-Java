@@ -84,22 +84,16 @@ public final class MonetDBEmbeddedPreparedStatement extends AbstractConnectionRe
         this.monetdbType = new String[this.size];
         this.digits = new int[this.size];
         this.scale = new int[this.size];
+        this.schema = new String[this.size];
+        this.table = new String[this.size];
+        this.column = new String[this.size];
 
-        qrs.getStringColumnByIndex(1, this.monetdbType);
-        qrs.getIntColumnByIndex(2, this.digits);
-        qrs.getIntColumnByIndex(3, this.scale);
-        if (this.rscolcnt != 3) {
-            this.schema = new String[this.size];
-            this.table = new String[this.size];
-            this.column = new String[this.size];
-            qrs.getStringColumnByIndex(4, this.schema);
-            qrs.getStringColumnByIndex(5, this.table);
-            qrs.getStringColumnByIndex(6, this.column);
-        } else {
-            this.schema = null;
-            this.table = null;
-            this.column = null;
-        }
+        qrs.getStringColumnByIndex(3, this.monetdbType);
+        qrs.getIntColumnByIndex(4, this.digits);
+        qrs.getIntColumnByIndex(5, this.scale);
+        qrs.getStringColumnByIndex(6, this.schema);
+        qrs.getStringColumnByIndex(7, this.table);
+        qrs.getStringColumnByIndex(8, this.column);
         qrs.close();
 
         mTimestampZ = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSZ");

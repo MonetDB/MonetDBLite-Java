@@ -1,4 +1,4 @@
-CFLAGS=-DLIBGDK -DLIBMAL -DLIBOPTIMIZER -DLIBSTREAM -DUSE_PTHREAD_LOCKS -DPIC -D_XPG6 -DHAVE_EMBEDDED
+CFLAGS=-DLIBGDK -DLIBMAL -DLIBOPTIMIZER -DLIBSTREAM -DUSE_PTHREAD_LOCKS -DPIC -D_XPG6 -DHAVE_EMBEDDED -DHAVE_EMBEDDED_JAVA
 
 INCLUDE_FLAGS= -Isrc/ -Isrc/embeddedjava -Isrc/monetdblite/src/common -Isrc/monetdblite/src/embedded \
 -Isrc/monetdblite/src/gdk -Isrc/monetdblite/src/mal/mal -Isrc/monetdblite/src/mal/modules \
@@ -17,7 +17,7 @@ endif
 ifeq ($(OS),Windows_NT)
     BUILDIR=windows
     SOEXT=dll
-    CFLAGS += -m64 -std=c99 -DNATIVE_WIN32
+    CFLAGS += -m64 -std=c99
     INCLUDE_FLAGS += -Isrc/embeddedjava/incwindows
     EXTRA_LINK_FLAGS = -lws2_32 -lpthread -lpsapi
     EXTRA_SHARED_FLAGS = -fPIC -Wl,--export-all-symbols

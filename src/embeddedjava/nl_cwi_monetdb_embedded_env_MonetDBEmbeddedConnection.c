@@ -68,7 +68,7 @@ static int executeQuery(JNIEnv *env, jlong connectionPointer, jstring query, jbo
 static jobject generateQueryResultSet(JNIEnv *env, jobject jconnection, jlong connectionPointer, monetdb_result *output,
 									  int query_type, long prepareID) {
 	int i, numberOfColumns;
-	jobject result;
+	jobject result = NULL;
 	jintArray typesIDs;
 	jint* copy = NULL;
 	JResultSet* thisResultSet = NULL;
@@ -79,7 +79,7 @@ static jobject generateQueryResultSet(JNIEnv *env, jobject jconnection, jlong co
 	} else {
 		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "There query returned no results?");
 		monetdb_cleanup_result((monetdb_connection) connectionPointer, output);
-		return NULL;
+		return result;
 	}
 
 	copy = GDKmalloc(sizeof(jint) * numberOfColumns);
@@ -88,14 +88,14 @@ static jobject generateQueryResultSet(JNIEnv *env, jobject jconnection, jlong co
 		GDKfree(copy);
 		freeResultSet(thisResultSet);
 		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System out of memory!");
-		return NULL;
+		return result;
 	}
 	typesIDs = (*env)->NewIntArray(env, numberOfColumns);
 	if(typesIDs == NULL) {
 		GDKfree(copy);
 		freeResultSet(thisResultSet);
 		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System out of memory!");
-		return NULL;
+		return result;
 	}
 
 	for (i = 0; i < numberOfColumns; i++) {
@@ -133,7 +133,6 @@ static jobject generateQueryResultSet(JNIEnv *env, jobject jconnection, jlong co
 	}
 
 	if((*env)->ExceptionCheck(env) == JNI_TRUE) {
-		result = NULL;
 		freeResultSet(thisResultSet);
 	} else {
 		(*env)->SetIntArrayRegion(env, typesIDs, 0, numberOfColumns, copy);
