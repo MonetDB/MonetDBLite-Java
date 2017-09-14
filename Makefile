@@ -1,6 +1,19 @@
-CFLAGS=-DLIBGDK -DLIBMAL -DLIBOPTIMIZER -DLIBSTREAM -DUSE_PTHREAD_LOCKS -DPIC -D_XPG6 -DHAVE_EMBEDDED -DHAVE_EMBEDDED_JAVA
+OPTIMIZE=$(OPT)
 
-INCLUDE_FLAGS= -Isrc/ -Isrc/embeddedjava -Isrc/monetdblite/src/common -Isrc/monetdblite/src/embedded \
+ifneq ($(OPTIMIZE), true)
+	OPTFLAGS=-O0 -g -Wall -Wextra -Werror -Wmissing-prototypes -Wold-style-definition
+	OBJDIR=build/$(BUILDIR)/debug
+else
+	OPTFLAGS=-O3
+	OBJDIR=build/$(BUILDIR)/optimized
+endif
+
+DEPSDIR=$(OBJDIR)/deps
+
+CFLAGS=-DLIBGDK -DLIBMAL -DLIBOPTIMIZER -DLIBSTREAM -DHAVE_EMBEDDED -DHAVE_EMBEDDED_JAVA
+
+LDFLAGS=-lm -lpthread -ldl
+INCLUDE_FLAGS= -Isrc/embeddedjava -Isrc/monetdblite/src -Isrc/monetdblite/src/common -Isrc/monetdblite/src/embedded \
 -Isrc/monetdblite/src/gdk -Isrc/monetdblite/src/mal/mal -Isrc/monetdblite/src/mal/modules \
 -Isrc/monetdblite/src/mal/optimizer -Isrc/monetdblite/src/mal/sqlbackend -Isrc/monetdblite/src/sql/include \
 -Isrc/monetdblite/src/sql/common -Isrc/monetdblite/src/sql/server -Isrc/monetdblite/src/sql/storage \
@@ -17,10 +30,8 @@ endif
 ifeq ($(OS),Windows_NT)
     BUILDIR=windows
     SOEXT=dll
-    CFLAGS += -m64 -std=c99
+    CFLAGS += -DWIN32 -D__CYGWIN__
     INCLUDE_FLAGS += -Isrc/embeddedjava/incwindows
-    EXTRA_LINK_FLAGS = -lws2_32 -lpthread -lpsapi
-    EXTRA_SHARED_FLAGS = -fPIC -Wl,--export-all-symbols
 #    ifeq ($(PROCESSOR_ARCHITEW6432),AMD64)
 #        CFLAGS += -D AMD64
 #    else
@@ -35,31 +46,16 @@ else ifeq ($(OS),Linux)
     BUILDIR=linux
     SOEXT=so
     CFLAGS += -fPIC
-    LDFLAGS = -lm -lpthread -ldl -lrt
+    LDFLAGS += -lrt
     INCLUDE_FLAGS += -Isrc/embeddedjava/inclinux
 else ifeq ($(OS),Darwin)
     BUILDIR=macosx
     SOEXT=dylib
     CFLAGS += -fPIC
-    LDFLAGS = -lm -lpthread -ldl
     INCLUDE_FLAGS += -Isrc/embeddedjava/incmacosx
 else
     $(error The operating system could not be detected)
 endif
-
-
-OPTIMIZE=$(OPT)
-
-ifneq ($(OPTIMIZE), true)
-	OPTFLAGS=-g -Wall -Wextra -Werror -Wmissing-prototypes -Wold-style-definition
-	OBJDIR=build/$(BUILDIR)/debug
-else
-	OPTFLAGS=-O3
-	OBJDIR=build/$(BUILDIR)/optimized
-endif
-
-DEPSDIR=$(OBJDIR)/deps
-
 
 SQLSCRIPTS=\
 src/monetdblite/src/sql/scripts/09_like.sql \
@@ -356,4 +352,4 @@ $(OBJDIR)/%.o: src/%.c
 	$(CC) $(CFLAGS) -MMD -MF $(subst $(OBJDIR),$(DEPSDIR),$(subst .o,.d,$@)) $(INCLUDE_FLAGS) $(OPTFLAGS) -c $(subst $(OBJDIR)/,src/,$(subst .o,.c,$@)) -o $@
 
 $(LIBFILE): $(COBJECTS)
-	$(CC) $(LDFLAGS) $(COBJECTS) $(EXTRA_LINK_FLAGS) $(OPTFLAGS) $(EXTRA_SHARED_FLAGS) -o $(LIBFILE) -shared
+	$(CC) $(LDFLAGS) $(COBJECTS) $(OPTFLAGS) -o $(LIBFILE) -shared

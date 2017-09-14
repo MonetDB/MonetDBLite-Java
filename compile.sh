@@ -7,10 +7,10 @@ if [ ! -z $TRAVIS  ] ; then
     case "$1" in
         windows)
             # Fix broken header files
-            \cp src/embeddedjava/windows/mingwheaders/intrin.h /usr/x86_64-w64-mingw32/sys-root/mingw/include/intrin.h
-            \cp src/embeddedjava/windows/mingwheaders/stdlib.h /usr/x86_64-w64-mingw32/sys-root/mingw/include/stdlib.h
-            \cp src/embeddedjava/windows/mingwheaders/time.h /usr/x86_64-w64-mingw32/sys-root/mingw/include/time.h
-            \cp src/embeddedjava/windows/mingwheaders/intrin-impl.h /usr/x86_64-w64-mingw32/sys-root/mingw/include/psdk_inc/intrin-impl.h
+            # \cp src/embeddedjava/windows/mingwheaders/intrin.h /usr/x86_64-w64-mingw32/sys-root/mingw/include/intrin.h
+            # \cp src/embeddedjava/windows/mingwheaders/stdlib.h /usr/x86_64-w64-mingw32/sys-root/mingw/include/stdlib.h
+            # \cp src/embeddedjava/windows/mingwheaders/time.h /usr/x86_64-w64-mingw32/sys-root/mingw/include/time.h
+            # \cp src/embeddedjava/windows/mingwheaders/intrin-impl.h /usr/x86_64-w64-mingw32/sys-root/mingw/include/psdk_inc/intrin-impl.h
             export OS=Windows_NT #Do this for the Makefile
             ;;
 
@@ -31,21 +31,18 @@ case "$1" in
         BUILDSYS=windows
         BUILDLIBRARY=libmonetdb5.dll
         export CC=x86_64-w64-mingw32-gcc
-        \cp -rf src/monetdb_config_windows.h src/monetdb_config.h
         ;;
 
     macosx)
         BUILDSYS=macosx
         BUILDLIBRARY=libmonetdb5.dylib
         export CC=gcc
-        \cp -rf src/monetdb_config_unix.h src/monetdb_config.h
         ;;
 
     *)
         BUILDSYS=linux
         BUILDLIBRARY=libmonetdb5.so
         export CC=gcc
-        \cp -rf src/monetdb_config_unix.h src/monetdb_config.h
 esac
 
 # Save the previous directory
