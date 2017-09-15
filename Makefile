@@ -10,8 +10,7 @@ endif
 
 DEPSDIR=$(OBJDIR)/deps
 
-CFLAGS=-DLIBGDK -DLIBMAL -DLIBOPTIMIZER -DLIBSTREAM -DHAVE_EMBEDDED -DHAVE_EMBEDDED_JAVA -DHAVE_CTIME_R \
--Wfatal-errors
+CFLAGS=-DLIBGDK -DLIBMAL -DLIBOPTIMIZER -DLIBSTREAM -DHAVE_EMBEDDED -DHAVE_EMBEDDED_JAVA -Wfatal-errors
 
 LDFLAGS=-lm -lpthread
 INCLUDE_FLAGS=-Isrc/embeddedjava -Isrc/monetdblite/src -Isrc/monetdblite/src/common -Isrc/monetdblite/src/embedded \
@@ -46,13 +45,13 @@ ifeq ($(OS),Windows_NT)
 else ifeq ($(OS),Linux)
     BUILDIR=linux
     SOEXT=so
-    CFLAGS += -fPIC -DHAVE_FSYNC
+    CFLAGS += -fPIC
     LDFLAGS += -lrt -ldl
     INCLUDE_FLAGS += -Isrc/embeddedjava/inclinux
 else ifeq ($(OS),Darwin)
     BUILDIR=macosx
     SOEXT=dylib
-    CFLAGS += -fPIC -DHAVE_FSYNC
+    CFLAGS += -fPIC
     LDFLAGS += -ldl
     INCLUDE_FLAGS += -Isrc/embeddedjava/incmacosx
 else

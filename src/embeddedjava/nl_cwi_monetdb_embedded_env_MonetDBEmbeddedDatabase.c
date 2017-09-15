@@ -17,9 +17,8 @@
 
 JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedDatabase_startDatabaseInternal
 	(JNIEnv *env, jclass monetDBEmbeddedDatabase, jstring dbDirectory, jboolean silentFlag, jboolean sequentialFlag) {
-	const char *dbdir_string_tmp = NULL;
-	const char *loadPath_tmp = NULL;
-	char *err;
+	const char* dbdir_string_tmp = NULL, *loadPath_tmp = NULL;
+	char *err = NULL;
 	jclass exceptionCls, loaderCls = NULL;
 	jfieldID pathID;
 	jstring loadPath = NULL;
@@ -31,6 +30,10 @@ JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedDataba
 			exceptionCls = (*env)->FindClass(env, "nl/cwi/monetdb/embedded/env/MonetDBEmbeddedException");
 			(*env)->ThrowNew(env, exceptionCls, "System out of memory!");
 			goto endofinit;
+		}
+		if(!strncmp(dbdir_string_tmp, ":memory:", 8)) { //activate in-memory mode
+			(*env)->ReleaseStringUTFChars(env, dbDirectory, dbdir_string_tmp);
+			dbdir_string_tmp = NULL;
 		}
 	}
 	if(!monetdb_is_initialized()) {
