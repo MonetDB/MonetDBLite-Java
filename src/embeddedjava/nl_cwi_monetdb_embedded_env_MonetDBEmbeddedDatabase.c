@@ -8,6 +8,7 @@
 
 #include "nl_cwi_monetdb_embedded_env_MonetDBEmbeddedDatabase.h"
 
+#include "monetdb_config.h"
 #include "embedded.h"
 #include "embeddedjvm.h"
 #include "javaids.h"

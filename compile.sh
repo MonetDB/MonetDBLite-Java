@@ -6,12 +6,7 @@ set -ev
 if [ ! -z $TRAVIS  ] ; then
     case "$1" in
         windows)
-            # Fix broken header files
-            # \cp src/embeddedjava/windows/mingwheaders/intrin.h /usr/x86_64-w64-mingw32/sys-root/mingw/include/intrin.h
-            # \cp src/embeddedjava/windows/mingwheaders/stdlib.h /usr/x86_64-w64-mingw32/sys-root/mingw/include/stdlib.h
-            # \cp src/embeddedjava/windows/mingwheaders/time.h /usr/x86_64-w64-mingw32/sys-root/mingw/include/time.h
-            # \cp src/embeddedjava/windows/mingwheaders/intrin-impl.h /usr/x86_64-w64-mingw32/sys-root/mingw/include/psdk_inc/intrin-impl.h
-            export OS=Windows_NT #Do this for the Makefile
+            export OS=Windows_NT
             ;;
 
         *)
@@ -55,7 +50,6 @@ make clean && make init && make -j
 if [ $? -ne 0 ] ; then
     echo "build failure"
 fi
-rm src/monetdb_config.h
 
 # Move the compiled library to the Gradle directory
 mkdir -p monetdb-java-lite/src/main/resources/libs/$BUILDSYS
@@ -65,6 +59,7 @@ mv build/$BUILDSYS/$BUILDLIBRARY monetdb-java-lite/src/main/resources/libs/$BUIL
 if [[ $1 == "windows" ]] ; then
     BITS=64
     cp -rf src/embeddedjava/windows/msvcr100win$BITS/msvcr100-$BITS.dll monetdb-java-lite/src/main/resources/libs/$BUILDSYS/msvcr100.dll
+    cp -rf src/embeddedjava/windows/libwinpthread-1.dll monetdb-java-lite/src/main/resources/libs/$BUILDSYS/libwinpthread-1.dll
 fi
 
 # If we are not on Travis then we perform the gradle build

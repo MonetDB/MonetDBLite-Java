@@ -9,6 +9,7 @@
 #ifndef SRC_JAVAIDS_H
 #define SRC_JAVAIDS_H
 
+#include "monetdb_config.h"
 #include <jni.h>
 
 int initializeIDS(JNIEnv *env);

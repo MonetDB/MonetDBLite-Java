@@ -8,14 +8,14 @@
 
 package nl.cwi.monetdb.embedded.env;
 
+import nl.cwi.monetdb.jdbc.MonetDriver;
+
 import java.io.*;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Locale;
-
-import nl.cwi.monetdb.jdbc.MonetDriver;
 
 /**
  * Class responsible to load MonetDB's embedded library. On the resources directory of the JAR inside the libs directory
@@ -102,7 +102,8 @@ public final class MonetDBJavaLiteLoader {
     private static final String monetDBJDBCDriverString;
 
     static {
-        monetDBJDBCDriverString = MonetDriver.getDriverMajorVersion() + "-" + MonetDriver.getDriverMinorVersion();
+        //2.32 - change the minor version in the next line (The MonetDriver call is need to register the driver in the tests)
+        monetDBJDBCDriverString =  MonetDriver.getDriverMajorVersion() + "-32";
     }
 
     /**
@@ -258,6 +259,8 @@ public final class MonetDBJavaLiteLoader {
         if(ordinalOSEnumValue == 0) { //On Windows we have to extract the Visual C/C++ Runtime library dependency
             //Check https://msdn.microsoft.com/en-us/library/ms235299.aspx for details
             loadLibraryIntoDirectory(nativeLibraryPath, "", "msvcr100.dll", tempDirectory);
+            //Compiling with mingw64-gcc from Linux with the pthread version so it needs this dependency
+            loadLibraryIntoDirectory(nativeLibraryPath, "", "libwinpthread-1.dll", tempDirectory);
         }
         String prefix = "MonetDBJavaLite-" + monetDBJDBCDriverString + "-";
         loadedLibraryFullPath = loadLibraryIntoDirectory(nativeLibraryPath, prefix, nativeLibraryName, tempDirectory);

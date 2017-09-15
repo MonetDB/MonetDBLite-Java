@@ -8,6 +8,7 @@
 
 #include "javaids.h"
 
+#include "monetdb_config.h"
 #include <jni.h>
 
 /* Embedded database environment Classes */

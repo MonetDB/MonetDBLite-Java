@@ -10,8 +10,8 @@
 #define SRC_CONVERTERS_H
 
 #include "monetdb_config.h"
-#include "mal_type.h"
 #include <jni.h>
+#include "mal_type.h"
 
 /* --  Get just a single value -- */
 

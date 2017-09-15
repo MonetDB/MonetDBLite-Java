@@ -10,10 +10,11 @@ endif
 
 DEPSDIR=$(OBJDIR)/deps
 
-CFLAGS=-DLIBGDK -DLIBMAL -DLIBOPTIMIZER -DLIBSTREAM -DHAVE_EMBEDDED -DHAVE_EMBEDDED_JAVA
+CFLAGS=-DLIBGDK -DLIBMAL -DLIBOPTIMIZER -DLIBSTREAM -DHAVE_EMBEDDED -DHAVE_EMBEDDED_JAVA -DHAVE_CTIME_R \
+-Wfatal-errors
 
-LDFLAGS=-lm -lpthread -ldl
-INCLUDE_FLAGS= -Isrc/embeddedjava -Isrc/monetdblite/src -Isrc/monetdblite/src/common -Isrc/monetdblite/src/embedded \
+LDFLAGS=-lm -lpthread
+INCLUDE_FLAGS=-Isrc/embeddedjava -Isrc/monetdblite/src -Isrc/monetdblite/src/common -Isrc/monetdblite/src/embedded \
 -Isrc/monetdblite/src/gdk -Isrc/monetdblite/src/mal/mal -Isrc/monetdblite/src/mal/modules \
 -Isrc/monetdblite/src/mal/optimizer -Isrc/monetdblite/src/mal/sqlbackend -Isrc/monetdblite/src/sql/include \
 -Isrc/monetdblite/src/sql/common -Isrc/monetdblite/src/sql/server -Isrc/monetdblite/src/sql/storage \
@@ -45,13 +46,14 @@ ifeq ($(OS),Windows_NT)
 else ifeq ($(OS),Linux)
     BUILDIR=linux
     SOEXT=so
-    CFLAGS += -fPIC
-    LDFLAGS += -lrt
+    CFLAGS += -fPIC -DHAVE_FSYNC
+    LDFLAGS += -lrt -ldl
     INCLUDE_FLAGS += -Isrc/embeddedjava/inclinux
 else ifeq ($(OS),Darwin)
     BUILDIR=macosx
     SOEXT=dylib
-    CFLAGS += -fPIC
+    CFLAGS += -fPIC -DHAVE_FSYNC
+    LDFLAGS += -ldl
     INCLUDE_FLAGS += -Isrc/embeddedjava/incmacosx
 else
     $(error The operating system could not be detected)

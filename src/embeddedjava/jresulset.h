@@ -11,6 +11,7 @@
 
 #include "monetdb_config.h"
 #include "embedded.h"
+#include "embeddedjvm.h"
 #include "gdk.h"
 #include "mal.h"
 #include "mal_client.h"

@@ -7,6 +7,7 @@
  */
 
 #include "jresulset.h"
+
 #include "monetdb_config.h"
 #include "embedded.h"
 #include "embeddedjvm.h"

@@ -10,8 +10,8 @@
 #define MONETDBLITE_CHECKNULLS_H
 
 #include "monetdb_config.h"
-#include "mal_type.h"
 #include <jni.h>
+#include "mal_type.h"
 
 void checkBooleanNulls(JNIEnv* env, jbooleanArray input, jint size, BAT* b);
 void checkTinyintNulls(JNIEnv* env, jbooleanArray input, jint size, BAT* b);

@@ -8,6 +8,7 @@
 
 #include "nl_cwi_monetdb_embedded_jdbc_EmbeddedDataBlockResponse.h"
 
+#include "monetdb_config.h"
 #include "jresulset.h"
 #include "converters.h"
 

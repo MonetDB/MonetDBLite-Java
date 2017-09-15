@@ -18,6 +18,7 @@
 #ifndef _JAVASOFT_JNI_H_
 #define _JAVASOFT_JNI_H_
 
+#include "monetdb_config.h"
 #include <stdio.h>
 #include <stdarg.h>
 

@@ -8,11 +8,11 @@
 
 #include "nl_cwi_monetdb_embedded_resultset_QueryResultSet.h"
 
+#include "monetdb_config.h"
 #include "javaids.h"
 #include "jresulset.h"
 #include "converters.h"
 #include "checknulls.h"
-#include "monetdb_config.h"
 #include "res_table.h"
 
 JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_getColumnNamesInternal

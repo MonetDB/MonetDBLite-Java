@@ -8,6 +8,7 @@
 
 #include "nl_cwi_monetdb_embedded_mapping_NullMappings.h"
 
+#include "monetdb_config.h"
 #include "converters.h"
 
 JNIEXPORT jbyte JNICALL Java_nl_cwi_monetdb_embedded_mapping_NullMappings_getBooleanNullConstant

@@ -9,7 +9,6 @@
 #include "nl_cwi_monetdb_embedded_tables_MonetDBTable.h"
 
 #include "monetdb_config.h"
-#include "monet_options.h"
 #include "embedded.h"
 #include "embeddedjvm.h"
 #include "res_table.h"

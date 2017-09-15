@@ -7,6 +7,8 @@
  */
 
 #include "converters.h"
+
+#include "monetdb_config.h"
 #include "javaids.h"
 #include "gdk_utils.h"
 #include "sql.h"

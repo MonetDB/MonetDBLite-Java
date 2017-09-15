@@ -8,11 +8,11 @@
 
 #include "nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection.h"
 
-#include "javaids.h"
-#include "jresulset.h"
+#include "monetdb_config.h"
 #include "embedded.h"
 #include "embeddedjvm.h"
-#include "monetdb_config.h"
+#include "javaids.h"
+#include "jresulset.h"
 #include "res_table.h"
 #include "gdk.h"
 
