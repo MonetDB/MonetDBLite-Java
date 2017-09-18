@@ -7,7 +7,6 @@ import nl.cwi.monetdb.embedded.resultset.QueryResultSet;
 import nl.cwi.monetdb.tests.helpers.MonetDBJavaLiteTesting;
 import org.junit.jupiter.api.*;
 
-import java.io.IOException;
 import java.sql.*;
 
 /**

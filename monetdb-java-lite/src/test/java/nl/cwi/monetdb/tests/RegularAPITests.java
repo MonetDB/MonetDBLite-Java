@@ -25,7 +25,6 @@ import org.junit.jupiter.api.*;
 
 import java.io.*;
 import java.math.BigDecimal;
-import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -786,13 +785,14 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 		String[] column1 = new String[]{"testingCSVParser", null, "Great test", "Have a nice day! :)"};
 		int[] column2 = new int[]{0, -3545, NullMappings.getIntNullConstant(), 33};
 		float[] column3 = new float[]{3.75f, -7.858f, 535.432f, NullMappings.getFloatNullConstant()};
+		String lineSep = System.lineSeparator();
 
 		//We could use a Java 8 stream with the StringJoin aggregator, but let's be simple...
 		String csvToImport =
-				"\"" + column1[0] + "\"," + column2[0] + "," + column3[0] + "\n" +
-					   "null"     + ","   + column2[1] + "," + column3[1] + "\n" +
-				"\"" + column1[2] + "\"," + "null"     + "," + column3[2] + "\n" +
-				"\"" + column1[3] + "\"," + column2[3] + "," + "null"     + "\n";
+				"\"" + column1[0] + "\"," + column2[0] + "," + column3[0] + lineSep +
+					   "null"     + ","   + column2[1] + "," + column3[1] + lineSep +
+				"\"" + column1[2] + "\"," + "null"     + "," + column3[2] + lineSep +
+				"\"" + column1[3] + "\"," + column2[3] + "," + "null"     + lineSep;
 		PrintWriter pw = new PrintWriter(csvImportFile);
 		pw.write(csvToImport);
 		pw.flush();
@@ -828,11 +828,6 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 
 		int rows2 = connection.executeUpdate("DROP TABLE testCSV;");
 		Assertions.assertEquals(-2, rows2, "The deletion should have affected no rows!");
-	}
-
-	//https://stackoverflow.com/questions/3842828/converting-little-endian-to-big-endian
-	private int little2big(int i) {
-		return (i&0xff)<<24 | (i&0xff00)<<8 | (i&0xff0000)>>8 | (i>>24)&0xff;
 	}
 
 	@Test
