@@ -21,29 +21,29 @@ import java.util.Map;
  */
 public final class ForkJavaProcess {
 
-    private ForkJavaProcess() {}
+	private ForkJavaProcess() {}
 
-    /**
-     * Create a child process and wait for it to end.
-     *
-     * @param classToExecute The Java class to execute
-     * @param environments A map of environment variables to pass in the process
-     * @return The exit status of the child process
-     * @throws IOException - If an {@link IOException} occurred in the process
-     * @throws InterruptedException - If an {@link InterruptedException} occurred in the process
-     */
-    public static int exec(Class<?> classToExecute, Map<String,String> environments)
-            throws IOException, InterruptedException {
-        String javaHome = System.getProperty("java.home");
-        String javaBin = javaHome + File.separator + "bin" + File.separator + "java";
-        String classpath = System.getProperty("java.class.path");
-        String className = classToExecute.getCanonicalName();
+	/**
+	 * Create a child process and wait for it to end.
+	 *
+	 * @param classToExecute The Java class to execute
+	 * @param environments A map of environment variables to pass in the process
+	 * @return The exit status of the child process
+	 * @throws IOException - If an {@link IOException} occurred in the process
+	 * @throws InterruptedException - If an {@link InterruptedException} occurred in the process
+	 */
+	public static int exec(Class<?> classToExecute, Map<String,String> environments)
+			throws IOException, InterruptedException {
+		String javaHome = System.getProperty("java.home");
+		String javaBin = javaHome + File.separator + "bin" + File.separator + "java";
+		String classpath = System.getProperty("java.class.path");
+		String className = classToExecute.getCanonicalName();
 
-        ProcessBuilder builder = new ProcessBuilder(javaBin, "-cp", classpath, className);
-        builder.environment().putAll(environments);
-        Process process = builder.start();
-        process.waitFor();
+		ProcessBuilder builder = new ProcessBuilder(javaBin, "-cp", classpath, className);
+		builder.environment().putAll(environments);
+		Process process = builder.start();
+		process.waitFor();
 
-        return process.exitValue();
-    }
+		return process.exitValue();
+	}
 }

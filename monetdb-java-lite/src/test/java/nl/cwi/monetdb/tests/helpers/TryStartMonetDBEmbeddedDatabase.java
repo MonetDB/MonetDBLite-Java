@@ -19,25 +19,25 @@ import nl.cwi.monetdb.embedded.env.MonetDBEmbeddedException;
  */
 public final class TryStartMonetDBEmbeddedDatabase {
 
-    private TryStartMonetDBEmbeddedDatabase() {}
+	private TryStartMonetDBEmbeddedDatabase() {}
 
-    /**
-     * An environment variable used to store the embedded database directory.
-     */
-    public static final String DATABASE_ENV = "MONETDBJAVALITE_DATABASE_DIRECTORY";
+	/**
+	 * An environment variable used to store the embedded database directory.
+	 */
+	public static final String DATABASE_ENV = "MONETDBJAVALITE_DATABASE_DIRECTORY";
 
-    /**
-     * The main method of the process.
-     *
-     * @param args The process parameters (Not used).
-     */
-    public static void main(String[] args) {
-        String databasePath = System.getenv(DATABASE_ENV);
-        try {
-            MonetDBEmbeddedDatabase.startDatabase(databasePath, true, false);
-            System.exit(1);
-        } catch (MonetDBEmbeddedException e) {
-            System.exit(0);
-        }
-    }
+	/**
+	 * The main method of the process.
+	 *
+	 * @param args The process parameters (Not used).
+	 */
+	public static void main(String[] args) {
+		String databasePath = System.getenv(DATABASE_ENV);
+		try {
+			MonetDBEmbeddedDatabase.startDatabase(databasePath, true, false);
+			System.exit(1);
+		} catch (MonetDBEmbeddedException e) {
+			System.exit(0);
+		}
+	}
 }

@@ -9,21 +9,21 @@ import nl.cwi.monetdb.embedded.env.MonetDBEmbeddedConnection;
  */
 public final strictfp class PreparedQueryResultSet extends QueryResultSet {
 
-    /** The prepared statement ID */
-    private final long preparedID;
+	/** The prepared statement ID */
+	private final long preparedID;
 
-    private PreparedQueryResultSet(MonetDBEmbeddedConnection connection, long structPointer, int numberOfColumns,
-                                   int numberOfRows, int[] typesIDs, long preparedID) {
-        super(connection, structPointer, numberOfColumns, numberOfRows, typesIDs);
-        this.preparedID = preparedID;
-    }
+	private PreparedQueryResultSet(MonetDBEmbeddedConnection connection, long structPointer, int numberOfColumns,
+								   int numberOfRows, int[] typesIDs, long preparedID) {
+		super(connection, structPointer, numberOfColumns, numberOfRows, typesIDs);
+		this.preparedID = preparedID;
+	}
 
-    /**
-     * Get the prepared statement ID.
-     *
-     * @return The prepared statement ID
-     */
-    public long getPreparedID() {
-        return preparedID;
-    }
+	/**
+	 * Get the prepared statement ID.
+	 *
+	 * @return The prepared statement ID
+	 */
+	public long getPreparedID() {
+		return preparedID;
+	}
 }

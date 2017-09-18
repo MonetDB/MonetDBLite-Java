@@ -19,55 +19,55 @@ import nl.cwi.monetdb.embedded.env.MonetDBEmbeddedException;
  */
 public abstract class AbstractRowSet {
 
-    /**
-     * The original query result set this row set belongs.
-     */
-    private final AbstractConnectionResult table;
+	/**
+	 * The original query result set this row set belongs.
+	 */
+	private final AbstractConnectionResult table;
 
-    /**
-     * The MonetDB-To-Java mappings of the columns.
-     */
-    protected final MonetDBToJavaMapping[] mappings;
+	/**
+	 * The MonetDB-To-Java mappings of the columns.
+	 */
+	protected final MonetDBToJavaMapping[] mappings;
 
-    /**
-     * The rows of this set.
-     */
-    protected final MonetDBRow[] rows;
+	/**
+	 * The rows of this set.
+	 */
+	protected final MonetDBRow[] rows;
 
-    protected AbstractRowSet(AbstractConnectionResult table, Object[][] rows) {
-        this.table = table;
-        int numberOfColumns = table.getNumberOfColumns();
-        this.mappings = new MonetDBToJavaMapping[numberOfColumns];
-        try {
-            table.getMappings(this.mappings);
-        } catch (MonetDBEmbeddedException ex) {
-            throw new IllegalArgumentException(ex);
-        }
-        this.rows = new MonetDBRow[rows.length];
-        for(int i = 0 ; i < rows.length ; i++) {
-            this.rows[i] = new MonetDBRow(this, rows[i]);
-        }
-    }
+	protected AbstractRowSet(AbstractConnectionResult table, Object[][] rows) {
+		this.table = table;
+		int numberOfColumns = table.getNumberOfColumns();
+		this.mappings = new MonetDBToJavaMapping[numberOfColumns];
+		try {
+			table.getMappings(this.mappings);
+		} catch (MonetDBEmbeddedException ex) {
+			throw new IllegalArgumentException(ex);
+		}
+		this.rows = new MonetDBRow[rows.length];
+		for(int i = 0 ; i < rows.length ; i++) {
+			this.rows[i] = new MonetDBRow(this, rows[i]);
+		}
+	}
 
-    /**
-     * Gets the original query result set this row set belongs.
-     *
-     * @return The original query result set this row set belongs
-     */
-    public AbstractConnectionResult getQueryResultTable() { return table; }
+	/**
+	 * Gets the original query result set this row set belongs.
+	 *
+	 * @return The original query result set this row set belongs
+	 */
+	public AbstractConnectionResult getQueryResultTable() { return table; }
 
-    /**
-     * Gets the number of columns in this set.
-     *
-     * @return The number of columns in this set
-     */
-    public int getNumberOfColumns() { return mappings.length; }
+	/**
+	 * Gets the number of columns in this set.
+	 *
+	 * @return The number of columns in this set
+	 */
+	public int getNumberOfColumns() { return mappings.length; }
 
-    /**
-     * Gets a column index in the result set by name.
-     *
-     * @param columnName The column name
-     * @return The index number
-     */
-    public abstract int getColumnIndexByName(String columnName);
+	/**
+	 * Gets a column index in the result set by name.
+	 *
+	 * @param columnName The column name
+	 * @return The index number
+	 */
+	public abstract int getColumnIndexByName(String columnName);
 }

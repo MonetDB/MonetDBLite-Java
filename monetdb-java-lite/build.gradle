@@ -27,7 +27,7 @@ ext.junitPlatformVersion = '1.0.0-M4'
 ext.junitJupiterVersion  = '5.0.0-M4'
 ext.junitVintageVersion  = '4.12.0-M4'
 ext.log4jVersion         = '2.8.2'
-version = '2.32'
+version = '2.33'
 ext.version = version
 group = 'monetdb'
 ext.group = group
@@ -36,8 +36,8 @@ ext.archivesBaseName = archivesBaseName
 ext.packaging = 'jar'
 
 dependencies {
-    compile group: "${group}", name: 'monetdb-jdbc-new', version: '2.31'
-    runtime group: "${group}", name: 'monetdb-jdbc-new', version: '2.31'
+    compile group: "${group}", name: 'monetdb-jdbc-new', version: '2.32'
+    runtime group: "${group}", name: 'monetdb-jdbc-new', version: '2.32'
 
     // JUnit Jupiter API and TestEngine implementation
     testCompile("org.junit.jupiter:junit-jupiter-api:${junitJupiterVersion}")
@@ -108,12 +108,12 @@ uploadArchives { //do gradle uploadArchives
                 artifactId 'monetdb-java-lite'
                 packaging 'jar'
                 description 'Serveless version of the MonetDB database in the JVM - JDBC compliant'
-                url 'https://github.com/hannesmuehleisen/MonetDBLite/tree/Jul2017Lite-Java'
+                url 'https://github.com/hannesmuehleisen/MonetDBLite-Java/tree/master'
 
                 scm {
-                    url 'https://github.com/hannesmuehleisen/MonetDBLite/tree/Jul2017Lite-Java'
-                    connection 'scm:git:git://github.com/hannesmuehleisen/MonetDBLite.git'
-                    developerConnection 'scm:git:git@github.com:hannesmuehleisen/MonetDBLite.git'
+                    url 'https://github.com/hannesmuehleisen/MonetDBLite-Java/tree/master'
+                    connection 'scm:git:git://github.com/hannesmuehleisen/MonetDBLite-Java.git'
+                    developerConnection 'scm:git:git@github.com:hannesmuehleisen/MonetDBLite-Java.git'
                 }
 
                 licenses {

@@ -15,16 +15,16 @@ package nl.cwi.monetdb.embedded.utils;
  */
 public final class StringEscaper {
 
-    private StringEscaper() {}
+	private StringEscaper() {}
 
-    /**
-     * Escapes a Java String for usage in SQL queries to protect us against bad people! :(
-     *
-     * @param input The String to escape
-     * @return The input String escaped
-     */
-    public static String sqlStringEscape(String input) {
-        return "'" + input.replaceAll("\\\\", "\\\\\\\\").replaceAll("'", "\\\\'")
-                + "'";
-    }
+	/**
+	 * Escapes a Java String for usage in SQL queries to protect us against bad people! :(
+	 *
+	 * @param input The String to escape
+	 * @return The input String escaped
+	 */
+	public static String sqlStringEscape(String input) {
+		return "'" + input.replaceAll("\\\\", "\\\\\\\\").replaceAll("'", "\\\\'")
+				+ "'";
+	}
 }

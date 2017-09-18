@@ -17,66 +17,66 @@ import nl.cwi.monetdb.embedded.env.MonetDBEmbeddedException;
  */
 public abstract class AbstractColumn {
 
-    /**
-     * The mapping between MonetDB type and the Java Class.
-     */
-    protected final MonetDBToJavaMapping mapping;
+	/**
+	 * The mapping between MonetDB type and the Java Class.
+	 */
+	protected final MonetDBToJavaMapping mapping;
 
-    /**
-     * The column name.
-     */
-    private final String columnName;
+	/**
+	 * The column name.
+	 */
+	private final String columnName;
 
-    /**
-     * The column digits.
-     */
-    private final int columnDigits;
+	/**
+	 * The column digits.
+	 */
+	private final int columnDigits;
 
-    /**
-     * The column scale.
-     */
-    private final int columnScale;
+	/**
+	 * The column scale.
+	 */
+	private final int columnScale;
 
-    protected AbstractColumn(String columnType, String columnName, int columnDigits, int columnScale)
-            throws MonetDBEmbeddedException {
-        this.mapping = MonetDBToJavaMapping.getJavaMappingFromMonetDBString(columnType);
-        this.columnName = columnName;
-        this.columnDigits = columnDigits;
-        this.columnScale = columnScale;
-    }
+	protected AbstractColumn(String columnType, String columnName, int columnDigits, int columnScale)
+			throws MonetDBEmbeddedException {
+		this.mapping = MonetDBToJavaMapping.getJavaMappingFromMonetDBString(columnType);
+		this.columnName = columnName;
+		this.columnDigits = columnDigits;
+		this.columnScale = columnScale;
+	}
 
-    /**
-     * Gets the type of the column.
-     *
-     * @return The Column type
-     */
-    public String getColumnInternalTypeName() { return mapping.toString(); }
+	/**
+	 * Gets the type of the column.
+	 *
+	 * @return The Column type
+	 */
+	public String getColumnInternalTypeName() { return mapping.toString(); }
 
-    /**
-     * Gets the Java mapping of the column.
-     *
-     * @return A enum constant of the Java mapping
-     */
-    public MonetDBToJavaMapping getMapping() { return mapping; }
+	/**
+	 * Gets the Java mapping of the column.
+	 *
+	 * @return A enum constant of the Java mapping
+	 */
+	public MonetDBToJavaMapping getMapping() { return mapping; }
 
-    /**
-     * Gets the name of the column.
-     *
-     * @return The column name
-     */
-    public String getColumnName() { return this.columnName; }
+	/**
+	 * Gets the name of the column.
+	 *
+	 * @return The column name
+	 */
+	public String getColumnName() { return this.columnName; }
 
-    /**
-     * Gets the number digits of the column.
-     *
-     * @return The number of digits
-     */
-    public int getColumnDigits() { return this.columnDigits; }
+	/**
+	 * Gets the number digits of the column.
+	 *
+	 * @return The number of digits
+	 */
+	public int getColumnDigits() { return this.columnDigits; }
 
-    /**
-     * Gets the scale of the column.
-     *
-     * @return The scale
-     */
-    public int getColumnScale() { return this.columnScale; }
+	/**
+	 * Gets the scale of the column.
+	 *
+	 * @return The scale
+	 */
+	public int getColumnScale() { return this.columnScale; }
 }

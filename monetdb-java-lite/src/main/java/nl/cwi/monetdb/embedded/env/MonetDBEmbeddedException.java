@@ -17,9 +17,9 @@ import java.sql.SQLException;
  */
 public class MonetDBEmbeddedException extends SQLException {
 
-    public MonetDBEmbeddedException(String message) { super(message); }
+	public MonetDBEmbeddedException(String message) { super(message); }
 
-    public MonetDBEmbeddedException(Throwable cause) {
-        super(cause);
-    }
+	public MonetDBEmbeddedException(Throwable cause) {
+		super(cause);
+	}
 }

@@ -17,17 +17,17 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public final class Randomizer {
 
-    private Randomizer() {}
+	private Randomizer() {}
 
-    /**  A AtomicLong instance to generate the result set identifier. */
-    private static final AtomicLong ResultSetCounter = new AtomicLong();
+	/**  A AtomicLong instance to generate the result set identifier. */
+	private static final AtomicLong ResultSetCounter = new AtomicLong();
 
-    /**
-     * Generates and returns an incrementally long value for a result set
-     *
-     * @return An incrementally generated long value for a result set
-     */
-    public static long generateNextResultSetId() {
-        return ResultSetCounter.incrementAndGet();
-    }
+	/**
+	 * Generates and returns an incrementally long value for a result set
+	 *
+	 * @return An incrementally generated long value for a result set
+	 */
+	public static long generateNextResultSetId() {
+		return ResultSetCounter.incrementAndGet();
+	}
 }

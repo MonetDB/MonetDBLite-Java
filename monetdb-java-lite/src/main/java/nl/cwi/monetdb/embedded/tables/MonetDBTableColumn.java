@@ -18,34 +18,34 @@ import nl.cwi.monetdb.embedded.mapping.AbstractColumn;
  */
 public final class MonetDBTableColumn extends AbstractColumn {
 
-    /**
-     * If the column has a default value.
-     */
-    private final String defaultValue;
+	/**
+	 * If the column has a default value.
+	 */
+	private final String defaultValue;
 
-    /**
-     * If the column is Nullable.
-     */
-    private final boolean isNullable;
+	/**
+	 * If the column is Nullable.
+	 */
+	private final boolean isNullable;
 
-    protected MonetDBTableColumn(String columnType, String columnName, int columnDigits, int columnScale,
-                                 String defaultValue, boolean isNullable) throws MonetDBEmbeddedException {
-        super(columnType, columnName, columnDigits, columnScale);
-        this.defaultValue = defaultValue;
-        this.isNullable = isNullable;
-    }
+	protected MonetDBTableColumn(String columnType, String columnName, int columnDigits, int columnScale,
+								 String defaultValue, boolean isNullable) throws MonetDBEmbeddedException {
+		super(columnType, columnName, columnDigits, columnScale);
+		this.defaultValue = defaultValue;
+		this.isNullable = isNullable;
+	}
 
-    /**
-     * Get the default value if there is one, or null if none.
-     *
-     * @return The default value if there is one, or null if none
-     */
-    public String getDefaultValue() { return this.defaultValue; }
+	/**
+	 * Get the default value if there is one, or null if none.
+	 *
+	 * @return The default value if there is one, or null if none
+	 */
+	public String getDefaultValue() { return this.defaultValue; }
 
-    /**
-     * Get the indication if the column is nullable.
-     *
-     * @return The indication if the column is nullable
-     */
-    public boolean isNullable() { return this.isNullable; }
+	/**
+	 * Get the indication if the column is nullable.
+	 *
+	 * @return The indication if the column is nullable
+	 */
+	public boolean isNullable() { return this.isNullable; }
 }

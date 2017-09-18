@@ -1,6 +1,6 @@
 # MonetDBJavaLite
 
-[![Build Status](https://travis-ci.org/hannesmuehleisen/MonetDBLite.svg?branch=Jul2017Lite-Java)](https://travis-ci.org/hannesmuehleisen/MonetDBLite)
+[![Build Status](https://travis-ci.org/hannesmuehleisen/MonetDBLite-Java.svg?branch=master)](https://travis-ci.org/hannesmuehleisen/MonetDBLite-Java)
 
 > **IMPORTANT** Before any further reading, remember that this software is still experimental, and it might crash
 sometimes, although testing has been made on it :) To be 100% safe you can run MonetDBJavaLite in a sub-process inside
@@ -21,7 +21,7 @@ MonetDBJavaLite jar (`monetdb-java-lite-<version>.jar`). The former can be used 
 connections are desired. The latter contains the embedded server code. For both the Embedded API and the Embedded JDBC
 connections, the second jar is also required in the `CLASSPATH`.
 
-> The current version for `monetdb-java-lite` is 2.32 and `monetdb-jdbc-new` is 2.31
+> The current version for `monetdb-java-lite` is 2.33 and `monetdb-jdbc-new` is 2.32
 
 > **IMPORTANT** The version of the JDBC driver for MonetDBJavaLite is not synced with the version of the original
 MonetDB JDBC driver.
@@ -38,14 +38,14 @@ Both jars can be obtained through the download section of our
 [website](https://www.monetdb.org/downloads/Java-Experimental/).
 
 Starting on version `2.30`, both jars can be obtained from the Maven Central repository. Note that `monetdb-java-lite`
-depends on `monetdb-jdbc-new`, so only the second one is required to list in project dependencies.
+depends on `monetdb-jdbc-new`, so only the second one is required to add in a project dependencies list.
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/monetdb/monetdb-jdbc-new/badge.svg)](https://maven-badges.herokuapp.com/maven-central/monetdb/monetdb-jdbc-new)
 ```xml
 <dependency>
   <groupId>monetdb</groupId>
   <artifactId>monetdb-jdbc-new</artifactId>
-  <version>2.31</version>
+  <version>2.32</version>
 </dependency>
 ```
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/monetdb/monetdb-java-lite/badge.svg)](https://maven-badges.herokuapp.com/maven-central/monetdb/monetdb-java-lite)
@@ -53,7 +53,7 @@ depends on `monetdb-jdbc-new`, so only the second one is required to list in pro
 <dependency>
   <groupId>monetdb</groupId>
   <artifactId>monetdb-java-lite</artifactId>
-  <version>2.32</version>
+  <version>2.33</version>
 </dependency>
 ```
 
@@ -102,13 +102,17 @@ and the Data Vaults extension.
 
 **The MonetDB Embedded Database has to be loaded in order to perform all the operations!** Due to the one database
 process restriction, the `MonetDBEmbeddedDatabase` class is a singleton. The `MonetDBEmbeddedDatabase` will create the
-MonetDB's farm if it's nonexistent in the directory, otherwise it will initialize the existing one. The
-`MonetDBEmbeddedDatabase` class is thread-safe. To start the database:
+MonetDB's farm if it's nonexistent in the directory, otherwise it will initialize the existing one. 
+
+Starting on `monetdb-java-lite` `2.33` and `monetdb-jdbc-new` `2.32` it is possible to start the in-memory mode by
+providing a `null` pointer, `:memory:` or an empty string in the path. The `MonetDBEmbeddedDatabase` class is
+thread-safe. To start the database:
 
 ```java
 Path directoryPath = Files.createTempDirectory("monetdbjavalite");
 boolean silentFlag = true, sequentialFlag = false;
 MonetDBEmbeddedDatabase.startDatabase(directoryPath.toString(), silentFlag, sequentialFlag);
+//MonetDBEmbeddedDatabase.startDatabase(null, silentFlag, sequentialFlag); //in-memory mode
 ```
 
 The `silent` flag is left for debugging purposes. If passed as `false`, errors found in the Embedded Database will be
@@ -120,8 +124,8 @@ be set to `false`.
 **Before exiting the JVM it is VERY important to shutdown the database, otherwise the program will cause many memory
 leaks!** The `void MonetDBEmbeddedDatabase.stopDatabase()` class method shuts down the embedded database and any pending
 connections if existing. The class method `boolean MonetDBEmbeddedDatabase.isDatabaseRunning()` checks if the database
-is running and `int MonetDBEmbeddedDatabase.getNumberOfConnections()` retrieves the number of connections in the
-database.
+is running, `int MonetDBEmbeddedDatabase.getNumberOfConnections()` retrieves the number of connections in the
+database and `boolean isDatabaseRunningInMemory()` checks if it is running in-memory.
 
 ### MonetDB to Java Mappings 
 
@@ -388,9 +392,13 @@ and the most important properties of the connection.
 where directory is the location of the database.** The following example shows how it can be done. In contrast the 
 JDBC MAPI connection URL has the format `jdbc:monetdb://<host>[:<port>]/<database>[query]`.
 
+Starting on `monetdb-java-lite` `2.33` and `monetdb-jdbc-new` `2.32` it is possible to start the in-memory mode by 
+`:memory:` or an empty string in the path.
+
 ```java
 //Connection con = DriverManager.getConnection("jdbc:monetdb:embedded:/home/user/myfarm"); //UNIX
 //Connection con = DriverManager.getConnection("jdbc:monetdb:embedded:C:\\user\\myfarm"); //Windows
+//Connection con = DriverManager.getConnection("jdbc:monetdb:embedded::memory:"); //in-memory mode
 
 //just a JDBC statement and result set
 Statement st = con.createStatement();
@@ -418,6 +426,7 @@ from the JDBC specification.
 ```java
 //Connection con = DriverManager.getConnection("jdbc:monetdb:embedded:/home/user/myfarm"); //UNIX
 //Connection con = DriverManager.getConnection("jdbc:monetdb:embedded:C:\\user\\myfarm"); //Windows
+//Connection con = DriverManager.getConnection("jdbc:monetdb:embedded::memory:"); //in-memory mode
 
 MonetDBEmbeddedConnection cast = ((EmbeddedConnection)con).getAsMonetDBEmbeddedConnection();
 connection.executeUpdate("SELECT * FROM somewhere WHERE field=1");

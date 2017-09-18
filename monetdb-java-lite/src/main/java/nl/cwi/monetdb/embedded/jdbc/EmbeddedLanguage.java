@@ -19,57 +19,57 @@ import nl.cwi.monetdb.mcl.connection.IMonetDBLanguage;
  */
 public enum EmbeddedLanguage implements IMonetDBLanguage {
 
-    /** The SQL language */
-    LANG_SQL(new String[]{null, null, ";"}, "sql"),
-    /** An unknown language */
-    LANG_UNKNOWN(new String[]{null, null, null}, "unknown");
+	/** The SQL language */
+	LANG_SQL(new String[]{null, null, ";"}, "sql"),
+	/** An unknown language */
+	LANG_UNKNOWN(new String[]{null, null, null}, "unknown");
 
-    EmbeddedLanguage(String[] queryTemplates, String representation) {
-        this.queryTemplates = queryTemplates;
-        this.representation = representation;
-    }
+	EmbeddedLanguage(String[] queryTemplates, String representation) {
+		this.queryTemplates = queryTemplates;
+		this.representation = representation;
+	}
 
-    private final String[] queryTemplates;
+	private final String[] queryTemplates;
 
-    private final String representation;
+	private final String representation;
 
-    @Override
-    public String getQueryTemplateIndex(int index) {
-        return this.queryTemplates[index];
-    }
+	@Override
+	public String getQueryTemplateIndex(int index) {
+		return this.queryTemplates[index];
+	}
 
-    @Override
-    public String getCommandTemplateIndex(int index) {
-        return null;
-    }
+	@Override
+	public String getCommandTemplateIndex(int index) {
+		return null;
+	}
 
-    @Override
-    public String[] getQueryTemplates() {
-        return this.queryTemplates;
-    }
+	@Override
+	public String[] getQueryTemplates() {
+		return this.queryTemplates;
+	}
 
-    @Override
-    public String[] getCommandTemplates() {
-        return null;
-    }
+	@Override
+	public String[] getCommandTemplates() {
+		return null;
+	}
 
-    @Override
-    public String getRepresentation() {
-        return representation;
-    }
+	@Override
+	public String getRepresentation() {
+		return representation;
+	}
 
-    /**
-     * This method is used to keep compatibility with the MAPI JDBC connection. (Only SQL supported)
-     *
-     * @param language The language to retrieve the corresponding String
-     * @return The language String
-     */
-    public static EmbeddedLanguage GetLanguageFromString(String language) {
-        switch (language) {
-            case "sql":
-                return LANG_SQL;
-            default:
-                return LANG_UNKNOWN;
-        }
-    }
+	/**
+	 * This method is used to keep compatibility with the MAPI JDBC connection. (Only SQL supported)
+	 *
+	 * @param language The language to retrieve the corresponding String
+	 * @return The language String
+	 */
+	public static EmbeddedLanguage GetLanguageFromString(String language) {
+		switch (language) {
+			case "sql":
+				return LANG_SQL;
+			default:
+				return LANG_UNKNOWN;
+		}
+	}
 }

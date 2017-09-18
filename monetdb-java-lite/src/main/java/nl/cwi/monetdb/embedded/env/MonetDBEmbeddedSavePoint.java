@@ -25,93 +25,93 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class MonetDBEmbeddedSavePoint implements Savepoint {
 
-    /**  A AtomicInteger instance to generate savepoints ids. */
-    private static final AtomicInteger SavepointCounter = new AtomicInteger();
+	/**  A AtomicInteger instance to generate savepoints ids. */
+	private static final AtomicInteger SavepointCounter = new AtomicInteger();
 
-    /**
-     * Returns the next id, which is larger than the last returned id. This
-     * method is synchronized to prevent race conditions. Since this is static
-     * code, this method is shared by requests from multiple Connection objects.
-     * Therefore two successive calls to this method need not to have a
-     * difference of 1.
-     *
-     * @return the next int which is guaranteed to be higher than the one at the last call to this method.
-     */
-    private static int getNextId() {
-        return SavepointCounter.incrementAndGet();
-    }
+	/**
+	 * Returns the next id, which is larger than the last returned id. This
+	 * method is synchronized to prevent race conditions. Since this is static
+	 * code, this method is shared by requests from multiple Connection objects.
+	 * Therefore two successive calls to this method need not to have a
+	 * difference of 1.
+	 *
+	 * @return the next int which is guaranteed to be higher than the one at the last call to this method.
+	 */
+	private static int getNextId() {
+		return SavepointCounter.incrementAndGet();
+	}
 
-    /**
-     * Returns the highest id returned by getNextId(). This method is also
-     * synchronized to prevent race conditions and thus guaranteed to be
-     * thread-safe.
-     *
-     * @return the highest id returned by a call to getNextId()
-     */
-    private static int getHighestId() {
-        return SavepointCounter.get();
-    }
+	/**
+	 * Returns the highest id returned by getNextId(). This method is also
+	 * synchronized to prevent race conditions and thus guaranteed to be
+	 * thread-safe.
+	 *
+	 * @return the highest id returned by a call to getNextId()
+	 */
+	private static int getHighestId() {
+		return SavepointCounter.get();
+	}
 
-    /** The name of this Savepoint */
-    private final String name;
-    /** The id of this Savepoint */
-    private final int id;
+	/** The name of this Savepoint */
+	private final String name;
+	/** The id of this Savepoint */
+	private final int id;
 
-    public MonetDBEmbeddedSavePoint(String name) throws IllegalArgumentException {
-        if (name == null)
-            throw new IllegalArgumentException("Null name not allowed");
-        this.id = MonetDBEmbeddedSavePoint.getNextId();
-        this.name = name;
-    }
+	public MonetDBEmbeddedSavePoint(String name) throws IllegalArgumentException {
+		if (name == null)
+			throw new IllegalArgumentException("Null name not allowed");
+		this.id = MonetDBEmbeddedSavePoint.getNextId();
+		this.name = name;
+	}
 
-    public MonetDBEmbeddedSavePoint() {
-        this.id = MonetDBEmbeddedSavePoint.getNextId();
-        this.name = null;
-    }
+	public MonetDBEmbeddedSavePoint() {
+		this.id = MonetDBEmbeddedSavePoint.getNextId();
+		this.name = null;
+	}
 
-    /**
-     * Retrieves the savepoint id, like the getSavepointId method with the only difference that this method will always
-     * return the id, regardless of whether it is named or not.
-     *
-     * @return the numeric ID of this savepoint
-     */
-    private int getId() {
-        return id;
-    }
+	/**
+	 * Retrieves the savepoint id, like the getSavepointId method with the only difference that this method will always
+	 * return the id, regardless of whether it is named or not.
+	 *
+	 * @return the numeric ID of this savepoint
+	 */
+	private int getId() {
+		return id;
+	}
 
-    /**
-     * Returns the name to use when referencing this save point to the MonetDB database. The returned value is
-     * guaranteed to be unique and consists of a prefix string and a sequence number.
-     *
-     * @return the unique savepoint name
-     */
-    String getName() {
-        return "MonetDBSP" + id;
-    }
+	/**
+	 * Returns the name to use when referencing this save point to the MonetDB database. The returned value is
+	 * guaranteed to be unique and consists of a prefix string and a sequence number.
+	 *
+	 * @return the unique savepoint name
+	 */
+	String getName() {
+		return "MonetDBSP" + id;
+	}
 
-    /**
-     * Retrieves the generated ID for the savepoint that this Savepoint object represents.
-     *
-     * @return the numeric ID of this savepoint
-     * @throws MonetDBEmbeddedException if this is a named savepoint
-     */
-    @Override
-    public int getSavepointId() throws MonetDBEmbeddedException {
-        if (name != null)
-            throw new MonetDBEmbeddedException("Cannot getID for named savepoint");
-        return getId();
-    }
+	/**
+	 * Retrieves the generated ID for the savepoint that this Savepoint object represents.
+	 *
+	 * @return the numeric ID of this savepoint
+	 * @throws MonetDBEmbeddedException if this is a named savepoint
+	 */
+	@Override
+	public int getSavepointId() throws MonetDBEmbeddedException {
+		if (name != null)
+			throw new MonetDBEmbeddedException("Cannot getID for named savepoint");
+		return getId();
+	}
 
-    /**
-     * Retrieves the name of the savepoint that this Savepoint object represents.
-     *
-     * @return the name of this savepoint
-     * @throws MonetDBEmbeddedException if this is an un-named savepoint
-     */
-    @Override
-    public String getSavepointName() throws MonetDBEmbeddedException {
-        if (name == null)
-            throw new MonetDBEmbeddedException("Unable to retrieve name of unnamed savepoint");
-        return name;
-    }
+	/**
+	 * Retrieves the name of the savepoint that this Savepoint object represents.
+	 *
+	 * @return the name of this savepoint
+	 * @throws MonetDBEmbeddedException if this is an un-named savepoint
+	 */
+	@Override
+	public String getSavepointName() throws MonetDBEmbeddedException {
+		if (name == null)
+			throw new MonetDBEmbeddedException("Unable to retrieve name of unnamed savepoint");
+		return name;
+	}
 }
