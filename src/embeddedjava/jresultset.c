@@ -6,11 +6,11 @@
  * Copyright 2008-2017 MonetDB B.V.
  */
 
-#include "jresulset.h"
-
 #include "monetdb_config.h"
 #include "embedded.h"
 #include "embeddedjvm.h"
+
+#include "jresulset.h"
 #include "gdk.h"
 #include "mal.h"
 #include "mal_client.h"

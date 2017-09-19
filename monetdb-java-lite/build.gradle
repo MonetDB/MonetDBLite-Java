@@ -5,7 +5,7 @@ buildscript {
     }
     dependencies {
         classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.4'
-        classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0-M3'
+        classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0'
         classpath 'io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.9.0'
     }
 }
@@ -23,10 +23,6 @@ apply plugin: 'org.junit.platform.gradle.plugin'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
-ext.junitPlatformVersion = '1.0.0-M4'
-ext.junitJupiterVersion  = '5.0.0-M4'
-ext.junitVintageVersion  = '4.12.0-M4'
-ext.log4jVersion         = '2.8.2'
 version = '2.33'
 ext.version = version
 group = 'monetdb'
@@ -36,23 +32,23 @@ ext.archivesBaseName = archivesBaseName
 ext.packaging = 'jar'
 
 dependencies {
-    compile group: "${group}", name: 'monetdb-jdbc-new', version: '2.32'
-    runtime group: "${group}", name: 'monetdb-jdbc-new', version: '2.32'
+    //New MonetDB JDBC driver
+    compile("${group}:monetdb-jdbc-new:2.32")
+    runtime("${group}:monetdb-jdbc-new:2.32")
 
-    // JUnit Jupiter API and TestEngine implementation
-    testCompile("org.junit.jupiter:junit-jupiter-api:${junitJupiterVersion}")
-    testRuntime("org.junit.jupiter:junit-jupiter-engine:${junitJupiterVersion}")
+    //JUnit Jupiter API and TestEngine implementation
+    testCompile('org.junit.jupiter:junit-jupiter-api:5.0.0')
+    testCompile('org.junit.jupiter:junit-jupiter-engine:5.0.0')
 
     //Log using log4j
-    testRuntime("org.apache.logging.log4j:log4j-core:${log4jVersion}")
-    testRuntime("org.apache.logging.log4j:log4j-jul:${log4jVersion}")
+    testCompile('org.apache.logging.log4j:log4j-core:2.9.0')
+    testCompile('org.apache.logging.log4j:log4j-jul:2.9.0')
 }
 
 junitPlatform { //configurations for JUnit5 tests
-    platformVersion "${junitPlatformVersion}"
+    platformVersion '1.0.0'
     logManager 'org.apache.logging.log4j.jul.LogManager'
-    reportsDir 'build/test-results/junit-platform'
-    enableStandardTestTask false
+    reportsDir file('build/test-results/junit-platform')
 }
 
 jar {
@@ -65,11 +61,11 @@ shadowJar { //Build instruction to the shadowJar (a jar which includes both the 
     manifest {
         inheritFrom project.jar.manifest
     }
-    destinationDir = file("./build/shadowJar")
+    destinationDir = file('./build/shadowJar')
 }
 
 task wrapper(type: Wrapper) { //Set the gradle wrapper, so users don't have to install Gradle
-    gradleVersion = '3.5'
+    gradleVersion = '4.1'
 }
 
 task javadocJar(type: Jar) { //Generate the javadocs jar
