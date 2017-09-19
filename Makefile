@@ -30,7 +30,7 @@ endif
 ifeq ($(OS),Windows_NT)
     BUILDIR=windows
     SOEXT=dll
-    CFLAGS += -DWIN32 -D__CYGWIN__
+    CFLAGS += -DWIN32 -D__CYGWIN__ -mpopcnt
     INCLUDE_FLAGS += -Isrc/embeddedjava/incwindows
 #    ifeq ($(PROCESSOR_ARCHITEW6432),AMD64)
 #        CFLAGS += -D AMD64
