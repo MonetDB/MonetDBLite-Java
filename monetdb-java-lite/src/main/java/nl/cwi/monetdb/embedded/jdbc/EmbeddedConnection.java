@@ -17,6 +17,7 @@ import nl.cwi.monetdb.mcl.connection.MCLException;
 import nl.cwi.monetdb.mcl.protocol.ProtocolException;
 
 import java.io.*;
+import java.net.SocketException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
@@ -33,7 +34,7 @@ public final class EmbeddedConnection extends MonetConnection {
 	/** The directory of the database */
 	private final String directory;
 
-	public EmbeddedConnection(Properties props, String hash, String language, String directory) throws IOException {
+	public EmbeddedConnection(Properties props, String hash, String language, String directory) {
 		super(props, hash, EmbeddedLanguage.GetLanguageFromString(language), true, true);
 		this.directory = directory;
 	}
@@ -52,7 +53,7 @@ public final class EmbeddedConnection extends MonetConnection {
 	 *
 	 * @return Is the connection running in memory?
 	 */
-	public boolean isRunninInMemory() {
+	public boolean isRunningInMemory() {
 		return directory == null;
 	}
 
@@ -136,9 +137,8 @@ public final class EmbeddedConnection extends MonetConnection {
 	 * @return -1
 	 */
 	@Override
-	public int getSoTimeout() {
-		this.addWarning("Cannot get a timeout on a embedded connection!", "M1M05");
-		return -1;
+	public int getSoTimeout() throws SocketException {
+		throw new SocketException("Cannot get a timeout on a embedded connection!");
 	}
 
 	/**
@@ -148,8 +148,8 @@ public final class EmbeddedConnection extends MonetConnection {
 	 * @param timeout The specified timeout, in milliseconds (ignored)
 	 */
 	@Override
-	public void setSoTimeout(int timeout) {
-		this.addWarning("Cannot set a timeout on a embedded connection!", "M1M05");
+	public void setSoTimeout(int timeout) throws SocketException {
+		throw new SocketException("Cannot set a timeout on a embedded connection!");
 	}
 
 	/**

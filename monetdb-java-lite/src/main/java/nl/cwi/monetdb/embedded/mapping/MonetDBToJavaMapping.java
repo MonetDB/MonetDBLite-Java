@@ -23,7 +23,7 @@ import java.util.HashMap;
  */
 public enum MonetDBToJavaMapping {
 
-	/* PLEASE Don't change these enum values order!! */
+	/* PLEASE Don't change the enum values order!! */
 	Boolean(Boolean.class), Char(String.class), Varchar(String.class), Clob(String.class), Tinyint(Byte.class),
 	Smallint(Short.class), Int(Integer.class), Bigint(Long.class), Decimal(BigDecimal.class), Real(Float.class),
 	Double(Double.class), MonthInterval(Integer.class), SecondInterval(Long.class), Time(Time.class),

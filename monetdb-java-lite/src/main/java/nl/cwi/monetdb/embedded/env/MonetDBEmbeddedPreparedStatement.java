@@ -594,113 +594,12 @@ public final class MonetDBEmbeddedPreparedStatement extends AbstractConnectionRe
 	 * @see Types
 	 */
 	public void setObject(int parameterIndex, Object x, int targetSqlType, int scale) throws MonetDBEmbeddedException {
+		if (x == null) {
+			setNull(parameterIndex, -1);
+			return;
+		}
 		if (x instanceof String) {
-			switch (targetSqlType) {
-				case 1: //CHAR:
-				case 2: //VARCHAR:
-				case 3: //CLOB:
-					setString(parameterIndex, (String)x);
-					break;
-				case 4: //TINYINT
-				case 5: //SMALLINT
-				case 6: //INTEGER
-				case 11: //MonthInterval
-				{
-					int val;
-					try {
-						val = Integer.parseInt((String)x);
-					} catch (NumberFormatException e) {
-						val = 0;
-					}
-					setInt(parameterIndex, val);
-				} break;
-				case 7: //BIGINT
-				case 12: //SecondInterval
-				{
-					long val;
-					try {
-						val = Long.parseLong((String)x);
-					} catch (NumberFormatException e) {
-						val = 0;
-					}
-					setLong(parameterIndex, val);
-				} break;
-				case 9: //REAL
-				{
-					float val;
-					try {
-						val = Float.parseFloat((String)x);
-					} catch (NumberFormatException e) {
-						val = 0;
-					}
-					setFloat(parameterIndex, val);
-				} break;
-				case 10: //DOUBLE
-				{
-					double val;
-					try {
-						val = Double.parseDouble((String)x);
-					} catch (NumberFormatException e) {
-						val = 0;
-					}
-					setDouble(parameterIndex, val);
-				} break;
-				case 8: //DECIMAL
-				{
-					BigDecimal val;
-					try {
-						val = new BigDecimal((String)x);
-					} catch (NumberFormatException e) {
-						try {
-							val = new BigDecimal(0.0);
-						} catch (NumberFormatException ex) {
-							throw new MonetDBEmbeddedException("Internal error: unable to create template BigDecimal: " + ex.getMessage());
-						}
-					}
-					val = val.setScale(scale, BigDecimal.ROUND_HALF_UP);
-					setBigDecimal(parameterIndex, val);
-				} break;
-				case 0: //BOOLEAN
-					setBoolean(parameterIndex, Boolean.valueOf((String) x));
-					break;
-				case 18: //Blob:
-					setBytes(parameterIndex, ((String)x).getBytes());
-					break;
-				case 15: //Types.DATE:
-				{
-					java.sql.Date val;
-					try {
-						val = java.sql.Date.valueOf((String)x);
-					} catch (IllegalArgumentException e) {
-						val = new java.sql.Date(0L);
-					}
-					setDate(parameterIndex, val);
-				} break;
-				case 13: //Types.TIME:
-				case 14: //TIMETZ:
-				{
-					Time val;
-					try {
-						val = Time.valueOf((String)x);
-					} catch (IllegalArgumentException e) {
-						val = new Time(0L);
-					}
-					setTime(parameterIndex, val);
-				} break;
-				case 16: //Types.TIMESTAMP:
-				case 17: //TIMESTAMPTZ:
-				{
-					Timestamp val;
-					try {
-						val = Timestamp.valueOf((String)x);
-					} catch (IllegalArgumentException e) {
-						val = new Timestamp(0L);
-					}
-					setTimestamp(parameterIndex, val);
-				} break;
-				default:
-					throw new MonetDBEmbeddedException("Conversion not allowed");
-			}
+			setString(parameterIndex, (String)x);
 		} else if (x instanceof BigDecimal || x instanceof Byte || x instanceof Short || x instanceof Integer ||
 				x instanceof Long || x instanceof Float || x instanceof Double) {
 			Number num = (Number)x;
@@ -914,8 +813,116 @@ public final class MonetDBEmbeddedPreparedStatement extends AbstractConnectionRe
 			setNull(parameterIndex, -1);
 			return;
 		}
-		setValue(parameterIndex, "'" + x.replaceAll("\\\\", "\\\\\\\\")
-				.replaceAll("'", "\\\\'") + "'");
+		int paramIdx = getParamIdx(parameterIndex);	// this will throw a SQLException if parameter can not be found
+
+		/* depending on the parameter data type (as expected by MonetDB) we
+		   may need to add the data type as cast prefix to the parameter value */
+		int targetSqlType = MonetDBToJavaMapping
+				.getJavaMappingFromMonetDBStringOrdinalValue(monetdbType[getParamIdx(parameterIndex)]);
+		String paramMonetdbType = monetdbType[paramIdx];
+
+		switch (targetSqlType) {
+			case 1: //CHAR:
+			case 2: //VARCHAR:
+			case 3: //CLOB:
+			{
+				String castprefix = "";
+				switch (paramMonetdbType) {
+					// some MonetDB specific data types require a cast prefix
+					case "url":
+						try {
+							// also check if x represents a valid url string to prevent
+							// failing exec #(..., ...) calls which destroy the prepared statement, see bug 6351
+							java.net.URL url_obj = new java.net.URL(x);
+						} catch (java.net.MalformedURLException mue) {
+							throw new MonetDBEmbeddedException("Conversion of string: " + x + " to parameter data type " + paramMonetdbType + " failed. " + mue.getMessage());
+						}
+						castprefix = "url ";
+						break;
+				}
+				/* in specific cases prefix the string with: inet or json or url or uuid */
+				setValue(parameterIndex,
+						castprefix + "'" + x.replaceAll("\\\\", "\\\\\\\\").replaceAll("'", "\\\\'") + "'");
+				break;
+			}
+			case 4: //TINYINT
+			case 5: //SMALLINT
+			case 6: //INTEGER
+			case 11: //MonthInterval
+			case 7: //BIGINT
+			case 12: //SecondInterval
+			case 9: //REAL
+			case 10: //DOUBLE
+			case 8: //DECIMAL
+				try {
+					// check (by calling parse) if the string represents a valid number to prevent
+					// failing exec #(..., ...) calls which destroy the prepared statement, see bug 6351
+					if (targetSqlType == 4) {
+						int number = Byte.parseByte(x);
+					} else if (targetSqlType == 5 ) {
+						int number = Short.parseShort(x);
+					} else if (targetSqlType == 6 || targetSqlType == 11) {
+						int number = Integer.parseInt(x);
+					} else if (targetSqlType == 7 || targetSqlType == 12) {
+						long number = Long.parseLong(x);
+					} else if (targetSqlType == 9 || targetSqlType == 10) {
+						double number = Double.parseDouble(x);
+					} else {
+						BigDecimal number = new BigDecimal(x);
+					}
+				} catch (NumberFormatException nfe) {
+					throw new MonetDBEmbeddedException("Conversion of string: " + x + " to parameter data type " + paramMonetdbType + " failed. " + nfe.getMessage());
+				}
+				setValue(parameterIndex, x);
+				break;
+			case 0:
+				if  (x.equalsIgnoreCase("false") || x.equalsIgnoreCase("true") || x.equals("0") || x.equals("1")) {
+					setValue(parameterIndex, x);
+				} else {
+					throw new MonetDBEmbeddedException("Conversion of string: " + x + " to parameter data type " + paramMonetdbType + " failed");
+				}
+				break;
+			case 15: //Types.DATE:
+			case 13: //Types.TIME:
+			case 14: //TIMETZ:
+			case 16: //Types.TIMESTAMP:
+			case 17: //TIMESTAMPTZ:
+				try {
+					// check if the string represents a valid calendar date or time or timestamp to prevent
+					// failing exec #(..., ...) calls which destroy the prepared statement, see bug 6351
+					if (targetSqlType == 15) {
+						java.sql.Date datum = java.sql.Date.valueOf(x);
+					} else if (targetSqlType == 13 || targetSqlType == 14) {
+						Time tijdstip = Time.valueOf(x);
+					} else {
+						Timestamp tijdstip = Timestamp.valueOf(x);
+					}
+				} catch (IllegalArgumentException iae) {
+					throw new MonetDBEmbeddedException("Conversion of string: " + x + " to parameter data type " + paramMonetdbType + " failed. " + iae.getMessage());
+				}
+				/* prefix the string with: date or time or timetz or timestamp or timestamptz */
+				setValue(parameterIndex, paramMonetdbType + " '" + x + "'");
+				break;
+			case 18: //Blob:
+				// check if the string x contains pairs of hex chars to prevent
+				// failing exec #(..., ...) calls which destroy the prepared statement, see bug 6351
+				int xlen = x.length();
+				for (int i = 0; i < xlen; i++) {
+					char c = x.charAt(i);
+					if (c < '0' || c > '9') {
+						if (c < 'A' || c > 'F') {
+							if (c < 'a' || c > 'f') {
+								throw new MonetDBEmbeddedException("Invalid string for parameter data type " + paramMonetdbType + ". The string may contain only hex chars");
+							}
+						}
+					}
+				}
+				/* prefix the string with: blob */
+				setValue(parameterIndex, "blob '" + x + "'");
+				break;
+			default:
+				throw new MonetDBEmbeddedException("Conversion of string to parameter data type " + paramMonetdbType + " is not (yet) supported");
+		}
 	}
 
 	/**
@@ -951,7 +958,8 @@ public final class MonetDBEmbeddedPreparedStatement extends AbstractConnectionRe
 			return;
 		}
 
-		boolean hasTimeZone = monetdbType[getParamIdx(index)].endsWith("tz");
+		String MonetDBType = monetdbType[getParamIdx(index)];
+		boolean hasTimeZone = ("timetz".equals(MonetDBType) || "timestamptz".equals(MonetDBType));
 		if (hasTimeZone) {
 			// timezone shouldn't matter, since the server is timezone
 			// aware in this case
@@ -1002,7 +1010,8 @@ public final class MonetDBEmbeddedPreparedStatement extends AbstractConnectionRe
 			return;
 		}
 
-		boolean hasTimeZone = monetdbType[getParamIdx(index)].endsWith("tz");
+		String MonetDBType = monetdbType[getParamIdx(index)];
+		boolean hasTimeZone = ("timestamptz".equals(MonetDBType) || "timetz".equals(MonetDBType));
 		if (hasTimeZone) {
 			// timezone shouldn't matter, since the server is timezone
 			// aware in this case
@@ -1031,8 +1040,13 @@ public final class MonetDBEmbeddedPreparedStatement extends AbstractConnectionRe
 	 * @throws MonetDBEmbeddedException if a database access error occurs
 	 */
 	public void setURL(int parameterIndex, URL x) throws MonetDBEmbeddedException {
-		setString(parameterIndex, x.toString());
-		values[getParamIdx(parameterIndex)] = "url " + values[getParamIdx(parameterIndex)];
+		if (x == null) {
+			setNull(parameterIndex, -1);
+			return;
+		}
+		String val = x.toString();
+		setValue(parameterIndex, "url '" + val.replaceAll("\\\\", "\\\\\\\\")
+				.replaceAll("'", "\\\\'") + "'");
 	}
 
 	/* helper for the anonymous class inside getMetaData */
