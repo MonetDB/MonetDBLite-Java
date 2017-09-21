@@ -10,7 +10,9 @@ endif
 
 DEPSDIR=$(OBJDIR)/deps
 
-CFLAGS=-DLIBGDK -DLIBMAL -DLIBOPTIMIZER -DLIBSTREAM -DHAVE_EMBEDDED -DHAVE_EMBEDDED_JAVA -Wfatal-errors
+CFLAGS=-DLIBGDK -DLIBMAL -DLIBOPTIMIZER -DLIBSTREAM -DHAVE_EMBEDDED -DHAVE_EMBEDDED_JAVA -DNDEBUG -Wfatal-errors
+
+LINKER_FLAGS=
 
 LDFLAGS=-lm -lpthread
 INCLUDE_FLAGS=-Isrc/embeddedjava -Isrc/monetdblite/src -Isrc/monetdblite/src/common -Isrc/monetdblite/src/embedded \
@@ -30,7 +32,8 @@ endif
 ifeq ($(OS),Windows_NT)
     BUILDIR=windows
     SOEXT=dll
-    CFLAGS += -DWIN32 -D_Printf_format_string_=SAL__format_string -mpopcnt
+    CFLAGS += -DWIN32 -DNATIVE_WIN32 -D_Printf_format_string_=SAL__format_string -mpopcnt
+    LINKER_FLAGS += -Wl,--export-all-symbols
     INCLUDE_FLAGS += -Isrc/embeddedjava/incwindows
 #    ifeq ($(PROCESSOR_ARCHITEW6432),AMD64)
 #        CFLAGS += -D AMD64
@@ -353,4 +356,4 @@ $(OBJDIR)/%.o: src/%.c
 	$(CC) $(CFLAGS) -MMD -MF $(subst $(OBJDIR),$(DEPSDIR),$(subst .o,.d,$@)) $(INCLUDE_FLAGS) $(OPTFLAGS) -c $(subst $(OBJDIR)/,src/,$(subst .o,.c,$@)) -o $@
 
 $(LIBFILE): $(COBJECTS)
-	$(CC) $(LDFLAGS) $(COBJECTS) $(OPTFLAGS) -o $(LIBFILE) -shared
+	$(CC) $(LDFLAGS) $(COBJECTS) $(OPTFLAGS) $(LINKER_FLAGS) -o $(LIBFILE) -shared

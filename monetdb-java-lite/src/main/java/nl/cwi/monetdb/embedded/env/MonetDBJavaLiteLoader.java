@@ -102,6 +102,13 @@ public final class MonetDBJavaLiteLoader {
 	private static final String monetDBJDBCDriverString;
 
 	static {
+		try {
+			Class.forName("nl.cwi.monetdb.jdbc.MonetDriver");
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+			System.err.println("Monet new JDBC driver not found! Please add monetdb-jdbc-new jar to the CLASSPATH");
+			System.exit(1);
+		}
 		//2.33 - change the minor version in the next line (The MonetDriver call is need to register the driver in the tests)
 		monetDBJDBCDriverString =  MonetDriver.getDriverMajorVersion() + "-33";
 	}
