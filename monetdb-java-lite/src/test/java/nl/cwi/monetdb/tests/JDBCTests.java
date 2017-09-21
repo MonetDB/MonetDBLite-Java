@@ -8,6 +8,7 @@
 
 package nl.cwi.monetdb.tests;
 
+import nl.cwi.monetdb.jdbc.MonetDriver;
 import nl.cwi.monetdb.tests.helpers.MonetDBJavaLiteTesting;
 import org.junit.jupiter.api.*;
 
@@ -21,6 +22,12 @@ import java.util.List;
  * @author <a href="mailto:pedro.ferreira@monetdbsolutions.com">Pedro Ferreira</a>
  */
 public class JDBCTests extends MonetDBJavaLiteTesting {
+
+	static {
+		try {
+			Class.forName("nl.cwi.monetdb.jdbc.MonetDriver");
+		} catch (ClassNotFoundException e) { }
+	}
 
 	private static Connection createJDBCEmbeddedConnection() throws SQLException {
 		return DriverManager.getConnection("jdbc:monetdb:embedded:" + MonetDBJavaLiteTesting.getDirectoryPath().toString());

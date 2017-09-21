@@ -16,6 +16,12 @@ import java.sql.*;
  */
 public class InMemoryTests extends MonetDBJavaLiteTesting {
 
+	static {
+		try {
+			Class.forName("nl.cwi.monetdb.jdbc.MonetDriver");
+		} catch (ClassNotFoundException e) { }
+	}
+
 	private static MonetDBEmbeddedConnection connection;
 
 	@BeforeAll
