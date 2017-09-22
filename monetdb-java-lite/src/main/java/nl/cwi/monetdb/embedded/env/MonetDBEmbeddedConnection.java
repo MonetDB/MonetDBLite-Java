@@ -14,6 +14,7 @@ import nl.cwi.monetdb.embedded.utils.Randomizer;
 import nl.cwi.monetdb.embedded.utils.StringEscaper;
 
 import java.io.Closeable;
+import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.util.Hashtable;
 
@@ -148,7 +149,7 @@ public class MonetDBEmbeddedConnection implements Closeable {
 	 */
 	public Savepoint setSavepoint() throws MonetDBEmbeddedException {
 		MonetDBEmbeddedSavePoint sp = new MonetDBEmbeddedSavePoint();
-		this.executeUpdate("SAVEPOINT " + sp.getName() + ";");
+		this.executeUpdate("SAVEPOINT " + sp.getSavepointName() + ";");
 		return sp;
 	}
 
@@ -163,13 +164,8 @@ public class MonetDBEmbeddedConnection implements Closeable {
 	 * auto-commit mode
 	 */
 	public Savepoint setSavepoint(String name) throws MonetDBEmbeddedException {
-		MonetDBEmbeddedSavePoint sp;
-		try {
-			sp = new MonetDBEmbeddedSavePoint(name);
-		} catch (IllegalArgumentException e) {
-			throw new MonetDBEmbeddedException(e.getMessage());
-		}
-		this.executeUpdate("SAVEPOINT " + sp.getName() + ";");
+		MonetDBEmbeddedSavePoint sp = new MonetDBEmbeddedSavePoint(name);
+		this.executeUpdate("SAVEPOINT " + sp.getSavepointName() + ";");
 		return sp;
 	}
 
@@ -182,11 +178,11 @@ public class MonetDBEmbeddedConnection implements Closeable {
 	 * savepoint in the current transaction
 	 */
 	public void releaseSavepoint(Savepoint savepoint) throws MonetDBEmbeddedException {
-		if (!(savepoint instanceof MonetDBEmbeddedSavePoint)) {
-			throw new MonetDBEmbeddedException("MonetDBLite can only handle savepoints that created itself");
+		try {
+			this.executeUpdate("RELEASE SAVEPOINT " + savepoint.getSavepointName() + ";");
+		} catch (SQLException e) {
+			throw new MonetDBEmbeddedException(e);
 		}
-		MonetDBEmbeddedSavePoint sp = (MonetDBEmbeddedSavePoint) savepoint;
-		this.executeUpdate("RELEASE SAVEPOINT " + sp.getName() + ";");
 	}
 
 	/**
@@ -198,11 +194,11 @@ public class MonetDBEmbeddedConnection implements Closeable {
 	 * this Connection object is currently in auto-commit mode
 	 */
 	public void rollback(Savepoint savepoint) throws MonetDBEmbeddedException {
-		if (!(savepoint instanceof MonetDBEmbeddedSavePoint)) {
-			throw new MonetDBEmbeddedException("MonetDBLite can only handle savepoints that created itself");
+		try {
+			this.executeUpdate("ROLLBACK TO SAVEPOINT " + savepoint.getSavepointName() + ";");
+		} catch (SQLException e) {
+			throw new MonetDBEmbeddedException(e);
 		}
-		MonetDBEmbeddedSavePoint sp = (MonetDBEmbeddedSavePoint) savepoint;
-		this.executeUpdate("ROLLBACK TO SAVEPOINT " + sp.getName() + ";");
 	}
 
 	/**

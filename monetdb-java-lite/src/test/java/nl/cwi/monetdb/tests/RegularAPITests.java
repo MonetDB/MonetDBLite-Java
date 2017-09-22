@@ -106,39 +106,48 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 	}
 
 	@Test
-	@Disabled("Problems with savepoints in MonetDBLite :(")
 	@DisplayName("Test savepoints")
 	void testSavepoints() throws MonetDBEmbeddedException {
 		connection.setAutoCommit(false);
 
-		connection.executeUpdate("CREATE TABLE testsave (a int);");
-		connection.executeUpdate("INSERT INTO testsave VALUES (1);");
+		connection.setSavepoint();
 
-		Savepoint svp1 = connection.setSavepoint();
+		connection.executeUpdate("CREATE TABLE testsave (id int);");
+		Savepoint svp1 = connection.setSavepoint("emptytable");
 
-		QueryResultSet qrs1 = connection.executeQuery("SELECT count(*) FROM testsave;");
-		int nRecords1 = qrs1.getIntegerByColumnIndexAndRow(1, 1);
-		Assertions.assertEquals(1, nRecords1, "There should be 1 row in the table!");
+		QueryResultSet qrs1 = connection.executeQuery("SELECT id FROM testsave;");
+		Assertions.assertEquals(0, qrs1.getNumberOfRows(), "The number of rows should be 0!");
 		qrs1.close();
 
-		Savepoint svp2 = connection.setSavepoint();
-		connection.executeUpdate("INSERT INTO testsave VALUES (2);");
+		connection.executeUpdate("INSERT INTO testsave VALUES (1), (2), (3);");
+		Savepoint svp2 = connection.setSavepoint("threevalues");
 
-		QueryResultSet qrs2 = connection.executeQuery("SELECT count(*) FROM testsave;");
-		int nRecords2 = qrs2.getIntegerByColumnIndexAndRow(1, 1);
-		Assertions.assertEquals(2, nRecords2, "There should be 2 rows in the table!");
+		QueryResultSet qrs2 = connection.executeQuery("SELECT id FROM testsave;");
+		Assertions.assertEquals(3, qrs2.getNumberOfRows(), "The number of rows should be 3!");
 		qrs2.close();
 
-		connection.rollback(svp1);
-		QueryResultSet qrs3 = connection.executeQuery("SELECT count(*) FROM testsave;");
-		int nRecords3 = qrs3.getIntegerByColumnIndexAndRow(1, 1);
-		Assertions.assertEquals(1, nRecords3, "There should be 1 row in the table!");
+		connection.releaseSavepoint(svp2);
+
+		QueryResultSet qrs3 = connection.executeQuery("SELECT id FROM testsave;");
+		Assertions.assertEquals(3, qrs3.getNumberOfRows(), "The number of rows should be 3!");
 		qrs3.close();
 
-		connection.releaseSavepoint(svp2);
-		Assertions.assertThrows(MonetDBEmbeddedException.class, () -> connection.rollback(svp2));
+		connection.rollback(svp1);
 
-		connection.executeUpdate("DROP TABLE testsave;");
+		QueryResultSet qrs4 = connection.executeQuery("SELECT id FROM testsave;");
+		Assertions.assertEquals(0, qrs4.getNumberOfRows(), "The number of rows should be 0!");
+		qrs4.close();
+
+		try {
+			connection.releaseSavepoint(svp2);
+			Assertions.fail("The MonetDBEmbeddedException should be thrown!");
+		} catch (MonetDBEmbeddedException ex) { }
+
+		try {
+			connection.rollback(svp2);
+			Assertions.fail("The MonetDBEmbeddedException should be thrown!");
+		} catch (MonetDBEmbeddedException ex) { }
+
 		connection.setAutoCommit(true);
 	}
 

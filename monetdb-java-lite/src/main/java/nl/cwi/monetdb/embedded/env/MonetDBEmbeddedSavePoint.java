@@ -41,52 +41,22 @@ public class MonetDBEmbeddedSavePoint implements Savepoint {
 		return SavepointCounter.incrementAndGet();
 	}
 
-	/**
-	 * Returns the highest id returned by getNextId(). This method is also
-	 * synchronized to prevent race conditions and thus guaranteed to be
-	 * thread-safe.
-	 *
-	 * @return the highest id returned by a call to getNextId()
-	 */
-	private static int getHighestId() {
-		return SavepointCounter.get();
-	}
-
-	/** The name of this Savepoint */
-	private final String name;
 	/** The id of this Savepoint */
 	private final int id;
+	/** The name of this Savepoint */
+	private final String name;
 
 	public MonetDBEmbeddedSavePoint(String name) throws IllegalArgumentException {
-		if (name == null)
-			throw new IllegalArgumentException("Null name not allowed");
 		this.id = MonetDBEmbeddedSavePoint.getNextId();
-		this.name = name;
+		if (name == null)
+			this.name = "MonetDBSP" + id;
+		else
+			this.name = name;
 	}
 
 	public MonetDBEmbeddedSavePoint() {
 		this.id = MonetDBEmbeddedSavePoint.getNextId();
-		this.name = null;
-	}
-
-	/**
-	 * Retrieves the savepoint id, like the getSavepointId method with the only difference that this method will always
-	 * return the id, regardless of whether it is named or not.
-	 *
-	 * @return the numeric ID of this savepoint
-	 */
-	private int getId() {
-		return id;
-	}
-
-	/**
-	 * Returns the name to use when referencing this save point to the MonetDB database. The returned value is
-	 * guaranteed to be unique and consists of a prefix string and a sequence number.
-	 *
-	 * @return the unique savepoint name
-	 */
-	String getName() {
-		return "MonetDBSP" + id;
+		this.name = "MonetDBSP" + id;
 	}
 
 	/**
@@ -97,9 +67,7 @@ public class MonetDBEmbeddedSavePoint implements Savepoint {
 	 */
 	@Override
 	public int getSavepointId() throws MonetDBEmbeddedException {
-		if (name != null)
-			throw new MonetDBEmbeddedException("Cannot getID for named savepoint");
-		return getId();
+		return id;
 	}
 
 	/**
@@ -110,8 +78,6 @@ public class MonetDBEmbeddedSavePoint implements Savepoint {
 	 */
 	@Override
 	public String getSavepointName() throws MonetDBEmbeddedException {
-		if (name == null)
-			throw new MonetDBEmbeddedException("Unable to retrieve name of unnamed savepoint");
 		return name;
 	}
 }
