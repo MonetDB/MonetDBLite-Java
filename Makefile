@@ -32,7 +32,7 @@ endif
 ifeq ($(OS),Windows_NT)
     BUILDIR=windows
     SOEXT=dll
-    CFLAGS += -DWIN32 -DNATIVE_WIN32 -D_Printf_format_string_=SAL__format_string -mpopcnt
+    CFLAGS += -DWIN32 -DNATIVE_WIN32 -mpopcnt
     LINKER_FLAGS += -Wl,--export-all-symbols
     INCLUDE_FLAGS += -Isrc/embeddedjava/incwindows
 #    ifeq ($(PROCESSOR_ARCHITEW6432),AMD64)
@@ -126,7 +126,6 @@ src/monetdblite/src/mal/modules/01_calc.mal \
 src/monetdblite/src/mal/sqlbackend/40_sql.mal
 
 COBJECTS=\
-$(OBJDIR)/monetdblite/src/common/monet_options.o \
 $(OBJDIR)/monetdblite/src/common/stream.o \
 $(OBJDIR)/monetdblite/src/common/mutils.o \
 $(OBJDIR)/monetdblite/src/embedded/embedded.o \
@@ -353,7 +352,7 @@ DEPS = $(shell find $(DEPSDIR) -name "*.d")
 
 
 $(OBJDIR)/%.o: src/%.c
-	$(CC) $(CFLAGS) -MMD -MF $(subst $(OBJDIR),$(DEPSDIR),$(subst .o,.d,$@)) $(INCLUDE_FLAGS) $(OPTFLAGS) -c $(subst $(OBJDIR)/,src/,$(subst .o,.c,$@)) -o $@
+	$(CC) $(CFLAGS) -DMONETDBLITE_COMPILE -MMD -MF $(subst $(OBJDIR),$(DEPSDIR),$(subst .o,.d,$@)) $(INCLUDE_FLAGS) $(OPTFLAGS) -c $(subst $(OBJDIR)/,src/,$(subst .o,.c,$@)) -o $@
 
 $(LIBFILE): $(COBJECTS)
 	$(CC) $(LDFLAGS) $(COBJECTS) $(OPTFLAGS) $(LINKER_FLAGS) -o $(LIBFILE) -shared

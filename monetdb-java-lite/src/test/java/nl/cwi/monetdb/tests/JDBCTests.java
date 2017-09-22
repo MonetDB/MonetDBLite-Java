@@ -123,7 +123,7 @@ public class JDBCTests extends MonetDBJavaLiteTesting {
 	@Test
 	@DisplayName("Create some concurrent JDBC connections")
 	void timeToStress() throws SQLException, InterruptedException {
-		int stress = 50;
+		int stress = 30;
 		List<Thread> stressers = new ArrayList<>(stress);
 
 		for (int i = 0; i < stress; i++) {
