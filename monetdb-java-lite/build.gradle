@@ -21,8 +21,10 @@ apply plugin: 'io.codearte.nexus-staging'
 apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'org.junit.platform.gradle.plugin'
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+allprojects {
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+}
 version = '2.33'
 ext.version = version
 group = 'monetdb'
@@ -65,7 +67,7 @@ shadowJar { //Build instruction to the shadowJar (a jar which includes both the 
 }
 
 task wrapper(type: Wrapper) { //Set the gradle wrapper, so users don't have to install Gradle
-    gradleVersion = '4.1'
+    gradleVersion = '4.2'
 }
 
 task javadocJar(type: Jar) { //Generate the javadocs jar
