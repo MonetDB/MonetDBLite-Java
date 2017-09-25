@@ -266,8 +266,6 @@ public final class MonetDBJavaLiteLoader {
 		if(ordinalOSEnumValue == 0) { //On Windows we have to extract the Visual C/C++ Runtime library dependency
 			//Check https://msdn.microsoft.com/en-us/library/ms235299.aspx for details
 			loadLibraryIntoDirectory(nativeLibraryPath, "", "msvcr100.dll", tempDirectory);
-			//Compiling with mingw64-gcc from Linux with the pthread version so it needs this dependency
-			loadLibraryIntoDirectory(nativeLibraryPath, "", "libwinpthread-1.dll", tempDirectory);
 		}
 		String prefix = "MonetDBJavaLite-" + monetDBJDBCDriverString + "-";
 		loadedLibraryFullPath = loadLibraryIntoDirectory(nativeLibraryPath, prefix, nativeLibraryName, tempDirectory);

@@ -12,9 +12,7 @@ DEPSDIR=$(OBJDIR)/deps
 
 CFLAGS=-DLIBGDK -DLIBMAL -DLIBOPTIMIZER -DLIBSTREAM -DHAVE_EMBEDDED -DHAVE_EMBEDDED_JAVA -DNDEBUG -Wfatal-errors
 
-LINKER_FLAGS=
-
-LDFLAGS=-lm -lpthread
+LDFLAGS=-lm
 INCLUDE_FLAGS=-Isrc/embeddedjava -Isrc/monetdblite/src -Isrc/monetdblite/src/common -Isrc/monetdblite/src/embedded \
 -Isrc/monetdblite/src/gdk -Isrc/monetdblite/src/mal/mal -Isrc/monetdblite/src/mal/modules \
 -Isrc/monetdblite/src/mal/optimizer -Isrc/monetdblite/src/mal/sqlbackend -Isrc/monetdblite/src/sql/include \
@@ -32,8 +30,7 @@ endif
 ifeq ($(OS),Windows_NT)
     BUILDIR=windows
     SOEXT=dll
-    CFLAGS += -DWIN32 -DNATIVE_WIN32 -mpopcnt
-    LINKER_FLAGS += -Wl,--export-all-symbols
+    LDFLAGS += -Wl,-Bstatic,--whole-archive -lwinpthread -Wl,--no-whole-archive
     INCLUDE_FLAGS += -Isrc/embeddedjava/incwindows
 #    ifeq ($(PROCESSOR_ARCHITEW6432),AMD64)
 #        CFLAGS += -D AMD64
@@ -49,13 +46,13 @@ else ifeq ($(OS),Linux)
     BUILDIR=linux
     SOEXT=so
     CFLAGS += -fPIC
-    LDFLAGS += -lrt -ldl
+    LDFLAGS += -lrt -ldl -lpthread
     INCLUDE_FLAGS += -Isrc/embeddedjava/inclinux
 else ifeq ($(OS),Darwin)
     BUILDIR=macosx
     SOEXT=dylib
     CFLAGS += -fPIC
-    LDFLAGS += -ldl
+    LDFLAGS += -ldl -lpthread
     INCLUDE_FLAGS += -Isrc/embeddedjava/incmacosx
 else
     $(error The operating system could not be detected)
@@ -355,4 +352,4 @@ $(OBJDIR)/%.o: src/%.c
 	$(CC) $(CFLAGS) -DMONETDBLITE_COMPILE -MMD -MF $(subst $(OBJDIR),$(DEPSDIR),$(subst .o,.d,$@)) $(INCLUDE_FLAGS) $(OPTFLAGS) -c $(subst $(OBJDIR)/,src/,$(subst .o,.c,$@)) -o $@
 
 $(LIBFILE): $(COBJECTS)
-	$(CC) $(LDFLAGS) $(COBJECTS) $(OPTFLAGS) $(LINKER_FLAGS) -o $(LIBFILE) -shared
+	$(CC) $(LDFLAGS) $(COBJECTS) $(OPTFLAGS) -o $(LIBFILE) -shared
