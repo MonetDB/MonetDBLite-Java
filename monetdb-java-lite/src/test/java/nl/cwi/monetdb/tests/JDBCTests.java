@@ -8,7 +8,6 @@
 
 package nl.cwi.monetdb.tests;
 
-import nl.cwi.monetdb.jdbc.MonetDriver;
 import nl.cwi.monetdb.tests.helpers.MonetDBJavaLiteTesting;
 import org.junit.jupiter.api.*;
 

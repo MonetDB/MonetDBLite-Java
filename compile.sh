@@ -59,7 +59,6 @@ mv build/$BUILDSYS/$BUILDLIBRARY monetdb-java-lite/src/main/resources/libs/$BUIL
 if [[ $1 == "windows" ]] ; then
     BITS=64
     cp -rf src/embeddedjava/windows/msvcr100win$BITS/msvcr100-$BITS.dll monetdb-java-lite/src/main/resources/libs/$BUILDSYS/msvcr100.dll
-    cp -rf src/embeddedjava/windows/libwinpthread-1.dll monetdb-java-lite/src/main/resources/libs/$BUILDSYS/libwinpthread-1.dll
 fi
 
 # If we are not on Travis then we perform the gradle build
