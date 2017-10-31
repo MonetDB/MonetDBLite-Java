@@ -39,12 +39,12 @@ dependencies {
     runtime("${group}:monetdb-jdbc-new:2.32")
 
     //JUnit Jupiter API and TestEngine implementation
-    testCompile('org.junit.jupiter:junit-jupiter-api:5.0.0')
-    testCompile('org.junit.jupiter:junit-jupiter-engine:5.0.0')
+    testCompile('org.junit.jupiter:junit-jupiter-api:5.0.1')
+    testCompile('org.junit.jupiter:junit-jupiter-engine:5.0.1')
 
     //Log using log4j
-    testCompile('org.apache.logging.log4j:log4j-core:2.9.0')
-    testCompile('org.apache.logging.log4j:log4j-jul:2.9.0')
+    testCompile('org.apache.logging.log4j:log4j-core:2.9.1')
+    testCompile('org.apache.logging.log4j:log4j-jul:2.9.1')
 }
 
 junitPlatform { //configurations for JUnit5 tests
@@ -67,7 +67,7 @@ shadowJar { //Build instruction to the shadowJar (a jar which includes both the 
 }
 
 task wrapper(type: Wrapper) { //Set the gradle wrapper, so users don't have to install Gradle
-    gradleVersion = '4.2.1'
+    gradleVersion = '4.3'
 }
 
 task javadocJar(type: Jar) { //Generate the javadocs jar
