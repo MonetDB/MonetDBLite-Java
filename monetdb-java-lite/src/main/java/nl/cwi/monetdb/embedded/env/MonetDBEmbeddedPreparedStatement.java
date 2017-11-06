@@ -161,7 +161,7 @@ public final class MonetDBEmbeddedPreparedStatement extends AbstractConnectionRe
 	}
 
 	/**
-	 * Transforms the prepare query into a simple SQL query by replacing the ?'s with the given column contents.
+	 * Transforms the prepared query into a simple SQL query by replacing the ?'s with the given column contents.
 	 * Mind that the JDBC specs allow `reuse' of a value for a column over multiple executes.
 	 *
 	 * @return the simple SQL string for the prepare query
@@ -169,7 +169,7 @@ public final class MonetDBEmbeddedPreparedStatement extends AbstractConnectionRe
 	 */
 	private String transform() throws MonetDBEmbeddedException {
 		StringBuilder buf = new StringBuilder(8 + 12 * size);
-		buf.append("exec ");
+		buf.append("execute ");
 		buf.append(id);
 		buf.append("(");
 		// check if all columns are set and do a replace

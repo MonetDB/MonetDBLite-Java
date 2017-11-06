@@ -27,14 +27,13 @@ import java.io.*;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.*;
+import java.sql.Date;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.HashMap;
-import java.util.ListIterator;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Test the regular API. Just that :)
@@ -51,6 +50,94 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 		MonetDBJavaLiteTesting.startupDatabase(MonetDBJavaLiteTesting.getDirectoryPath().toString());
 		connection = MonetDBEmbeddedDatabase.createConnection();
 	}
+
+	@Test
+	@DisplayName("General assertions from the Database environment")
+	void databaseEnv() throws MonetDBEmbeddedException {
+		//Cannot have two MonetDBEmbeddedDatabase instances
+		try {
+			MonetDBEmbeddedDatabase.startDatabase("/", true, false);
+			Assertions.fail("The MonetDBEmbeddedException should be thrown!");
+		} catch (MonetDBEmbeddedException ignored) {
+			//I was getting unexpected results with this inside of a Assertions.assertThrows, so I made this...
+		}
+
+		Assertions.assertTrue(MonetDBEmbeddedDatabase::isDatabaseRunning);
+		boolean inMemory = MonetDBEmbeddedDatabase.isDatabaseRunningInMemory();
+		boolean silentFlagSet = MonetDBEmbeddedDatabase.isSilentFlagSet();
+		boolean sequentialFlagSet = MonetDBEmbeddedDatabase.isSequentialFlagSet();
+		Assertions.assertFalse(inMemory);
+		Assertions.assertTrue(silentFlagSet);
+		Assertions.assertFalse(sequentialFlagSet);
+
+		String thisPath = MonetDBJavaLiteTesting.getDirectoryPath().toString();
+		String dbPath = MonetDBEmbeddedDatabase.getDatabaseDirectory();
+		Assertions.assertEquals(thisPath, dbPath, "The database is running on a different directory?");
+
+		MonetDBEmbeddedConnection con1 = MonetDBEmbeddedDatabase.createConnection();
+
+		QueryResultSet rs = con1.executeQuery("SELECT 1;");
+		//A query result set cannot do any further statements after is closed
+		rs.close();
+		Assertions.assertThrows(MonetDBEmbeddedException.class, () -> rs.getIntegerByColumnIndexAndRow(1, 1));
+		Assertions.assertTrue(rs::isQueryResultSetClosed);
+
+		//The same happens for the connection
+		con1.close();
+		Assertions.assertThrows(MonetDBEmbeddedException.class, () -> con1.executeQuery("SELECT 1;"));
+		Assertions.assertTrue(con1::isClosed);
+	}
+
+	@Test
+	@DisplayName("Just another race of MonetDBEmbeddedConnections")
+	void oneMoreRace() throws InterruptedException {
+		int stress = 30;
+		List<Thread> otherStressers = new ArrayList<>(stress);
+
+		for (int i = 0; i < stress; i++) {
+			Thread t = new Thread(() -> {
+				try {
+					MonetDBEmbeddedConnection con = MonetDBEmbeddedDatabase.createConnection();
+					QueryResultSet rs = con.executeQuery("SELECT * from tables;");
+					rs.close();
+					con.close();
+				} catch (MonetDBEmbeddedException e) {
+					Assertions.fail(e.getMessage());
+				}
+			});
+			t.start();
+			otherStressers.add(t);
+		}
+
+		for (Thread t : otherStressers) {
+			t.join();
+		}
+	}
+
+	@Test
+	@DisplayName("Empty result sets")
+	void testEmptyResulSets() throws MonetDBEmbeddedException {
+		MonetDBEmbeddedConnection con = MonetDBEmbeddedDatabase.createConnection();
+		QueryResultSet qrs = con.executeQuery("SELECT id from types WHERE 1=0;");
+		Assertions.assertThrows(ArrayIndexOutOfBoundsException.class, () -> qrs.getIntegerByColumnIndexAndRow(1, 1));
+		int numberOfRows = qrs.getNumberOfRows();
+		Assertions.assertEquals(0, numberOfRows, "The number of rows should be 0, got " + numberOfRows + " instead!");
+		qrs.close();
+		con.close();
+	}
+
+	@Test
+	@DisplayName("SELECT NULL")
+	void selectNull() throws MonetDBEmbeddedException {
+		MonetDBEmbeddedConnection con = MonetDBEmbeddedDatabase.createConnection();
+		QueryResultSet qrs = con.executeQuery("SELECT NULL AS stresser;");
+		int numberOfRows = qrs.getNumberOfRows(), numberOfColumns = qrs.getNumberOfColumns();
+		Assertions.assertEquals(1, numberOfRows, "The number of rows should be 1, got " + numberOfRows + " instead!");
+		Assertions.assertEquals(1, numberOfColumns, "The number of columns should be 1, got " + numberOfColumns + " instead!");
+		qrs.close();
+		con.close();
+	}
+
 
 	@Test
 	@DisplayName("Testing single values retrieved from a query")
@@ -882,8 +969,22 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 	}
 
 	@AfterAll
-	@DisplayName("Shutdown at the end")
-	static void shutDatabase() throws MonetDBEmbeddedException {
+	@DisplayName("Shutdown database at the end")
+	static void shutDatabase() throws MonetDBEmbeddedException, IOException, InterruptedException {
+		connection.close();
 		MonetDBJavaLiteTesting.shutdownDatabase();
+		Assertions.assertFalse(MonetDBEmbeddedDatabase::isDatabaseRunning, "The database should be closed!");
+		Assertions.assertTrue(connection::isClosed, "The connection should be closed!");
+
+		//If the database is closed, then the connection will close as well
+		Assertions.assertThrows(MonetDBEmbeddedException.class, () -> connection.executeQuery("SELECT 1;"));
+		//Stop the database again also shouldn't work
+		Assertions.assertThrows(MonetDBEmbeddedException.class, MonetDBEmbeddedDatabase::stopDatabase);
+
+		//start again the database in another directory and stop it
+		Path otherPath = Files.createTempDirectory("monetdbtestother");
+		MonetDBEmbeddedDatabase.startDatabase(otherPath.toString(), true, false);
+		MonetDBEmbeddedDatabase.createConnection().close();
+		MonetDBEmbeddedDatabase.stopDatabase();
 	}
 }
