@@ -229,11 +229,11 @@ String singleWord = qrs.getStringByColumnIndexAndRow(1, 1);
 
 int[] counterValues = new int[numberOfRows];
 //gets [1, 2, (low negative value because it's a null value)]
-qrs.getIntColumnByName(2, counterValues);
+qrs.getIntColumnByIndex(2, counterValues);
 
 Timestamp[] temporalValues = new Timestamp[numberOfRows];
 //gets an array of java.sql.Timestamp objects
-qrs.getTimestampColumnByIndex("temporal", temporalValues); //got it by name
+qrs.getTimestampColumnByName("temporal", temporalValues); //got it by name
 
 boolean[] truthNullMappings = new boolean[numberOfRows];
 //get the null mappings of a column, in this case: [false, false, true]
