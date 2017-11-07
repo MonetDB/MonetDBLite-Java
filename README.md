@@ -217,7 +217,7 @@ For the `NULL` values mappings of a column, the methods `void getColumnNullMappi
 and`void getNullMappingByName(String columnName, boolean[] input)` can be used. 
 
 ```java
-QueryResultSet qrs = connection.executeQuery("SELECT * FROM example");
+QueryResultSet qrs = connection.executeQuery("SELECT words, counter, temporal FROM example");
 int numberOfRows = qrs.getNumberOfRows();
 
 String[] columnNames =  new String[numberOfRows];
@@ -280,7 +280,7 @@ int numberOfRowsAffected = statement1.executeUpdate();
 //... do something with numberOfRowsAffected
 statement1.close(); //don't forget ;)
 
-MonetDBEmbeddedPreparedStatement statement2 = connection.prepareStatement("SELECT * FROM testPrepared WHERE oneValue=?;");
+MonetDBEmbeddedPreparedStatement statement2 = connection.prepareStatement("SELECT oneValue, information FROM testPrepared WHERE oneValue=?;");
 statement2.setInt(1, 12);
 QueryResultSet qrs = statement2.executeQuery();
 //... do something with the result set
@@ -388,12 +388,12 @@ connection. In the JDBC specification, an URL is provided to the
 [DriverManager](https://docs.oracle.com/javase/8/docs/api/java/sql/DriverManager.html) identifying the driver's vendor
 and the most important properties of the connection.
 
-**To start an JDBC Embedded connection the JDBC URL must provided in the format	`jdbc:monetdb:embedded:<directory>`,
+**To start an JDBC Embedded connection the JDBC URL must provided in the format	`jdbc:monetdb:embedded:[<directory>]`,
 where directory is the location of the database.** The following example shows how it can be done. In contrast the 
 JDBC MAPI connection URL has the format `jdbc:monetdb://<host>[:<port>]/<database>[query]`.
 
-Starting on `monetdb-java-lite` `2.33` and `monetdb-jdbc-new` `2.32` it is possible to start the in-memory mode by 
-`:memory:` or an empty string in the path.
+Starting on `monetdb-java-lite` `2.33` and `monetdb-jdbc-new` `2.32` it is possible to start the in-memory mode with
+`:memory:` or an empty string in the directory path.
 
 ```java
 //Connection con = DriverManager.getConnection("jdbc:monetdb:embedded:/home/user/myfarm"); //UNIX
@@ -404,7 +404,7 @@ Starting on `monetdb-java-lite` `2.33` and `monetdb-jdbc-new` `2.32` it is possi
 Statement st = con.createStatement();
 st.executeUpdate("CREATE TABLE jdbcTest (justAnInteger int, justAString varchar(32))");
 st.executeUpdate("INSERT INTO jdbcTest VALUES (1, 'testing!')");
-ResultSet rs = st.executeQuery("SELECT * from test1;");
+ResultSet rs = st.executeQuery("SELECT justAnInteger, justAString from test1;");
 while (rs.next()) {
     int justAnInteger = rs.getInt(1);
     String justAString = rs.getString(2);
@@ -429,9 +429,9 @@ from the JDBC specification.
 //Connection con = DriverManager.getConnection("jdbc:monetdb:embedded::memory:"); //in-memory mode
 
 MonetDBEmbeddedConnection cast = ((EmbeddedConnection)con).getAsMonetDBEmbeddedConnection();
-connection.executeUpdate("SELECT * FROM somewhere WHERE field=1");
+cast.executeUpdate("SELECT something FROM somewhere WHERE field=1");
 //do as a MonetDBEmbeddedConnection...
-con.close(); //Don't forget! ;)
+con.close(); //The connection close statement should be called from the JDBC connection instance
 ```
 
 ### Differences between the JDBC MAPI and Embedded connections
@@ -485,7 +485,7 @@ instead. An example to run a query asynchronously:
 ```java
 CompletableFuture<QueryResultSet> asyncFetch = CompletableFuture.supplyAsync(() -> {
     try {
-        return connection.executeQuery("SELECT * FROM exampleTable");
+        return connection.executeQuery("SELECT something FROM exampleTable");
     } catch (MonetDBEmbeddedException ex) {
         //log the exception...
         return null;
@@ -573,7 +573,7 @@ try {
     statement.executeUpdate("INSERT INTO example VALUES (1, 'Scala', 3.223)")
     statement.executeUpdate("INSERT INTO example VALUES (2, 'is', -1000)")
     statement.executeUpdate("INSERT INTO example VALUES (3, 'cool', -743.858)")
-    val resultSet = statement.executeQuery("SELECT * FROM example")
+    val resultSet = statement.executeQuery("SELECT counter, justAString, floatingPoint FROM example")
     while (resultSet.next()) {
         val counterValue = resultSet.getInt(1)
         val stringValue = resultSet.getString(2)
