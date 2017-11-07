@@ -390,7 +390,8 @@ and the most important properties of the connection.
 
 **To start an JDBC Embedded connection the JDBC URL must provided in the format	`jdbc:monetdb:embedded:[<directory>]`,
 where directory is the location of the database.** The following example shows how it can be done. In contrast the 
-JDBC MAPI connection URL has the format `jdbc:monetdb://<host>[:<port>]/<database>[query]`.
+JDBC MAPI connection URL has the format 
+`jdbc:monetdb://<hostname>[:<portnr>]/<databasename>[?<property>=<value>[;<property>=<value>]]`.
 
 Starting on `monetdb-java-lite` `2.33` and `monetdb-jdbc-new` `2.32` it is possible to start the in-memory mode with
 `:memory:` or an empty string in the directory path.
