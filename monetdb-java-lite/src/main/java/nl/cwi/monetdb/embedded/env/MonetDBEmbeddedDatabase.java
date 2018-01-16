@@ -27,10 +27,36 @@ public final class MonetDBEmbeddedDatabase {
 	/** The MonetDBEmbeddedDatabase instance as only one database is allowed per JVM process. */
 	private static MonetDBEmbeddedDatabase monetDBEmbeddedDatabase = null;
 
+	/**
+	 * The hook thread to be called when the JVM shuts down.
+	 */
+	private static class MonetDBEmbeddedHook extends Thread {
+		@Override
+		public void run() {
+			try {
+				MonetDBEmbeddedDatabase.stopDatabase();
+			} catch (Exception e) {}
+		}
+	}
+
+	/**  A hook to be called once the JVM shuts down */
+	private static final MonetDBEmbeddedHook MonetDBHook;
+
+	/**  The hook's thread ID */
+	private static final long MonetDBHookID;
+
+	/**  Check if the database is closed or not. */
 	private static volatile boolean isClosed = true;
 
 	/**  A ReadWriteLock to avoid racing conditions. */
-	private static final ReentrantReadWriteLock locker = new ReentrantReadWriteLock();
+	private static final ReentrantReadWriteLock locker;
+
+	static {
+		locker = new ReentrantReadWriteLock();
+		MonetDBHook = new MonetDBEmbeddedHook();
+		MonetDBHookID = MonetDBHook.getId();
+		Runtime.getRuntime().addShutdownHook(MonetDBHook);
+	}
 
 	/**
 	 * Check if the database is still running or not.
@@ -183,7 +209,10 @@ public final class MonetDBEmbeddedDatabase {
 	 * @throws MonetDBEmbeddedException If the database is not running or an error in the database occurred
 	 */
 	public static void stopDatabase() throws MonetDBEmbeddedException {
-		locker.writeLock().lock();
+		long currentID = Thread.currentThread().getId();
+		if(currentID != MonetDBHookID) {
+			locker.writeLock().lock();
+		}
 		try {
 			if(monetDBEmbeddedDatabase == null) {
 				throw new MonetDBEmbeddedException("The MonetDB Embedded database is not running!");
@@ -198,9 +227,13 @@ public final class MonetDBEmbeddedDatabase {
 				monetDBEmbeddedDatabase = null;
 				isClosed = true;
 			}
-			locker.writeLock().unlock();
+			if(currentID != MonetDBHookID) {
+				locker.writeLock().unlock();
+			}
 		} catch (Exception ex) {
-			locker.writeLock().unlock();
+			if(currentID != MonetDBHookID) {
+				locker.writeLock().unlock();
+			}
 			throw ex;
 		}
 	}

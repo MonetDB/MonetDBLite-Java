@@ -138,7 +138,6 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 		con.close();
 	}
 
-
 	@Test
 	@DisplayName("Testing single values retrieved from a query")
 	void testSingleValues() throws MonetDBEmbeddedException {
@@ -520,7 +519,7 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 
 		Assertions.assertEquals(row1.getColumnByIndex(1), "I", "Strings not correctly retrieved!");
 		Assertions.assertEquals(row1.getColumnByIndex(2), new Integer(12), "Integers not correctly retrieved!");
-		Assertions.assertEquals(row1.getColumnByIndex(3), new Float(234.53423f), "Floats not correctly retrieved!");
+		Assertions.assertEquals(row1.getColumnByIndex(3), new Float(234.53424f), "Floats not correctly retrieved!");
 
 		ListIterator<Object> cols  = row1.iterator();
 		Assertions.assertTrue(cols.hasNext(), "The iterator should have 3 rows left!");
@@ -528,7 +527,7 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 		Assertions.assertTrue(cols.hasNext(), "The iterator should have 2 rows left!");
 		Assertions.assertEquals(cols.next(), 12, "Integers not correctly retrieved!");
 		Assertions.assertTrue(cols.hasNext(), "The iterator should have 1 rows left!");
-		Assertions.assertEquals(cols.next(), 234.53423f, "Floats not correctly retrieved!");
+		Assertions.assertEquals(cols.next(), 234.53424f, "Floats not correctly retrieved!");
 		Assertions.assertFalse(cols.hasNext(), "The iterator should have no rows!");
 
 		qrs2.close();
