@@ -218,9 +218,9 @@ and`void getNullMappingByName(String columnName, boolean[] input)` can be used.
 
 ```java
 QueryResultSet qrs = connection.executeQuery("SELECT words, counter, temporal FROM example");
-int numberOfRows = qrs.getNumberOfRows();
+int numberOfRows = qrs.getNumberOfRows(), numberOfColumns = qrs.getNumberOfColumns();
 
-String[] columnNames =  new String[numberOfRows];
+String[] columnNames =  new String[numberOfColumns];
 //gets ['words', 'counter', 'temporal']
 qrs.getColumnNames(columnNames);
 
@@ -605,13 +605,13 @@ Don't forget to check the options to JVM such as the garbage collection algorith
 This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of the MPL was not
 distributed with this file, You can obtain one at [https://mozilla.org/MPL/2.0/](https://mozilla.org/MPL/2.0/).
 
-Copyright 1997 - July 2008 CWI, August 2008 - 2017 MonetDB B.V.
+Copyright 1997 - July 2008 CWI, August 2008 - 2018 MonetDB B.V.
 
 ## Developer and support
 
-The MonetDBJavaLite is being supported by [Pedro Ferreira](mailto://pedro.ferreira@monetdbsolutions.com), a developer
-at [MonetDBSolutions](https://monetdbsolutions.com/)! Feel free to create an issue, a pull request or
-[just send an e-mail](mailto://pedro.ferreira@monetdbsolutions.com)! You can also create a question on
+MonetDBJavaLite is being supported by [Pedro Ferreira](mailto://pedro.ferreira@monetdbsolutions.com), a developer at
+[MonetDBSolutions](https://monetdbsolutions.com/). Feel free to create an issue, a pull request or
+[just send an email](mailto://pedro.ferreira@monetdbsolutions.com). You can also create a question on
 [Stack Overflow](https://stackoverflow.com/) with the tag `monetdblite`.
 
 As you could see I like emoticons! :) Just one more :)
