@@ -92,7 +92,8 @@ public final class MonetDBEmbeddedDatabase {
 	}
 
 	/**
-	 * Starts a MonetDB database on the given farm.
+	 * Starts a MonetDB database on the given farm with debugging parameters if desired. This method should be used by
+	 * experts only :)
 	 *
 	 * @param dbDirectory The full path of the farm
 	 * @param silentFlag A boolean if silent mode will be turned on or not
@@ -117,6 +118,16 @@ public final class MonetDBEmbeddedDatabase {
 			locker.writeLock().unlock();
 			throw ex;
 		}
+	}
+
+	/**
+	 * Starts a MonetDB database on the given farm.
+	 *
+	 * @param dbDirectory The full path of the farm
+	 * @throws MonetDBEmbeddedException If the JNI library has not been loaded yet or an error in the database occurred
+	 */
+	public static void startDatabase(String dbDirectory) throws MonetDBEmbeddedException {
+		MonetDBEmbeddedDatabase.startDatabase(dbDirectory, true, false);
 	}
 
 	/**
