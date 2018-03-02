@@ -3,7 +3,7 @@
  * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 1997 - July 2008 CWI, August 2008 - 2017 MonetDB B.V.
+ * Copyright 1997 - July 2008 CWI, August 2008 - 2018 MonetDB B.V.
  */
 
 package nl.cwi.monetdb.embedded.jdbc;
@@ -12,12 +12,14 @@ import nl.cwi.monetdb.embedded.env.MonetDBEmbeddedConnection;
 import nl.cwi.monetdb.embedded.env.MonetDBEmbeddedDatabase;
 import nl.cwi.monetdb.embedded.env.MonetDBEmbeddedException;
 import nl.cwi.monetdb.jdbc.MonetConnection;
+import nl.cwi.monetdb.jdbc.MonetStatement;
 import nl.cwi.monetdb.mcl.connection.ControlCommands;
 import nl.cwi.monetdb.mcl.connection.MCLException;
 import nl.cwi.monetdb.mcl.protocol.ProtocolException;
 
 import java.io.*;
 import java.net.SocketException;
+import java.sql.BatchUpdateException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
@@ -186,5 +188,27 @@ public final class EmbeddedConnection extends MonetConnection {
 			case ControlCommands.REPLY_SIZE:
 				((EmbeddedProtocol)protocol).getEmbeddedConnection().sendReplySizeCommand(data);
 		}
+	}
+
+	/**
+	 * Execute a batch query in an embedded connection.
+	 *
+	 * @param statement The original MonetStatement where the batch comes from
+	 * @param batch The list of queries to execute
+	 * @param counts The return of the update statement of each input query
+	 * @param e An exception to be thrown if an error occurs
+	 * @return If all queries in the batch executed successfully or not
+	 * @throws SQLException if an IO exception or a database error occurs
+	 */
+	@Override
+	protected boolean executeNextQueryBatch(MonetStatement statement, List<String> batch, int[] counts,
+											BatchUpdateException e) throws SQLException {
+		int i = 0;
+		boolean error = false;
+		for (String query : batch) {
+			error |= statement.internalBatch(query, counts, i, i + 1, e);
+			i++;
+		}
+		return error;
 	}
 }

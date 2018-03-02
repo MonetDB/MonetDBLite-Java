@@ -3,7 +3,7 @@
  * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 1997 - July 2008 CWI, August 2008 - 2017 MonetDB B.V.
+ * Copyright 1997 - July 2008 CWI, August 2008 - 2018 MonetDB B.V.
  */
 
 package nl.cwi.monetdb.embedded.env;
@@ -109,8 +109,8 @@ public final class MonetDBJavaLiteLoader {
 			System.err.println("Monet new JDBC driver not found! Please add monetdb-jdbc-new jar to the CLASSPATH");
 			System.exit(1);
 		}
-		//2.33 - change the minor version in the next line (The MonetDriver call is need to register the driver in the tests)
-		monetDBJDBCDriverString =  MonetDriver.getDriverMajorVersion() + "-33";
+		//2.34 - change the minor version in the next line (The MonetDriver call is need to register the driver in the tests)
+		monetDBJDBCDriverString =  MonetDriver.getDriverMajorVersion() + "-34";
 	}
 
 	/**

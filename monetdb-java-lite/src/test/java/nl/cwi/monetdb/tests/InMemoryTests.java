@@ -1,3 +1,11 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * Copyright 1997 - July 2008 CWI, August 2008 - 2018 MonetDB B.V.
+ */
+
 package nl.cwi.monetdb.tests;
 
 import nl.cwi.monetdb.embedded.env.MonetDBEmbeddedConnection;
@@ -111,6 +119,19 @@ public class InMemoryTests extends MonetDBJavaLiteTesting {
 		Assertions.assertEquals(-2, rows3, "The deletion should have affected no rows!");
 		stmt.close();
 		jdbcConnection.close();
+	}
+
+	@Test
+	@DisplayName("Prove that tables are not persisted after restart")
+	void testLackOfPersistence() throws SQLException {
+		connection.executeUpdate("CREATE TABLE iwillnotsurvive (a int);");
+		connection.executeUpdate("INSERT INTO iwillnotsurvive VALUES (1);");
+
+		connection.close();
+		MonetDBJavaLiteTesting.shutdownDatabase();
+
+		startupDatabase();
+		Assertions.assertThrows(MonetDBEmbeddedException.class, () -> connection.executeQuery("SELECT a FROM iwillnotsurvive;"));
 	}
 
 	@AfterAll

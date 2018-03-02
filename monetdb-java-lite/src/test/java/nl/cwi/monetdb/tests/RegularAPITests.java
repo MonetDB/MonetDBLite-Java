@@ -3,7 +3,7 @@
  * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 1997 - July 2008 CWI, August 2008 - 2017 MonetDB B.V.
+ * Copyright 1997 - July 2008 CWI, August 2008 - 2018 MonetDB B.V.
  */
 
 package nl.cwi.monetdb.tests;
@@ -499,7 +499,7 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 	@DisplayName("Test query result set rows iteration")
 	void testQueryResultSet() throws MonetDBEmbeddedException {
 		connection.executeUpdate("CREATE TABLE testresultsets (a text, b int, c real);");
-		connection.executeUpdate("INSERT INTO testresultsets VALUES ('I', 12, 234.53423);");
+		connection.executeUpdate("INSERT INTO testresultsets VALUES ('I', 12, 234.534);");
 		connection.executeUpdate("INSERT INTO testresultsets VALUES ('like', -13, 43.123);");
 		connection.executeUpdate("INSERT INTO testresultsets VALUES ('Java', 123, -34.43);");
 
@@ -519,7 +519,7 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 
 		Assertions.assertEquals(row1.getColumnByIndex(1), "I", "Strings not correctly retrieved!");
 		Assertions.assertEquals(row1.getColumnByIndex(2), new Integer(12), "Integers not correctly retrieved!");
-		Assertions.assertEquals(row1.getColumnByIndex(3), new Float(234.53424f), "Floats not correctly retrieved!");
+		Assertions.assertEquals(row1.getColumnByIndex(3), new Float(234.534f), "Floats not correctly retrieved!");
 
 		ListIterator<Object> cols  = row1.iterator();
 		Assertions.assertTrue(cols.hasNext(), "The iterator should have 3 rows left!");
@@ -527,7 +527,7 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 		Assertions.assertTrue(cols.hasNext(), "The iterator should have 2 rows left!");
 		Assertions.assertEquals(cols.next(), 12, "Integers not correctly retrieved!");
 		Assertions.assertTrue(cols.hasNext(), "The iterator should have 1 rows left!");
-		Assertions.assertEquals(cols.next(), 234.53424f, "Floats not correctly retrieved!");
+		Assertions.assertEquals(cols.next(), 234.534f, "Floats not correctly retrieved!");
 		Assertions.assertFalse(cols.hasNext(), "The iterator should have no rows!");
 
 		qrs2.close();

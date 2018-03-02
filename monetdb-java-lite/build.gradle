@@ -25,7 +25,7 @@ allprojects {
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
 }
-version = '2.33'
+version = '2.34'
 ext.version = version
 group = 'monetdb'
 ext.group = group
@@ -35,16 +35,16 @@ ext.packaging = 'jar'
 
 dependencies {
     //New MonetDB JDBC driver
-    compile("${group}:monetdb-jdbc-new:2.32")
-    runtime("${group}:monetdb-jdbc-new:2.32")
+    compile("${group}:monetdb-jdbc-new:+")
+    runtime("${group}:monetdb-jdbc-new:+")
 
     //JUnit Jupiter API and TestEngine implementation
-    testCompile('org.junit.jupiter:junit-jupiter-api:5.0.1')
-    testCompile('org.junit.jupiter:junit-jupiter-engine:5.0.1')
+    testCompile('org.junit.jupiter:junit-jupiter-api:+')
+    testCompile('org.junit.jupiter:junit-jupiter-engine:+')
 
     //Log using log4j
-    testCompile('org.apache.logging.log4j:log4j-core:2.9.1')
-    testCompile('org.apache.logging.log4j:log4j-jul:2.9.1')
+    testCompile('org.apache.logging.log4j:log4j-core:+')
+    testCompile('org.apache.logging.log4j:log4j-jul:+')
 }
 
 junitPlatform { //configurations for JUnit5 tests
@@ -67,7 +67,7 @@ shadowJar { //Build instruction to the shadowJar (a jar which includes both the 
 }
 
 task wrapper(type: Wrapper) { //Set the gradle wrapper, so users don't have to install Gradle
-    gradleVersion = '4.3'
+    gradleVersion = '4.6'
 }
 
 task javadocJar(type: Jar) { //Generate the javadocs jar

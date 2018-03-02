@@ -45,7 +45,7 @@ depends on `monetdb-jdbc-new`, so only the second one is required to add in a pr
 <dependency>
   <groupId>monetdb</groupId>
   <artifactId>monetdb-jdbc-new</artifactId>
-  <version>2.32</version>
+  <version>2.33</version>
 </dependency>
 ```
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/monetdb/monetdb-java-lite/badge.svg)](https://maven-badges.herokuapp.com/maven-central/monetdb/monetdb-java-lite)
@@ -53,7 +53,7 @@ depends on `monetdb-jdbc-new`, so only the second one is required to add in a pr
 <dependency>
   <groupId>monetdb</groupId>
   <artifactId>monetdb-java-lite</artifactId>
-  <version>2.33</version>
+  <version>2.34</version>
 </dependency>
 ```
 
@@ -105,27 +105,22 @@ process restriction, the `MonetDBEmbeddedDatabase` class is a singleton. The `Mo
 MonetDB's farm if it's nonexistent in the directory, otherwise it will initialize the existing one. 
 
 Starting on `monetdb-java-lite` `2.33` and `monetdb-jdbc-new` `2.32` it is possible to start the in-memory mode by
-providing a `null` pointer, `:memory:` or an empty string in the path. The `MonetDBEmbeddedDatabase` class is
-thread-safe. To start the database:
+providing a `null` pointer, `:memory:` or an empty string in the path. In an in-memory connection data is not persisted
+on disk. In other hand transactions are held in-memory thus more performance is obtained. The `MonetDBEmbeddedDatabase`
+class is thread-safe. To start the database:
 
 ```java
 Path directoryPath = Files.createTempDirectory("monetdbjavalite");
 boolean silentFlag = true, sequentialFlag = false;
-MonetDBEmbeddedDatabase.startDatabase(directoryPath.toString(), silentFlag, sequentialFlag);
-//MonetDBEmbeddedDatabase.startDatabase(null, silentFlag, sequentialFlag); //in-memory mode
+MonetDBEmbeddedDatabase.startDatabase(directoryPath.toString());
+//MonetDBEmbeddedDatabase.startDatabase(null); //in-memory mode
 ```
-
-The `silent` flag is left for debugging purposes. If passed as `false`, errors found in the Embedded Database will be
-thrown to the stdout. If the `sequentialFlag` is provided as `true`, MonetDBLite will use sequential pipeline instead
-of the default one. In this pipeline some of MonetDBLite's optimizers are disabled. It is use mainly to make some tests
-to work deterministically, i.e., avoid ambiguous output by avoiding parallelism. For better performance this flag should
-be set to `false`.
 
 **Before exiting the JVM it is VERY important to shutdown the database, otherwise the program will cause many memory
 leaks!** The `void MonetDBEmbeddedDatabase.stopDatabase()` class method shuts down the embedded database and any pending
 connections if existing. The class method `boolean MonetDBEmbeddedDatabase.isDatabaseRunning()` checks if the database
 is running, `int MonetDBEmbeddedDatabase.getNumberOfConnections()` retrieves the number of connections in the
-database and `boolean isDatabaseRunningInMemory()` checks if it is running in-memory.
+database and `boolean MonetDBEmbeddedDatabase.isDatabaseRunningInMemory()` checks if it is running in-memory.
 
 ### MonetDB to Java Mappings 
 
@@ -177,10 +172,10 @@ connection.close();
 ```
 
 After a connection is made, regular queries can be sent to the embedded database, then retrieving the results. The
-methods `void startTransaction()`, `void commit()` and `void rollback()`, can be used for the transaction management.
-The methods `Savepoint setSavepoint()`, `Savepoint setSavepoint(String name)`,
-`void releaseSavepoint(Savepoint savepoint)` and `void rollback(Savepoint savepoint)` handle savepoints in the
-transaction.
+connection starts on the auto-commit mode by default. The methods `void startTransaction()`, `void commit()` and
+`void rollback()`, can be used for the transaction management. The methods `Savepoint setSavepoint()`,
+`Savepoint setSavepoint(String name)`, `void releaseSavepoint(Savepoint savepoint)` and
+`void rollback(Savepoint savepoint)` handle savepoints in the transaction.
 
 ### Update Queries
 
@@ -241,9 +236,9 @@ qrs.getColumnNullMappingsByName("counter", truthNullMappings);
 
 qrs.close(); //don't forget to close in the end!!! ;)
 ```
-A single value can be checked if it's `NULL` with the help of `NullMappings` class `boolean Check#Type#IsNull(T value)`
-static methods, except for `booleans`, in which the `boolean checkBooleanIsNull(int column, int row)` in the
-`QueryResultSet` should be used instead.
+To check if a boolean value is NULL, one can use the method `boolean checkBooleanIsNull(int column, int row)` of the
+class `QueryResultSet`. For all other data types, one can use the methods `boolean Check#Type#IsNull(T value)` of the
+class NullMappings.
 
 If it is desired to iterate row-wise, the methods `QueryResultRowSet fetchResultSetRows(int startIndex, int endIndex)`,
 `QueryResultRowSet fetchFirstNRowValues(int n)` and `QueryResultRowSet fetchAllRowValues()` can be used. However as of
@@ -397,7 +392,7 @@ Starting on `monetdb-java-lite` `2.33` and `monetdb-jdbc-new` `2.32` it is possi
 `:memory:` or an empty string in the directory path.
 
 ```java
-//Connection con = DriverManager.getConnection("jdbc:monetdb:embedded:/home/user/myfarm"); //UNIX
+//Connection con = DriverManager.getConnection("jdbc:monetdb:embedded:/home/user/myfarm"); //POSIX
 //Connection con = DriverManager.getConnection("jdbc:monetdb:embedded:C:\\user\\myfarm"); //Windows
 //Connection con = DriverManager.getConnection("jdbc:monetdb:embedded::memory:"); //in-memory mode
 
@@ -405,13 +400,14 @@ Starting on `monetdb-java-lite` `2.33` and `monetdb-jdbc-new` `2.32` it is possi
 Statement st = con.createStatement();
 st.executeUpdate("CREATE TABLE jdbcTest (justAnInteger int, justAString varchar(32))");
 st.executeUpdate("INSERT INTO jdbcTest VALUES (1, 'testing!')");
-ResultSet rs = st.executeQuery("SELECT justAnInteger, justAString from test1;");
+ResultSet rs = st.executeQuery("SELECT justAnInteger, justAString from jdbcTest");
 while (rs.next()) {
     int justAnInteger = rs.getInt(1);
     String justAString = rs.getString(2);
     System.out.println(justAnInteger + " " + justAString); //just showing!
 }
 rs.close(); //Don't forget! :)
+st.executeUpdate("DROP TABLE jdbcTest");
 st.close();
 con.close();
 ```
@@ -425,7 +421,7 @@ It is made possible to use the the Embedded API in the JDBC Embedded connection,
 from the JDBC specification.
 
 ```java
-//Connection con = DriverManager.getConnection("jdbc:monetdb:embedded:/home/user/myfarm"); //UNIX
+//Connection con = DriverManager.getConnection("jdbc:monetdb:embedded:/home/user/myfarm"); //POSIX
 //Connection con = DriverManager.getConnection("jdbc:monetdb:embedded:C:\\user\\myfarm"); //Windows
 //Connection con = DriverManager.getConnection("jdbc:monetdb:embedded::memory:"); //in-memory mode
 
@@ -438,11 +434,9 @@ con.close(); //The connection close statement should be called from the JDBC con
 ### Differences between the JDBC MAPI and Embedded connections
 
 In the original MonetDBLite, some less important features of MonetDB were turned off in order to shrink its size. This
-also means that some features of the MonetDB JDBC driver won't be available in a JDBC Embedded connection at the moment.
+also means that some features of the MonetDB JDBC driver won't be available in a JDBC Embedded connection.
 
 * As mentioned before, the authentication scheme is nonexistent in the Embedded connection.
-* [Batch Processing](https://www.tutorialspoint.com/jdbc/jdbc-batch-processing.htm) is not possible in a Embedded
-connection, due to constraints of MonetDBLite.
 * In the JDBC specification a [Fetch Size](https://docs.oracle.com/cd/A87860_01/doc/java.817/a83724/resltse5.htm)
 attribute allows to fetch a result set in blocks. This feature is favorable in a socket connection (MAPI) where the
 client and the server might not be in the same machine, thus fetching the results incrementally in blocks. However in
@@ -451,7 +445,8 @@ Therefore the result set is always retrieved with a single block, making the
 [`void setFetchSize(int rows)`](https://docs.oracle.com/javase/8/docs/api/java/sql/Statement.html#getFetchSize) and
 [`int getFetchSize()`](https://docs.oracle.com/javase/8/docs/api/java/sql/Statement.html#setFetchSize-int-) methods
 depreciated in a Embedded connection (they do nothing).
-* The methods [`void setNetworkTimeout(Executor executor, int millis)`](https://docs.oracle.com/javase/8/docs/api/java/sql/Connection.html#setNetworkTimeout-java.util.concurrent.Executor-int-)
+* The methods
+[`void setNetworkTimeout(Executor executor, int millis)`](https://docs.oracle.com/javase/8/docs/api/java/sql/Connection.html#setNetworkTimeout-java.util.concurrent.Executor-int-)
 and [`int getNetworkTimeout()`](https://docs.oracle.com/javase/8/docs/api/java/sql/Connection.html#getNetworkTimeout--)
 are insignificant as there is no network involved in the Embedded connection.
 * As mentioned before, some MonetDB data types are not featured in MonetDBLite, so existing queries with those types in
@@ -461,14 +456,34 @@ a MAPI connection can't be ported to the Embedded connection version of it.
 processing. In a MAPI connection, the MonetBlob and MonetClob classes provide this implementation, however in the
 Embedded connection, these wrappers are not used, so only Strings and byte[] are used in favor for more performance.
 
+## Changelog
+
+* 2.34
+    * Added batch processing in the JDBC connection.
+    * Added simplified MonetDBEmbedded.startDatabase(String dbDirectory) method.
+    * Added runtime addShutdownHook to stop the database when the JVM exits if it is still running.
+* 2.33
+    * Merged with latest changes on MonetDB original JDBC driver.
+* 2.32
+    * Added in-memory mode.
+* 2.31
+    * Merged with MonetDB Jul2017 release.
+* 2.30
+    * Added JDBC-like prepared statements in the Embedded API.
+    * Deployed on Maven Central Repository.
+* 2.25
+    * Bugfix release.
+* 2.24
+    * Experimental release based on MonetDB Dec2016 release.
+
 ## FAQs
 
 ### 1. I am getting the MonetDBEmbeddedException: "The MonetDB Embedded database is still running!"
 
 Due to the internal representation of MonetDB, we allow only **ONE** embedded database per process. Check if you are
-calling the class method `boolean StartDatabase(String dbDirectory, boolean silentFlag, boolean sequentialFlag)` more
-than once in your code without any `void StopDatabase()` call in between. If you still need more than one database in
-your program, we recommend to create a sub JVM process. It can be easily achieved with the
+calling the class method `boolean StartDatabase(String dbDirectory)` more than once in your code without any
+`void StopDatabase()` call in between. If you still need more than one database in your program, we recommend to create
+a sub JVM process. It can be easily achieved with the
 [`exec family of methods in the Runtime class`](https://docs.oracle.com/javase/8/docs/api/java/lang/Runtime.html).
 
 ### 2. I am having race conditions, can you tell me why?
@@ -480,7 +495,8 @@ synchronization mechanism, or a pool of connections much alike Java EE does with
 
 That can be easily achieved with
 [CompletableFuture<T>](https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/CompletableFuture.html) in Java 8.
-For older versions of Java you can use [Future<T>](https://docs.oracle.com/javase/7/docs/api/java/util/concurrent/Future.html)
+For older versions of Java you can use 
+[Future<T>](https://docs.oracle.com/javase/7/docs/api/java/util/concurrent/Future.html)
 instead. An example to run a query asynchronously:
 
 ```java
@@ -531,7 +547,8 @@ large result sets. You could try to create them without initialization, but that
 With the current implementation you can re-use the same arrays in multiple QueryResultSets, thus getting the
 auto-initialization overhead much less often.
 
-In overall you can see that the `QueryResultSet` API is similar to the [ByteBuffers](https://docs.oracle.com/javase/8/docs/api/java/nio/ByteBuffer.html)
+In overall you can see that the `QueryResultSet` API is similar to the 
+[ByteBuffers](https://docs.oracle.com/javase/8/docs/api/java/nio/ByteBuffer.html)
 implementation, where both intend to re-use Arrays.
 
 Regarding this question, it would be better to approach to create an Array pointing directly to the result column, thus
@@ -610,7 +627,8 @@ Copyright 1997 - July 2008 CWI, August 2008 - 2018 MonetDB B.V.
 ## Developer and support
 
 MonetDBJavaLite is being supported by [Pedro Ferreira](mailto://pedro.ferreira@monetdbsolutions.com), a developer at
-[MonetDBSolutions](https://monetdbsolutions.com/). Feel free to create an issue, a pull request or
+[MonetDBSolutions](https://monetdbsolutions.com/). Feel free to create an issue on
+[Bugzilla](https://www.monetdb.org/bugzilla/) or GitHub, create a pull request or
 [just send an email](mailto://pedro.ferreira@monetdbsolutions.com). You can also create a question on
 [Stack Overflow](https://stackoverflow.com/) with the tag `monetdblite`.
 

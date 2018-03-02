@@ -3,7 +3,7 @@
  * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 1997 - July 2008 CWI, August 2008 - 2017 MonetDB B.V.
+ * Copyright 1997 - July 2008 CWI, August 2008 - 2018 MonetDB B.V.
  */
 
 package nl.cwi.monetdb.tests;
@@ -411,7 +411,7 @@ public class JDBCTests extends MonetDBJavaLiteTesting {
 		Assertions.assertFalse(con.getAutoCommit(), "Auto-commit not working?");
 
 		Statement stmt = con.createStatement();
-		int rows1 = stmt.executeUpdate("CREATE TABLE table_Test_PSgetObject (ti tinyint, si smallint, i int, bi bigint, vvc varchar(32), bbol boolean, fpp real)");
+		int rows1 = stmt.executeUpdate("CREATE TABLE table_Test_PSgetObject (ti tinyint, si smallint, i int, bi bigint, vvc varchar(32), bbol boolean, fpp double)");
 		stmt.close();
 		Assertions.assertEquals(-2, rows1, "The creation should have affected no rows!");
 
@@ -421,7 +421,7 @@ public class JDBCTests extends MonetDBJavaLiteTesting {
 		long[] column4 = new long[]{44534534354L};
 		String[] column5 = new String[]{"testing"};
 		boolean[] column6 = new boolean[]{true};
-		float[] column7 = new float[]{12.345f};
+		double[] column7 = new double[]{12.345f};
 
 		PreparedStatement pstmt = con.prepareStatement("INSERT INTO table_Test_PSgetObject (ti,si,i,bi,vvc,bbol,fpp) VALUES (?,?,?,?,?,?,?)");
 		pstmt.setByte(1, column1[0]);
@@ -430,7 +430,7 @@ public class JDBCTests extends MonetDBJavaLiteTesting {
 		pstmt.setLong(4, column4[0]);
 		pstmt.setString(5, column5[0]);
 		pstmt.setBoolean(6, column6[0]);
-		pstmt.setFloat(7, column7[0]);
+		pstmt.setDouble(7, column7[0]);
 		Assertions.assertFalse(pstmt.execute(), "The value returned should be false in a update query!");
 		pstmt.close();
 
@@ -444,13 +444,79 @@ public class JDBCTests extends MonetDBJavaLiteTesting {
 		Assertions.assertEquals(column4[0], rs.getLong(4), "Problems in the JDBC prepared statements!");
 		Assertions.assertEquals(column5[0], rs.getString(5), "Problems in the JDBC prepared statements!");
 		Assertions.assertEquals(column6[0], rs.getBoolean(6), "Problems in the JDBC prepared statements!");
-		Assertions.assertEquals(column7[0], rs.getFloat(7), 0.01f, "Problems in the JDBC prepared statements!");
+		Assertions.assertEquals(column7[0], rs.getDouble(7), 0.1f, "Problems in the JDBC prepared statements!");
 		rs.close();
 		pstmt.close();
 
 		pstmt = con.prepareStatement("SELECT ti,si,i,bi,vvc,bbol,fpp FROM table_Test_PSgetObject ORDER BY ti,si,i,bi,vvc,bbol,fpp");
 		Assertions.assertTrue(pstmt.execute(), "The value returned should be true in a result set query!");
 		pstmt.close();
+
+		con.rollback();
+		con.close();
+	}
+
+	@Test
+	@DisplayName("Test batch processing in JDBC")
+	void testBatchProcessingUpdates() throws SQLException {
+		Connection con = createJDBCEmbeddedConnection();
+		con.setAutoCommit(false);
+
+		Statement st = con.createStatement();
+		int res1 = st.executeUpdate("CREATE TABLE jdbcTest (justAnInteger int, justAString varchar(32));");
+		Assertions.assertEquals(-2, res1, "The creation should have affected no rows!");
+
+		st.addBatch("INSERT INTO jdbcTest VALUES (3, 'abc')");
+		st.addBatch("INSERT INTO jdbcTest VALUES (-10, 'def'), (0, 'ghi'), (100, 'jkl')");
+		st.addBatch("UPDATE jdbcTest SET justAString = 'something' WHERE justAnInteger < 3");
+		st.addBatch("DELETE FROM jdbcTest WHERE justAnInteger = '100'");
+		st.addBatch("SELECT 1");
+
+		Assertions.assertArrayEquals(new int[]{1, 3, 2, 1, -3}, st.executeBatch(), "The response codes are incorrect!");
+
+		int[] column1 = new int[]{3, -10, 0};
+		String[] column2 = new String[]{"abc", "something", "something"};
+
+		ResultSet rs = st.executeQuery("SELECT justAnInteger, justAString from jdbcTest;");
+		for(int i = 0 ; i < 3; i++) {
+			rs.next();
+			Assertions.assertEquals(column1[i], rs.getInt(1), "Problems in the JDBC result set!");
+			Assertions.assertEquals(column2[i], rs.getString(2), "Problems in the JDBC result set!");
+		}
+		Assertions.assertFalse(rs.next(), "Incorrect number of rows retrieved!");
+		rs.close();
+
+		int res2 = st.executeUpdate("DELETE FROM jdbcTest");
+		Assertions.assertEquals(3, res2, "The deletion should have affected 3 rows!");
+		st.close();
+
+		int[] column11 = new int[]{100, 2000, -8984};
+		String[] column22 = new String[]{"12another", "test", "to pass on!"};
+
+		PreparedStatement pst = con.prepareStatement("INSERT INTO jdbcTest VALUES (?, ?)");
+		pst.setInt(1, column11[0]);
+		pst.setString(2, column22[0]);
+		pst.addBatch();
+
+		pst.setInt(1, column11[1]);
+		pst.setString(2, column22[1]);
+		pst.addBatch();
+
+		pst.setInt(1, column11[2]);
+		pst.setString(2, column22[2]);
+		pst.addBatch();
+
+		Assertions.assertArrayEquals(new int[]{1, 1, 1}, pst.executeBatch(), "The response codes are incorrect!");
+		pst.close();
+
+		rs = st.executeQuery("SELECT justAnInteger, justAString from jdbcTest;");
+		for(int i = 0 ; i < 3; i++) {
+			rs.next();
+			Assertions.assertEquals(column11[i], rs.getInt(1), "Problems in the JDBC result set!");
+			Assertions.assertEquals(column22[i], rs.getString(2), "Problems in the JDBC result set!");
+		}
+		Assertions.assertFalse(rs.next(), "Incorrect number of rows retrieved!");
+		rs.close();
 
 		con.rollback();
 		con.close();
