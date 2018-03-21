@@ -52,9 +52,9 @@ script:
     # Move the javadocs
     - mv build/docs/javadoc/* synchronizing/javadocs/embedded/
     # Download the monetdb-jdbc-new jar
-    - curl https://search.maven.org/remotecontent?filepath=monetdb/monetdb-jdbc-new/2.33/monetdb-jdbc-new-2.33.jar --output synchronizing/monetdb-jdbc-new-2.33.jar
+    - curl https://search.maven.org/remotecontent?filepath=monetdb/monetdb-jdbc-new/2.34/monetdb-jdbc-new-2.34.jar --output synchronizing/monetdb-jdbc-new-2.34.jar
     # Move the monetdb-java-lite jar
-    - mv build/libs/monetdb-java-lite-2.34.jar synchronizing
+    - mv build/libs/monetdb-java-lite-2.35.jar synchronizing
     # Rsync the library files to the monet.org machine
     - rsync -aqz --ignore-times synchronizing/* ferreira@monetdb.org:/var/www/html/downloads/Java-Experimental/
 

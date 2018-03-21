@@ -25,7 +25,7 @@ allprojects {
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
 }
-version = '2.34'
+version = '2.35'
 ext.version = version
 group = 'monetdb'
 ext.group = group
