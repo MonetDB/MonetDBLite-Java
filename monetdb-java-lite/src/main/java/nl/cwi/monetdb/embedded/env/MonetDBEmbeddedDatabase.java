@@ -273,13 +273,17 @@ public final class MonetDBEmbeddedDatabase {
 	}
 
 	/**
-	 * Creates a JDBC embedded connection on the database, set on the default schema.
+	 * Creates a JDBC embedded connection in the directory.
 	 *
-	 * @param directory The desired directory for the JDBC embedded connection.
+	 * @param directory The full path of the farm
+	 * @param silentFlag A boolean if silent mode will be turned on or not
+	 * @param sequentialFlag A boolean indicating if the sequential pipeline will be set or not
 	 * @return A JDBCEmbeddedConnection instance
 	 * @throws MonetDBEmbeddedException If the database is not running or an error in the database occurred
 	 */
-	public static JDBCEmbeddedConnection createJDBCEmbeddedConnection(String directory) throws MonetDBEmbeddedException {
+	public static JDBCEmbeddedConnection createJDBCEmbeddedConnection(String directory, boolean silentFlag,
+																	  boolean sequentialFlag)
+			throws MonetDBEmbeddedException {
 		if (directory != null && (directory.trim().isEmpty() || directory.equals(":memory:")))
 			directory = null;
 		locker.writeLock().lock();
@@ -292,11 +296,15 @@ public final class MonetDBEmbeddedDatabase {
 				} else if(monetDBEmbeddedDatabase.databaseDirectory != null &&
 						!monetDBEmbeddedDatabase.databaseDirectory.equals(directory)) {
 					throw new MonetDBEmbeddedException("The embedded database is already running in a different directory!");
+				} else if(monetDBEmbeddedDatabase.silentFlag != silentFlag) {
+					throw new MonetDBEmbeddedException("The embedded database is already running with a different silentFlag!");
+				} else if(monetDBEmbeddedDatabase.sequentialFlag != sequentialFlag) {
+					throw new MonetDBEmbeddedException("The embedded database is already running with a different optimizer pipeline!");
 				}
 			}
 			if(monetDBEmbeddedDatabase == null) { //don't start the database again on a new JDBC connection
 				MonetDBJavaLiteLoader.loadMonetDBJavaLite();
-				monetDBEmbeddedDatabase = startDatabaseInternal(directory, true, false);
+				monetDBEmbeddedDatabase = startDatabaseInternal(directory, silentFlag, sequentialFlag);
 			}
 			JDBCEmbeddedConnection con = monetDBEmbeddedDatabase.createJDBCEmbeddedConnectionInternal();
 			monetDBEmbeddedDatabase.connections.put(con.getRandomIdentifier(), con);
@@ -306,6 +314,18 @@ public final class MonetDBEmbeddedDatabase {
 			locker.writeLock().unlock();
 			throw ex;
 		}
+	}
+
+	/**
+	 * Creates a JDBC embedded connection in the directory.
+	 *
+	 * @param directory The full path of the farm
+	 * @return A JDBCEmbeddedConnection instance
+	 * @throws MonetDBEmbeddedException If the database is not running or an error in the database occurred
+	 */
+	public static JDBCEmbeddedConnection createJDBCEmbeddedConnection(String directory)
+			throws MonetDBEmbeddedException {
+		return createJDBCEmbeddedConnection(directory, true, false);
 	}
 
 	/**

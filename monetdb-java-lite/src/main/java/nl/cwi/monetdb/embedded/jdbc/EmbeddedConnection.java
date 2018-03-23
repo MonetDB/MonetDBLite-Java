@@ -36,9 +36,25 @@ public final class EmbeddedConnection extends MonetConnection {
 	/** The directory of the database */
 	private final String directory;
 
+	/** If the sequential flag is set */
+	private final boolean silentFlag;
+
+	/** If the silent flag is set */
+	private final boolean sequentialFlag;
+
 	public EmbeddedConnection(Properties props, String hash, String language, String directory) {
 		super(props, hash, EmbeddedLanguage.GetLanguageFromString(language), true, true);
 		this.directory = directory;
+		this.silentFlag = true;
+		this.sequentialFlag = false;
+	}
+
+	public EmbeddedConnection(Properties props, String hash, String language, String directory, Boolean silentFlag,
+							  Boolean sequentialFlag) {
+		super(props, hash, EmbeddedLanguage.GetLanguageFromString(language), true, true);
+		this.directory = directory;
+		this.silentFlag = silentFlag;
+		this.sequentialFlag = sequentialFlag;
 	}
 
 	/**
@@ -57,6 +73,24 @@ public final class EmbeddedConnection extends MonetConnection {
 	 */
 	public boolean isRunningInMemory() {
 		return directory == null;
+	}
+
+	/**
+	 * Is the silent flag set?
+	 *
+	 * @return Is the silent flag set?
+	 */
+	public boolean isSilentFlag() {
+		return silentFlag;
+	}
+
+	/**
+	 * Is the sequential flag set?
+	 *
+	 * @return Is the sequential flag set?
+	 */
+	public boolean isSequentialFlag() {
+		return sequentialFlag;
 	}
 
 	/**
@@ -85,7 +119,8 @@ public final class EmbeddedConnection extends MonetConnection {
 	@Override
 	public List<String> connect(String user, String pass) throws IOException, ProtocolException, MCLException {
 		try {
-			this.protocol = new EmbeddedProtocol(MonetDBEmbeddedDatabase.createJDBCEmbeddedConnection(this.directory));
+			this.protocol = new EmbeddedProtocol(MonetDBEmbeddedDatabase.createJDBCEmbeddedConnection(this.directory,
+					this.silentFlag, this.sequentialFlag));
 		} catch (MonetDBEmbeddedException ex) {
 			throw new MCLException(ex);
 		}
