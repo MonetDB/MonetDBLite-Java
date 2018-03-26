@@ -111,7 +111,6 @@ class is thread-safe. To start the database:
 
 ```java
 Path directoryPath = Files.createTempDirectory("monetdbjavalite");
-boolean silentFlag = true, sequentialFlag = false;
 MonetDBEmbeddedDatabase.startDatabase(directoryPath.toString());
 //MonetDBEmbeddedDatabase.startDatabase(null); //in-memory mode
 ```

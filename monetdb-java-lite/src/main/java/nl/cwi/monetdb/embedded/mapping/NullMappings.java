@@ -97,7 +97,7 @@ public final class NullMappings {
 	 * @param value The value to test
 	 * @return A boolean indicating if the value is null
 	 */
-	public static boolean checkFloatIsNull(float value) { return value == getFloatNullConstant(); }
+	public static native boolean checkFloatIsNull(float value);
 
 	/**
 	 * Gets MonetDB's double null constant.
@@ -112,7 +112,7 @@ public final class NullMappings {
 	 * @param value The value to test
 	 * @return A boolean indicating if the value is null
 	 */
-	public static boolean checkDoubleIsNull(double value) { return value == getDoubleNullConstant(); }
+	public static native boolean checkDoubleIsNull(double value);
 
 	/**
 	 * A null pointer returning method.

@@ -136,7 +136,7 @@ public class InMemoryTests extends MonetDBJavaLiteTesting {
 
 	@AfterAll
 	@DisplayName("Shutdown the database in-memory")
-	static void shutdownDatabaseInMemory() throws MonetDBEmbeddedException, InterruptedException {
+	static void shutdownDatabaseInMemory() throws MonetDBEmbeddedException {
 		connection.close();
 		MonetDBJavaLiteTesting.shutdownDatabase();
 		Assertions.assertFalse(MonetDBEmbeddedDatabase::isDatabaseRunning, "The database should be closed!");

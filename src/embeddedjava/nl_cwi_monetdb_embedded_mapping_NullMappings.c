@@ -46,11 +46,25 @@ JNIEXPORT jlong JNICALL Java_nl_cwi_monetdb_embedded_mapping_NullMappings_getLon
 	return (jlong) lng_nil;
 }
 
+JNIEXPORT jboolean JNICALL Java_nl_cwi_monetdb_embedded_mapping_NullMappings_checkFloatIsNull
+		(JNIEnv *env, jclass jClass, jfloat value) {
+	(void) env;
+	(void) jClass;
+	return isnan(value) != 0 ? JNI_TRUE : JNI_FALSE;
+}
+
 JNIEXPORT jfloat JNICALL Java_nl_cwi_monetdb_embedded_mapping_NullMappings_getFloatNullConstant
 		(JNIEnv *env, jclass jClass) {
 	(void) env;
 	(void) jClass;
 	return (jfloat) flt_nil;
+}
+
+JNIEXPORT jboolean JNICALL Java_nl_cwi_monetdb_embedded_mapping_NullMappings_checkDoubleIsNull
+		(JNIEnv *env, jclass jClass, jdouble value) {
+	(void) env;
+	(void) jClass;
+	return isnan(value) != 0 ? JNI_TRUE : JNI_FALSE;
 }
 
 JNIEXPORT jdouble JNICALL Java_nl_cwi_monetdb_embedded_mapping_NullMappings_getDoubleNullConstant

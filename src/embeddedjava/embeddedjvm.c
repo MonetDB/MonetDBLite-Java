@@ -56,7 +56,7 @@ char* sendAutoCommitCommand(monetdb_connection conn, int flag, int* result) {
 			msg = createException(MAL, "embedded", "auto_commit (rollback) failed");
 		}
 	}
-	SQLautocommit(connection, m);
+	SQLautocommit(m);
 
 	return msg;
 }
@@ -106,5 +106,5 @@ void setAutocommitFlag(monetdb_connection conn, int autoCommit) {
 	if(autoCommit == 0) {
 		m->session->status = 0;
 	}
-	SQLautocommit(connection, m);
+	SQLautocommit(m);
 }

@@ -57,11 +57,27 @@ JNIEXPORT jfloat JNICALL Java_nl_cwi_monetdb_embedded_mapping_NullMappings_getFl
 
 /*
  * Class:     nl_cwi_monetdb_embedded_mapping_NullMappings
+ * Method:    checkFloatIsNull
+ * Signature: (F)Z
+ */
+JNIEXPORT jboolean JNICALL Java_nl_cwi_monetdb_embedded_mapping_NullMappings_checkFloatIsNull
+  (JNIEnv *, jclass, jfloat);
+
+/*
+ * Class:     nl_cwi_monetdb_embedded_mapping_NullMappings
  * Method:    getDoubleNullConstant
  * Signature: ()D
  */
 JNIEXPORT jdouble JNICALL Java_nl_cwi_monetdb_embedded_mapping_NullMappings_getDoubleNullConstant
   (JNIEnv *, jclass);
+
+/*
+ * Class:     nl_cwi_monetdb_embedded_mapping_NullMappings
+ * Method:    checkDoubleIsNull
+ * Signature: (D)Z
+ */
+JNIEXPORT jboolean JNICALL Java_nl_cwi_monetdb_embedded_mapping_NullMappings_checkDoubleIsNull
+  (JNIEnv *, jclass, jdouble);
 
 #ifdef __cplusplus
 }

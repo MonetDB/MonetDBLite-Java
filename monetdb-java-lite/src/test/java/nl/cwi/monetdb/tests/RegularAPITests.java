@@ -969,7 +969,7 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 
 	@AfterAll
 	@DisplayName("Shutdown database at the end")
-	static void shutDatabase() throws MonetDBEmbeddedException, IOException, InterruptedException {
+	static void shutDatabase() throws MonetDBEmbeddedException, IOException {
 		connection.close();
 		MonetDBJavaLiteTesting.shutdownDatabase();
 		Assertions.assertFalse(MonetDBEmbeddedDatabase::isDatabaseRunning, "The database should be closed!");
