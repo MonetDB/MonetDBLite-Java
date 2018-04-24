@@ -932,6 +932,14 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 		final String binImport1FilePath = binImport1.getAbsolutePath();
 		final File binImport2 = Files.createTempFile("binimporstring",".bin").toFile();
 		final String binImport2FilePath = binImport2.getAbsolutePath();
+		final File binImport3 = Files.createTempFile("binimportfloat",".bin").toFile();
+		final String binImport3FilePath = binImport3.getAbsolutePath();
+		final File binImport4 = Files.createTempFile("binimportlong",".bin").toFile();
+		final String binImport4FilePath = binImport4.getAbsolutePath();
+		final File binImport5 = Files.createTempFile("binimportdouble",".bin").toFile();
+		final String binImport5FilePath = binImport5.getAbsolutePath();
+		final File binImport6 = Files.createTempFile("binimportbyte",".bin").toFile();
+		final String binImport6FilePath = binImport6.getAbsolutePath();
 
 		int[] data1 = {137, -89, 82, 0, -54};
 		DataOutputStream file1 = new DataOutputStream(new FileOutputStream(binImport1FilePath));
@@ -945,14 +953,41 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 			file2.println(aData2);
 		file2.close();
 
-		int rows1 = connection.executeUpdate("CREATE TABLE testBinImp (aa int, bb clob);");
-		Assertions.assertEquals(-2, rows1, "The creation should have affected no rows!");
-		connection.executeUpdate("COPY BINARY INTO testBinImp FROM ('" + binImport1FilePath + "', '" + binImport2FilePath + "');");
+		float[] data3 = {0.0f, 1.2f, -0.32f, 124.2f, -67.12f};
+		DataOutputStream file3 = new DataOutputStream(new FileOutputStream(binImport3FilePath));
+		for (float aData3 : data3)
+			file3.writeFloat(aData3);
+		file3.close();
 
-		QueryResultSet qrs = connection.executeQuery("SELECT aa, bb FROM testBinImp;");
+		long[] data4 = {0L, 1L, 10000L, -2414124L, 1212L};
+		DataOutputStream file4 = new DataOutputStream(new FileOutputStream(binImport4FilePath));
+		for (long aData4 : data4)
+			file4.writeLong(aData4);
+		file4.close();
+
+		double[] data5 = {0.0f, 1.2f, -0.32f, 124.2f, -67.12f};
+		DataOutputStream file5 = new DataOutputStream(new FileOutputStream(binImport5FilePath));
+		for (double aData5 : data5)
+			file5.writeDouble(aData5);
+		file5.close();
+
+		byte[] data6 = {0, 1, -2, -4, 5};
+		DataOutputStream file6 = new DataOutputStream(new FileOutputStream(binImport6FilePath));
+		for (byte aData6 : data6)
+			file6.writeByte(aData6);
+		file6.close();
+
+		int rows1 = connection.executeUpdate("CREATE TABLE testBinImp (aa int, bb clob, cc real, dd bigint, ee double, ff tinyint);");
+		Assertions.assertEquals(-2, rows1, "The creation should have affected no rows!");
+		int rows2 = connection.executeUpdate("COPY BINARY INTO testBinImp FROM ('" + binImport1FilePath + "', '" +
+				binImport2FilePath + "', '" + binImport3FilePath + "', '" + binImport4FilePath + "', '" +
+				binImport5FilePath + "', '" + binImport6FilePath + "');");
+		Assertions.assertEquals(5, rows2, "The copy binary into should have affected 5 rows!");
+
+		QueryResultSet qrs = connection.executeQuery("SELECT aa, bb, cc, dd, ee, ff FROM testBinImp;");
 		int numberOfRows = qrs.getNumberOfRows(), numberOfColumns = qrs.getNumberOfColumns();
 		Assertions.assertEquals(5, numberOfRows, "The number of rows should be 5, got " + numberOfRows + " instead!");
-		Assertions.assertEquals(2, numberOfColumns, "The number of columns should be 2, got " + numberOfColumns + " instead!");
+		Assertions.assertEquals(6, numberOfColumns, "The number of columns should be 6, got " + numberOfColumns + " instead!");
 
 		int[] array1 = new int[5];
 		qrs.getIntColumnByIndex(1, array1);
@@ -962,9 +997,25 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 		qrs.getStringColumnByIndex(2, array2);
 		Assertions.assertArrayEquals(data2, array2, "Binary import not working with Strings!");
 
+		float[] array3 = new float[5];
+		qrs.getFloatColumnByIndex(3, array3);
+		Assertions.assertArrayEquals(data3, array3, "Binary import not working with Floating-points!");
+
+		long[] array4 = new long[5];
+		qrs.getLongColumnByIndex(4, array4);
+		Assertions.assertArrayEquals(data4, array4, "Binary import not working with Longs!");
+
+		double[] array5 = new double[5];
+		qrs.getDoubleColumnByIndex(5, array5);
+		Assertions.assertArrayEquals(data5, array5, "Binary import not working with Doubles!");
+
+		byte[] array6 = new byte[5];
+		qrs.getByteColumnByIndex(6, array6);
+		Assertions.assertArrayEquals(data6, array6, "Binary import not working with Bytes!");
+
 		qrs.close();
-		int rows2 = connection.executeUpdate("DROP TABLE testBinImp;");
-		Assertions.assertEquals(-2, rows2, "The deletion should have affected no rows!");
+		int rows3 = connection.executeUpdate("DROP TABLE testBinImp;");
+		Assertions.assertEquals(-2, rows3, "The deletion should have affected no rows!");
 	}
 
 	@AfterAll
