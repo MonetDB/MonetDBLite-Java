@@ -19,7 +19,13 @@ monetdb-java-lite/monetdb-java-lite.iml
 
 # IDE stuff
 .idea/
+
+# Cmake
 cmake-build-debug/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Project.cbp
 
 # The decrypted files!
 monetdb-java-lite/gradle.properties

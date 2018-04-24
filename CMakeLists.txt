@@ -7,6 +7,15 @@ set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS 1)
 
 add_definitions(-DLIBGDK -DLIBMAL -DLIBOPTIMIZER -DLIBSTREAM -DHAVE_EMBEDDED -DHAVE_EMBEDDED_JAVA)
 
+if (UNIX OR APPLE)
+    set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -fPIC -Wfatal-errors -Wall -Wextra -Werror -Wmissing-prototypes -Wold-style-definition")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -fPIC -Wfatal-errors -Wall -DNDEBUG")
+endif (UNIX OR APPLE)
+
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif(NOT CMAKE_BUILD_TYPE)
+
 include_directories(
         src/monetdblite/src
         src/monetdblite/src/embedded
@@ -24,7 +33,7 @@ include_directories(
         src/embeddedjava
 )
 
-add_library(libmonetdb5 SHARED
+add_library(monetdb5 SHARED
         src/monetdblite/src/monetdb_config.h
         src/monetdblite/src/embedded/undef.h
         src/monetdblite/src/embedded/embedded.h
@@ -395,3 +404,11 @@ add_library(libmonetdb5 SHARED
         src/embeddedjava/nl_cwi_monetdb_embedded_resultset_QueryResultSet.c
         src/embeddedjava/nl_cwi_monetdb_embedded_tables_MonetDBTable.c
 )
+
+if (UNIX)
+    set_target_properties(monetdb5 PROPERTIES LINK_FLAGS "-lm -lrt -ldl -lpthread")
+endif (UNIX)
+
+if (APPLE)
+    set_target_properties(monetdb5 PROPERTIES LINK_FLAGS "-ldl -lpthread")
+endif (APPLE)
