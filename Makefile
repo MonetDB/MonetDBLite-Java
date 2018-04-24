@@ -23,7 +23,7 @@ ifeq ($(CC),)
     CC = gcc
 endif
 
-ifeq ($(OS),) # I am doing cross compilation for MonetDBJavaLite, so I need this
+ifeq ($(OS),)
     OS := $(shell uname -s)
 endif
 
@@ -31,7 +31,6 @@ ifeq ($(OS),Windows_NT)
     BUILDIR=windows
     SOEXT=dll
     LDFLAGS += -Wl,-Bstatic,--whole-archive -lwinpthread -Wl,--no-whole-archive
-    INCLUDE_FLAGS += -Isrc/embeddedjava/incwindows
 #    ifeq ($(PROCESSOR_ARCHITEW6432),AMD64)
 #        CFLAGS += -D AMD64
 #    else
@@ -47,13 +46,11 @@ else ifeq ($(OS),Linux)
     SOEXT=so
     CFLAGS += -fPIC
     LDFLAGS += -lrt -ldl -lpthread
-    INCLUDE_FLAGS += -Isrc/embeddedjava/inclinux
 else ifeq ($(OS),Darwin)
     BUILDIR=macosx
     SOEXT=dylib
     CFLAGS += -fPIC
     LDFLAGS += -ldl -lpthread
-    INCLUDE_FLAGS += -Isrc/embeddedjava/incmacosx
 else
     $(error The operating system could not be detected)
 endif

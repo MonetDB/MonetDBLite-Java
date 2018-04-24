@@ -1,31 +1,21 @@
 #!/bin/bash
 
-# Show all the build steps, plus exist when we find an error
-set -ev
+set -e
 
-if [ ! -z $TRAVIS  ] ; then
-    case "$1" in
-        windows)
-            export OS=Windows_NT
-            ;;
-
-        *)
-            # Install MonetDB compilation dependencies
-            apt-get -qq update && apt-get -qq -y install pkg-config pkgconf flex bison byacc
-            if [[ $1 == "macosx" ]] ; then
-                export OS=Darwin
-            else
-                export OS=Linux
-            fi
-
-    esac
+if [[ ! -z $TRAVIS && $1 != "windows" ]]; then
+    # Install MonetDB compilation dependencies
+    apt-get -qq update && apt-get -qq -y install pkg-config pkgconf flex bison byacc
+    if [[ $1 == "macosx" ]] ; then
+        export OS=Darwin
+    else
+        export OS=Linux
+    fi
 fi
 
 case "$1" in
     windows)
         BUILDSYS=windows
         BUILDLIBRARY=libmonetdb5.dll
-        export CC=x86_64-w64-mingw32-gcc
         ;;
 
     macosx)
@@ -45,20 +35,20 @@ PREVDIRECTORY=`pwd`
 BASEDIR=$(realpath `dirname $0`)
 cd $BASEDIR
 
-export OPT=true # Set the optimization flags
-make clean && make init && make -j
-if [ $? -ne 0 ] ; then
-    echo "build failure"
+if [[ $1 == "windows" ]] ; then
+    cmake -G "Visual Studio 2017 Win64"
+    cmake --build . --target ALL_BUILD --config Release
+else
+    export OPT=true # Set the optimization flags
+    make clean && make init && make -j
 fi
 
 # Move the compiled library to the Gradle directory
 mkdir -p monetdb-java-lite/src/main/resources/libs/$BUILDSYS
 mv build/$BUILDSYS/$BUILDLIBRARY monetdb-java-lite/src/main/resources/libs/$BUILDSYS/$BUILDLIBRARY
 
-# Windows again damm!
 if [[ $1 == "windows" ]] ; then
-    BITS=64
-    cp -rf src/embeddedjava/windows/msvcr100win$BITS/msvcr100-$BITS.dll monetdb-java-lite/src/main/resources/libs/$BUILDSYS/msvcr100.dll
+    cp -rf src/embeddedjava/windows/vcruntime140.dll monetdb-java-lite/src/main/resources/libs/$BUILDSYS/vcruntime140.dll
 fi
 
 # If we are not on Travis then we perform the gradle build
