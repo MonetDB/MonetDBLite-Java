@@ -9,10 +9,12 @@
 #ifndef MONETDB_JNI_H
 #define MONETDB_JNI_H
 
+#include "monetdb_config.h"
+
 #if defined(__linux) || defined(__linux__)
 #include "inclinux/jni_md.h"
 #include "inclinux/jni.h"
-#elif defined__APPLE__)
+#elif defined(__APPLE__)
 #include "incmacosx/jni_md.h"
 #include "incmacosx/jni.h"
 #elif defined(NATIVE_WIN32) || defined(_WIN64)

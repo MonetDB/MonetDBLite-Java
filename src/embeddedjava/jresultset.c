@@ -57,7 +57,7 @@ JResultSet* createResultSet(monetdb_connection conn, monetdb_result* output) {
 }
 
 void freeResultSet(JResultSet* thisResultSet) {
-	int numberOfColumns, i;
+	size_t numberOfColumns, i;
 	BAT **dearBats;
 	if(thisResultSet) {
 		if(thisResultSet->bats) {

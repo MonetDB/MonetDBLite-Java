@@ -83,7 +83,7 @@ void sendCloseCommand(monetdb_connection conn, int tableID) {
 	}
 }
 
-void sendReplySizeCommand(monetdb_connection conn, lng size) {
+void sendReplySizeCommand(monetdb_connection conn, int size) {
 	Client connection = (Client) conn;
 	mvc* m = ((backend *) connection->sqlcontext)->mvc;
 

@@ -5,7 +5,7 @@ cmake_minimum_required (VERSION 3.8)
 
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS 1)
 
-add_definitions(-DLIBGDK -DLIBMAL -DLIBOPTIMIZER -DLIBSTREAM -DHAVE_EMBEDDED -DHAVE_EMBEDDED_JAVA)
+add_definitions(-DLIBGDK -DLIBMAL -DLIBOPTIMIZER -DLIBSTREAM -DHAVE_EMBEDDED -DHAVE_EMBEDDED_JAVA -DMONETDBLITE_COMPILE -D_CRT_SECURE_NO_WARNINGS)
 
 if (UNIX OR APPLE)
     set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -fPIC -Wfatal-errors -Wall -Wextra -Werror -Wmissing-prototypes -Wold-style-definition")
@@ -18,7 +18,7 @@ endif(NOT CMAKE_BUILD_TYPE)
 
 include_directories(
         src/monetdblite/src
-        src/monetdblite/src/embedded
+		src/monetdblite/src/windows
         src/monetdblite/src/common
         src/monetdblite/src/gdk
         src/monetdblite/src/mal/mal
@@ -30,36 +30,38 @@ include_directories(
         src/monetdblite/src/sql/server
         src/monetdblite/src/sql/storage
         src/monetdblite/src/sql/storage/bat
+        src/monetdblite/src/embedded
         src/embeddedjava
 )
 
 add_library(monetdb5 SHARED
         src/monetdblite/src/monetdb_config.h
+		src/monetdblite/src/windows/dirent.h
         src/monetdblite/src/embedded/undef.h
-        src/monetdblite/src/embedded/embedded.h
-        src/monetdblite/src/common/stream.h
         src/monetdblite/src/common/mutils.h
+        src/monetdblite/src/common/stream.h
+        src/monetdblite/src/gdk/gdk.h
+		src/monetdblite/src/gdk/gdk_posix.h
+		src/monetdblite/src/gdk/gdk_atoms.h
+	    src/monetdblite/src/gdk/gdk_utils.h
+	    src/monetdblite/src/gdk/gdk_system.h
         src/monetdblite/src/gdk/gdk_calc_compare.h
-        src/monetdblite/src/gdk/gdk_atoms.h
+        src/monetdblite/src/gdk/gdk_private.h
+        src/monetdblite/src/gdk/gdk_system_private.h
+        src/monetdblite/src/gdk/gdk_calc_private.h
         src/monetdblite/src/gdk/gdk_bbp.h
         src/monetdblite/src/gdk/gdk_calc.h
         src/monetdblite/src/gdk/gdk_hash.h
-        src/monetdblite/src/gdk/gdk_system_private.h
-        src/monetdblite/src/gdk/gdk_calc_private.h
-        src/monetdblite/src/gdk/gdk_private.h
         src/monetdblite/src/gdk/gdk_cand.h
         src/monetdblite/src/gdk/gdk_qsort_impl.h
         src/monetdblite/src/gdk/gdk_ssort_impl.h
         src/monetdblite/src/gdk/gdk_delta.h
-        src/monetdblite/src/gdk/gdk_system.h
-        src/monetdblite/src/gdk/gdk_utils.h
         src/monetdblite/src/gdk/gdk_atomic.h
         src/monetdblite/src/gdk/gdk_tm.h
-        src/monetdblite/src/gdk/gdk.h
         src/monetdblite/src/gdk/gdk_imprints.h
         src/monetdblite/src/gdk/gdk_storage.h
         src/monetdblite/src/gdk/gdk_logger.h
-        src/monetdblite/src/gdk/gdk_posix.h
+        src/monetdblite/src/mal/mal/mal.h
         src/monetdblite/src/mal/mal/mal_dataflow.h
         src/monetdblite/src/mal/mal/mal_interpreter.h
         src/monetdblite/src/mal/mal/mal_builder.h
@@ -83,7 +85,6 @@ add_library(monetdb5 SHARED
         src/monetdblite/src/mal/mal/mal_parser.h
         src/monetdblite/src/mal/mal/mal_instruction.h
         src/monetdblite/src/mal/mal/mal_utils.h
-        src/monetdblite/src/mal/mal/mal.h
         src/monetdblite/src/mal/modules/mmath.h
         src/monetdblite/src/mal/modules/tablet.h
         src/monetdblite/src/mal/modules/batmmath.h
@@ -202,6 +203,7 @@ add_library(monetdb5 SHARED
         src/monetdblite/src/sql/storage/bat/bat_logger.h
         src/monetdblite/src/sql/storage/bat/nop_logger.h
         src/monetdblite/src/sql/storage/bat/res_table.h
+        src/monetdblite/src/embedded/embedded.h
         src/embeddedjava/jni.h
         src/embeddedjava/embeddedjvm.h
         src/embeddedjava/jresulset.h

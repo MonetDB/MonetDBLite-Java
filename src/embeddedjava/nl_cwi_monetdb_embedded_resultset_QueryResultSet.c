@@ -298,7 +298,7 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_get
 	(JNIEnv *env, jobject queryResultSet, jlong structPointer, jint column, jint typeID, jbooleanArray result) {
 	JResultSet* thisResultSet = (JResultSet*) structPointer;
 	BAT* dearBat = thisResultSet->bats[column];
-	int numberOfRows = BATcount(dearBat), digits = thisResultSet->digits[column];
+	jint numberOfRows = (jint) BATcount(dearBat), digits = thisResultSet->digits[column];
 	(void) queryResultSet;
 
 	//I could use function pointers, but there is too much variety
@@ -359,7 +359,7 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_map
 	(JNIEnv *env, jobject queryResultSet, jlong structPointer, jint column, jint typeID, jobjectArray result) {
 	JResultSet* thisResultSet = (JResultSet*) structPointer;
 	BAT* dearBat = thisResultSet->bats[column];
-	int numberOfRows = BATcount(dearBat);
+	jint numberOfRows = (jint) BATcount(dearBat);
 	(void) queryResultSet;
 
 	//I could use function pointers, but there is too much variety

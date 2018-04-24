@@ -33,7 +33,7 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnectio
 }
 
 static int executeQuery(JNIEnv *env, jlong connectionPointer, jstring query, jboolean execute, monetdb_result **output,
-						int *query_type, size_t *lastId, long *rowCount, long *prepareID) {
+						int *query_type, size_t *lastId, lng *rowCount, lng *prepareID) {
 	const char *query_string_tmp;
 	char* err = NULL;
 
@@ -66,7 +66,7 @@ static int executeQuery(JNIEnv *env, jlong connectionPointer, jstring query, jbo
 }
 
 static jobject generateQueryResultSet(JNIEnv *env, jobject jconnection, jlong connectionPointer, monetdb_result *output,
-									  int query_type, long prepareID) {
+									  int query_type, lng prepareID) {
 	int i, numberOfColumns;
 	jobject result = NULL;
 	jintArray typesIDs;
@@ -156,7 +156,7 @@ static jobject generateQueryResultSet(JNIEnv *env, jobject jconnection, jlong co
 JNIEXPORT jint JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnection_sendUpdateInternal
 	(JNIEnv *env, jobject jconnection, jlong connectionPointer, jstring query, jboolean execute) {
 	monetdb_result *output = NULL;
-	long rowCount;
+	lng rowCount;
 	jint returnValue = -1;
 	int query_type, res;
 
@@ -194,7 +194,7 @@ JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnec
 	(JNIEnv *env, jobject jconnection, jlong connectionPointer, jstring query, jboolean execute) {
 	int query_type, res;
 	monetdb_result *output = NULL;
-	long prepareID;
+	lng prepareID;
 
 	res = executeQuery(env, connectionPointer, query, execute, &output, &query_type, NULL, NULL, &prepareID);
 	if(res) {
@@ -211,7 +211,7 @@ JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnec
 JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnection_executePrepareStatementInternal
 	(JNIEnv *env, jobject jconnection, jlong connectionPointer, jstring query, jboolean execute) {
 	int query_type, res;
-	long rowCount;
+	lng rowCount;
 	monetdb_result *output = NULL;
 	jobject resultSet = NULL, result;
 	jint returnValue = -1;

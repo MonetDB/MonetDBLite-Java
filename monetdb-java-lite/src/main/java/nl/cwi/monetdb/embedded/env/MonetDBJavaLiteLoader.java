@@ -39,7 +39,7 @@ public final class MonetDBJavaLiteLoader {
 		/**
 		 * Windows NT
 		 */
-		Windows("/libs/windows", "libmonetdb5.dll"),
+		Windows("/libs/windows", "monetdb5.dll"),
 
 		/**
 		 * Mac OS X
@@ -265,7 +265,7 @@ public final class MonetDBJavaLiteLoader {
 		// Extract the libraries from the jar
 		if(ordinalOSEnumValue == 0) { //On Windows we have to extract the Visual C/C++ Runtime library dependency
 			//Check https://msdn.microsoft.com/en-us/library/ms235299.aspx for details
-			loadLibraryIntoDirectory(nativeLibraryPath, "", "msvcr100.dll", tempDirectory);
+			loadLibraryIntoDirectory(nativeLibraryPath, "", "vcruntime140.dll", tempDirectory);
 		}
 		String prefix = "MonetDBJavaLite-" + monetDBJDBCDriverString + "-";
 		loadedLibraryFullPath = loadLibraryIntoDirectory(nativeLibraryPath, prefix, nativeLibraryName, tempDirectory);

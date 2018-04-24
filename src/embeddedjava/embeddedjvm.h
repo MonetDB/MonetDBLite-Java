@@ -21,7 +21,7 @@ char* monetdb_find_table(monetdb_connection conn, sql_table** table, const char*
 char* sendAutoCommitCommand(monetdb_connection conn, int flag, int* result);
 void sendReleaseCommand(monetdb_connection conn, int commandId);
 void sendCloseCommand(monetdb_connection conn, int commandId);
-void sendReplySizeCommand(monetdb_connection conn, lng size);
+void sendReplySizeCommand(monetdb_connection conn, int size);
 int getAutocommitFlag(monetdb_connection conn);
 void setAutocommitFlag(monetdb_connection conn, int autoCommit);
 

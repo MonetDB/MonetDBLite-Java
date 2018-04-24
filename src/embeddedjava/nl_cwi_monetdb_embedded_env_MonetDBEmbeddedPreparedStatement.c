@@ -16,5 +16,5 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedPreparedS
 	(JNIEnv *env, jobject preparedStatement, jlong connectionPointer, jlong prepareStatementID) {
 	(void) env;
 	(void) preparedStatement;
-	sendReleaseCommand((monetdb_connection) connectionPointer, prepareStatementID);
+	sendReleaseCommand((monetdb_connection) connectionPointer, (int) prepareStatementID);
 }

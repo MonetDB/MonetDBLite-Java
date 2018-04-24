@@ -180,8 +180,8 @@ FETCHING_LEVEL_THREE(lng, lng)
 #define BAT_TO_STRING       value = (*env)->NewStringUTF(env, nvalue);
 
 #define GET_BAT_BLOB        nvalue = (blob*) BUNtail(li, p);
-#define BAT_TO_JBLOB        value = (*env)->NewByteArray(env, nvalue->nitems); \
-							(*env)->SetByteArrayRegion(env, value, 0, nvalue->nitems, (jbyte*) nvalue->data);
+#define BAT_TO_JBLOB        value = (*env)->NewByteArray(env, (jsize) nvalue->nitems); \
+							(*env)->SetByteArrayRegion(env, value, 0, (jsize) nvalue->nitems, (jbyte*) nvalue->data);
 #define CHECK_NULL_BLOB     nvalue->nitems != ~(size_t) 0
 
 #define FETCHING_LEVEL_FOUR(NAME, RETURN_TYPE, GET_ATOM, CHECK_NOT_NULL, CONVERT_ATOM, ONE_CAST, TWO_CAST) \
@@ -406,7 +406,7 @@ BATCH_LEVEL_FOUR(Blob, GET_BAT_BLOB, CHECK_NULL_BLOB, BAT_TO_JBLOB, blob*, jbyte
 		aux->trevsorted = 1; \
 		aux->tdense = 0; \
 		p = (BAT_CAST *) Tloc(aux, 0); \
-		(*env)->Get##COPY_METHOD##ArrayRegion(env, data, 0, cnt, (JAVA_CAST *) p); \
+		(*env)->Get##COPY_METHOD##ArrayRegion(env, data, 0, (jsize) cnt, (JAVA_CAST *) p); \
 		for(i = 0; i < cnt; i++, p++) { \
 			value = p[i]; \
 			if (value == BAT_CAST##_nil) { \
@@ -485,7 +485,7 @@ CONVERSION_LEVEL_ONE(Double, dbl, jdouble, Double)
 		aux->tdense = 0; \
 		p = (BAT_CAST *) Tloc(aux, 0); \
 		for(i = 0; i < cnt; i++, p++) { \
-			value = (*env)->GetObjectArrayElement(env, data, i); \
+			value = (*env)->GetObjectArrayElement(env, data, (jsize) i); \
 			if (value == NULL) { \
 				aux->tnil = 1; \
 				aux->tnonil = 0; \
@@ -539,7 +539,7 @@ CONVERSION_LEVEL_TWO(Timestamp, timestamp, *timestamp_nil, JTIMESTAMP_TO_BAT, TI
 		aux->tdense = 0; \
 		p = (BAT_CAST *) Tloc(aux, 0); \
 		for(i = 0; i < cnt; i++, p++) { \
-			value = (*env)->GetObjectArrayElement(env, data, i); \
+			value = (*env)->GetObjectArrayElement(env, data, (jsize) i); \
 			if (value == NULL) { \
 				aux->tnil = 1; \
 				aux->tnonil = 0; \
@@ -644,7 +644,7 @@ CONVERSION_LEVEL_THREE(lng)
 		aux->tsorted = 1; \
 		aux->trevsorted = 1; \
 		for(i = 0; i < cnt; i++) { \
-			value = (*env)->GetObjectArrayElement(env, data, i); \
+			value = (*env)->GetObjectArrayElement(env, data, (jsize) i); \
 			if (value == NULL) { \
 				aux->tnil = 1; \
 				aux->tnonil = 0; \

@@ -80,7 +80,7 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection_
 
 JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection_sendQueryInternal
 	(JNIEnv *env, jobject jdbccon, jlong connectionPointer, jstring query, jboolean execute) {
-	long rowCount = 0, prepareID = 0;
+	lng rowCount = 0, prepareID = 0;
 	size_t lastId = 0;
 	int lineResponseCounter = 0, query_type = 0, autoCommitStatus = 1;
 	jint nextResponses[4], responseParameters[3];
@@ -129,13 +129,13 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection_
 			//set the Table Headers values
 			if(output) {
 				responseParameters[0] = (query_type == Q_PREPARE) ? (int) prepareID : (int) lastId;
-				responseParameters[1] = output->nrows; //number of rows
+				responseParameters[1] = (jint) output->nrows; //number of rows
 			} else {
 				responseParameters[0] = -1;
 				responseParameters[1] = 0;
 			}
 			if(query_type == Q_TABLE || query_type == Q_PREPARE) {
-				responseParameters[2] = (output) ? output->ncols : 0; //number of columns
+				responseParameters[2] = (output) ? (jint) output->ncols : 0; //number of columns
 			}
 			//set the other headers
 			nextResponses[lineResponseCounter++] = 2; //HEADER
@@ -202,7 +202,7 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection_
 	(JNIEnv *env, jobject jdbccon, jlong connectionPointer, jint size) {
 	(void) env;
 	(void) jdbccon;
-	sendReplySizeCommand((monetdb_connection) connectionPointer, (lng) size);
+	sendReplySizeCommand((monetdb_connection) connectionPointer, size);
 }
 
 JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection_sendReleaseCommandInternal
