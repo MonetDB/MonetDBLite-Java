@@ -5,6 +5,8 @@ cmake_minimum_required (VERSION 3.8)
 
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS 1)
 
+add_definitions(-DLIBGDK -DLIBMAL -DLIBOPTIMIZER -DLIBSTREAM -DHAVE_EMBEDDED -DHAVE_EMBEDDED_JAVA)
+
 include_directories(
         src/monetdblite/src
         src/monetdblite/src/embedded
@@ -393,7 +395,3 @@ add_library(libmonetdb5 SHARED
         src/embeddedjava/nl_cwi_monetdb_embedded_resultset_QueryResultSet.c
         src/embeddedjava/nl_cwi_monetdb_embedded_tables_MonetDBTable.c
 )
-
-#set_target_properties(libmonetdb5 PROPERTIES VERSION ${PROJECT_VERSION})
-
-# TODO: Add tests and install targets if needed.
