@@ -24,7 +24,7 @@ import java.sql.*;
  */
 public class InMemoryTests extends MonetDBJavaLiteTesting {
 
-	/*static {
+	static {
 		try {
 			Class.forName("nl.cwi.monetdb.jdbc.MonetDriver");
 		} catch (ClassNotFoundException e) { }
@@ -146,5 +146,5 @@ public class InMemoryTests extends MonetDBJavaLiteTesting {
 		Assertions.assertThrows(MonetDBEmbeddedException.class, () -> connection.executeQuery("SELECT 2;"));
 		//Stop the database again also shouldn't work
 		Assertions.assertThrows(MonetDBEmbeddedException.class, MonetDBEmbeddedDatabase::stopDatabase);
-	}*/
+	}
 }

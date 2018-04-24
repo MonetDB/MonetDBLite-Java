@@ -18,7 +18,7 @@ endif(NOT CMAKE_BUILD_TYPE)
 
 include_directories(
         src/monetdblite/src
-		src/monetdblite/src/windows
+        src/monetdblite/src/windows
         src/monetdblite/src/common
         src/monetdblite/src/gdk
         src/monetdblite/src/mal/mal
@@ -36,15 +36,15 @@ include_directories(
 
 add_library(monetdb5 SHARED
         src/monetdblite/src/monetdb_config.h
-		src/monetdblite/src/windows/dirent.h
+        src/monetdblite/src/windows/dirent.h
         src/monetdblite/src/embedded/undef.h
         src/monetdblite/src/common/mutils.h
         src/monetdblite/src/common/stream.h
         src/monetdblite/src/gdk/gdk.h
-		src/monetdblite/src/gdk/gdk_posix.h
-		src/monetdblite/src/gdk/gdk_atoms.h
-	    src/monetdblite/src/gdk/gdk_utils.h
-	    src/monetdblite/src/gdk/gdk_system.h
+        src/monetdblite/src/gdk/gdk_posix.h
+        src/monetdblite/src/gdk/gdk_atoms.h
+        src/monetdblite/src/gdk/gdk_utils.h
+        src/monetdblite/src/gdk/gdk_system.h
         src/monetdblite/src/gdk/gdk_calc_compare.h
         src/monetdblite/src/gdk/gdk_private.h
         src/monetdblite/src/gdk/gdk_system_private.h

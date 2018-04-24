@@ -22,7 +22,7 @@ import java.util.List;
  */
 public class JDBCTests extends MonetDBJavaLiteTesting {
 
-	/*static {
+	static {
 		try {
 			Class.forName("nl.cwi.monetdb.jdbc.MonetDriver");
 		} catch (ClassNotFoundException e) { }
@@ -520,5 +520,5 @@ public class JDBCTests extends MonetDBJavaLiteTesting {
 
 		con.rollback();
 		con.close();
-	}*/
+	}
 }

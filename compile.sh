@@ -37,7 +37,7 @@ cd $BASEDIR
 
 if [[ $1 == "windows" ]] ; then
     cmake -G "Visual Studio 15 2017 Win64"
-    cmake --build . --target ALL_BUILD --config Debug
+    cmake --build . --target ALL_BUILD --config Release
 else
     export OPT=true # Set the optimization flags
     make clean && make init && make -j
