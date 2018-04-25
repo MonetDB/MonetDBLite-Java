@@ -15,35 +15,38 @@ fi
 case "$1" in
     windows)
         BUILDSYS=windows
-        BUILDLIBRARY=libmonetdb5.dll
+        BUILDLIBRARY=monetdb5.dll
         ;;
 
     macosx)
         BUILDSYS=macosx
         BUILDLIBRARY=libmonetdb5.dylib
-        export CC=gcc
         ;;
 
     *)
         BUILDSYS=linux
         BUILDLIBRARY=libmonetdb5.so
-        export CC=gcc
 esac
 
 # Save the previous directory
 PREVDIRECTORY=`pwd`
 BASEDIR=$(realpath `dirname $0`)
 cd $BASEDIR
+mkdir -p build/$BUILDSYS
+cd build/$BUILDSYS
 
+#Time to compile
 if [[ $1 == "windows" ]] ; then
-    cmake -G "Visual Studio 15 2017 Win64"
+    cmake -G "Visual Studio 15 2017 Win64" ../..
     cmake --build . --target ALL_BUILD --config Release
 else
-    export OPT=true # Set the optimization flags
-    make clean && make init && make -j
+    echo `pwd`
+    OPT=true cmake -G "Unix Makefiles" ../..
+    make clean && make -j
 fi
 
 # Move the compiled library to the Gradle directory
+cd $BASEDIR
 mkdir -p monetdb-java-lite/src/main/resources/libs/$BUILDSYS
 mv build/$BUILDSYS/$BUILDLIBRARY monetdb-java-lite/src/main/resources/libs/$BUILDSYS/$BUILDLIBRARY
 

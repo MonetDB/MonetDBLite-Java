@@ -5,20 +5,99 @@ cmake_minimum_required (VERSION 3.8)
 
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS 1)
 
-add_definitions(-DLIBGDK -DLIBMAL -DLIBOPTIMIZER -DLIBSTREAM -DHAVE_EMBEDDED -DHAVE_EMBEDDED_JAVA -DMONETDBLITE_COMPILE -D_CRT_SECURE_NO_WARNINGS)
+add_definitions(-DLIBGDK -DLIBMAL -DLIBOPTIMIZER -DLIBSTREAM -DHAVE_EMBEDDED -DHAVE_EMBEDDED_JAVA)
+
+if (WIN32)
+    set(CMAKE_CXX_FLAGS_DEBUG "-D_CRT_SECURE_NO_WARNINGS -DMONETDBLITE_COMPILE")
+    set(CMAKE_CXX_FLAGS_RELEASE "-D_CRT_SECURE_NO_WARNINGS -DMONETDBLITE_COMPILE")
+endif()
 
 if (UNIX OR APPLE)
-    set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -fPIC -Wfatal-errors -Wall -Wextra -Werror -Wmissing-prototypes -Wold-style-definition")
-    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -fPIC -Wfatal-errors -Wall -DNDEBUG")
-endif (UNIX OR APPLE)
+    IF(DEFINED ENV{OPT})
+        set(CMAKE_C_FLAGS "-O3 -fPIC -Wfatal-errors -Wall -DNDEBUG")
+    ELSE()
+        set(CMAKE_C_FLAGS "-g -O0 -fPIC -Wfatal-errors -Wall -Wextra -Werror -Wmissing-prototypes -Wold-style-definition")
+    ENDIF()
+endif()
 
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release)
-endif(NOT CMAKE_BUILD_TYPE)
+if(NOT(WIN32 OR UNIX OR APPLE))
+    message( FATAL_ERROR "MonetDBLite is only available to Windows, Linux and MacOS X" )
+endif()
+
+add_custom_target(sqlparser bison -b ${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/server/sql_parser -y  -d -p sql -r all ${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/server/sql_parser.y
+        COMMAND rm ${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/server/sql_parser.output)
+
+set(SQLSCRIPTS                 "${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/scripts/09_like.sql")
+set(SQLSCRIPTS "${SQLSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/scripts/10_math.sql")
+set(SQLSCRIPTS "${SQLSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/scripts/11_times.sql")
+set(SQLSCRIPTS "${SQLSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/scripts/13_date.sql")
+set(SQLSCRIPTS "${SQLSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/scripts/15_querylog.sql")
+set(SQLSCRIPTS "${SQLSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/scripts/16_tracelog.sql")
+set(SQLSCRIPTS "${SQLSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/scripts/17_temporal.sql")
+set(SQLSCRIPTS "${SQLSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/scripts/18_index.sql")
+set(SQLSCRIPTS "${SQLSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/scripts/20_vacuum.sql")
+set(SQLSCRIPTS "${SQLSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/scripts/21_dependency_functions.sql")
+set(SQLSCRIPTS "${SQLSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/scripts/22_clients.sql")
+set(SQLSCRIPTS "${SQLSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/scripts/25_debug.sql")
+set(SQLSCRIPTS "${SQLSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/scripts/26_sysmon.sql")
+set(SQLSCRIPTS "${SQLSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/scripts/27_rejects.sql")
+set(SQLSCRIPTS "${SQLSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/scripts/39_analytics.sql")
+set(SQLSCRIPTS "${SQLSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/scripts/41_md5sum.sql")
+set(SQLSCRIPTS "${SQLSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/scripts/51_sys_schema_extension.sql")
+set(SQLSCRIPTS "${SQLSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/scripts/75_storagemodel.sql")
+set(SQLSCRIPTS "${SQLSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/scripts/80_statistics.sql")
+set(SQLSCRIPTS "${SQLSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/scripts/99_system.sql")
+
+set(MALSCRIPTS                 "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/modules/aggr.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/modules/algebra.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/modules/bat5.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/modules/batExtensions.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/modules/batmmath.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/modules/batmtime.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/modules/batstr.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/modules/blob.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/modules/group.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/modules/iterator.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/modules/language.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/modules/mal_init.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/modules/manifold.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/modules/mat.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/modules/mkey.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/modules/mmath.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/modules/mtime.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/modules/orderidx.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/modules/pcre.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/modules/sample.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/modules/str.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/modules/tablet.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/optimizer/optimizer.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/sqlbackend/sql.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/sqlbackend/sql_aggr_bte.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/sqlbackend/sql_aggr_dbl.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/sqlbackend/sql_aggr_flt.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/sqlbackend/sql_aggr_int.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/sqlbackend/sql_aggr_lng.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/sqlbackend/sql_aggr_sht.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/sqlbackend/sql_decimal.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/sqlbackend/sql_inspect.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/sqlbackend/sql_rank.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/sqlbackend/sql_transaction.mal")
+set(MALSCRIPTS "${MALSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/sqlbackend/sqlcatalog.mal")
+
+set(MALAUTO              "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/modules/01_batcalc.mal")
+set(MALAUTO "${MALAUTO}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/modules/01_calc.mal")
+set(MALAUTO "${MALAUTO}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/sqlbackend/40_sql.mal")
+
+add_custom_target(inlines rm -rf build/inlines
+        COMMAND mkdir -p build/inlines/createdb
+        COMMAND mkdir -p build/inlines/autoload
+        COMMAND cp ${MALSCRIPTS}  build/inlines
+        COMMAND cp ${MALAUTO}     build/inlines/autoload
+        COMMAND cp ${SQLSCRIPTS}  build/inlines/createdb
+        COMMAND python ${CMAKE_SOURCE_DIR}/src/monetdblite/src/embedded/inlined_scripts.py build/inlines/ ${CMAKE_SOURCE_DIR}/src/monetdblite/src/embedded/inlined_scripts.c)
 
 include_directories(
         src/monetdblite/src
-        src/monetdblite/src/windows
         src/monetdblite/src/common
         src/monetdblite/src/gdk
         src/monetdblite/src/mal/mal
@@ -33,6 +112,10 @@ include_directories(
         src/monetdblite/src/embedded
         src/embeddedjava
 )
+
+if (WIN32)
+    set(INCLUDE_DIRECTORIES ${INCLUDE_DIRECTORIES} src/monetdblite/src/windows)
+endif()
 
 add_library(monetdb5 SHARED
         src/monetdblite/src/monetdb_config.h
@@ -406,6 +489,8 @@ add_library(monetdb5 SHARED
         src/embeddedjava/nl_cwi_monetdb_embedded_resultset_QueryResultSet.c
         src/embeddedjava/nl_cwi_monetdb_embedded_tables_MonetDBTable.c
 )
+
+add_dependencies(monetdb5 sqlparser inlines)
 
 if (UNIX)
     set_target_properties(monetdb5 PROPERTIES LINK_FLAGS "-lm -lrt -ldl -lpthread")

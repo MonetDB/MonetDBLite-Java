@@ -158,7 +158,7 @@ JNIEXPORT jint JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnectio
 	monetdb_result *output = NULL;
 	lng rowCount;
 	jint returnValue = -1;
-	int query_type, res;
+	int query_type = Q_UPDATE, res;
 
 	(void) jconnection;
 	res = executeQuery(env, connectionPointer, query, execute, &output, &query_type, NULL, &rowCount, NULL);
@@ -175,7 +175,7 @@ JNIEXPORT jint JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnectio
 
 JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnection_sendQueryInternal
 	(JNIEnv *env, jobject jconnection, jlong connectionPointer, jstring query, jboolean execute) {
-	int res, query_type;
+	int res, query_type = Q_TABLE;
 	monetdb_result *output = NULL;
 
 	res = executeQuery(env, connectionPointer, query, execute, &output, &query_type, NULL, NULL, NULL);
@@ -192,7 +192,7 @@ JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnec
 
 JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnection_prepareStatementInternal
 	(JNIEnv *env, jobject jconnection, jlong connectionPointer, jstring query, jboolean execute) {
-	int query_type, res;
+	int query_type = Q_PREPARE, res;
 	monetdb_result *output = NULL;
 	lng prepareID;
 
@@ -210,7 +210,7 @@ JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnec
 
 JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnection_executePrepareStatementInternal
 	(JNIEnv *env, jobject jconnection, jlong connectionPointer, jstring query, jboolean execute) {
-	int query_type, res;
+	int query_type = Q_PREPARE, res;
 	lng rowCount;
 	monetdb_result *output = NULL;
 	jobject resultSet = NULL, result;
