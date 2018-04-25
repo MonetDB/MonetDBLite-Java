@@ -48,7 +48,12 @@ fi
 # Move the compiled library to the Gradle directory
 cd $BASEDIR
 mkdir -p monetdb-java-lite/src/main/resources/libs/$BUILDSYS
-mv build/$BUILDSYS/$BUILDLIBRARY monetdb-java-lite/src/main/resources/libs/$BUILDSYS/$BUILDLIBRARY
+
+if [[ $1 == "windows" ]] ; then
+	mv build/$BUILDSYS/Release/$BUILDLIBRARY monetdb-java-lite/src/main/resources/libs/$BUILDSYS/$BUILDLIBRARY
+else
+    mv build/$BUILDSYS/$BUILDLIBRARY monetdb-java-lite/src/main/resources/libs/$BUILDSYS/$BUILDLIBRARY
+fi
 
 if [[ $1 == "windows" ]] ; then
     cp -rf src/embeddedjava/windows/vcruntime140.dll monetdb-java-lite/src/main/resources/libs/$BUILDSYS/vcruntime140.dll
