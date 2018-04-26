@@ -33,8 +33,8 @@ install:
 script:
     - jdk_switcher use oraclejdk8
     # Compile for the 3 operating systems! May the God be with us! We will create 3 distinct directories for each compilation!
-    - docker run -it --rm -v $(pwd):/workdir:Z --privileged=true -e CROSS_TRIPLE=x86_64-linux-gnu -e TRAVIS=1 multiarch/crossbuild bash compile.sh linux
-    - docker run -it --rm -v $(pwd):/workdir:Z --privileged=true -e CROSS_TRIPLE=x86_64-apple-darwin -e TRAVIS=1 multiarch/crossbuild bash compile.sh macosx
+    - docker run -it --rm -v $(pwd):/workdir:Z --privileged=true -e CROSS_TRIPLE=x86_64-linux-gnu -e TRAVIS=1 pedrotadim/compilemonetdblite bash compile.sh linux
+    - docker run -it --rm -v $(pwd):/workdir:Z --privileged=true -e CROSS_TRIPLE=x86_64-apple-darwin -e TRAVIS=1 -e CROSS_COMPILING=1 pedrotadim/compilemonetdblite bash compile.sh macosx
     - docker run -it --rm -v $(pwd):/workdir:Z --privileged=true -e TRAVIS=1 pedrotadim/compilemonetdblite bash compile.sh windows
     # Assemble everything! Decrypt the necessary files and run gradle
     - openssl aes-256-cbc -K $encrypted_e5ce453b448a_key -iv $encrypted_e5ce453b448a_iv -in secring.gpg.enc -out monetdb-java-lite/secring.gpg -d

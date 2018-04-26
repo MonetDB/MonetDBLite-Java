@@ -67,7 +67,7 @@ shadowJar { //Build instruction to the shadowJar (a jar which includes both the 
 }
 
 task wrapper(type: Wrapper) { //Set the gradle wrapper, so users don't have to install Gradle
-    gradleVersion = '4.6'
+    gradleVersion = '4.7'
 }
 
 task javadocJar(type: Jar) { //Generate the javadocs jar
