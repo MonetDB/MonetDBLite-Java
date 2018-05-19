@@ -109,8 +109,8 @@ public final class MonetDBJavaLiteLoader {
 			System.err.println("Monet new JDBC driver not found! Please add monetdb-jdbc-new jar to the CLASSPATH");
 			System.exit(1);
 		}
-		//2.36 - change the minor version in the next line (The MonetDriver call is need to register the driver in the tests)
-		monetDBJDBCDriverString =  MonetDriver.getDriverMajorVersion() + "-36";
+		//2.37 - change the minor version in the next line (The MonetDriver call is need to register the driver in the tests)
+		monetDBJDBCDriverString =  MonetDriver.getDriverMajorVersion() + "-37";
 	}
 
 	/**
