@@ -165,7 +165,7 @@ public final class EmbeddedConnection extends MonetConnection {
 
 	@Override
 	public int initialStringBuilderSize() {
-		return Integer.MAX_VALUE >> 1; //Max value for a StringBuilder array
+		return 8 * 1024; //The same as the block size in a MAPI connection
 	}
 
 	/**
