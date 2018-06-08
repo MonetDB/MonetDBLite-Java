@@ -24,8 +24,10 @@ if(NOT(WIN32 OR UNIX OR APPLE))
     message( FATAL_ERROR "MonetDBLite is only available to Windows, Linux and MacOS X" )
 endif()
 
-add_custom_target(sqlparser bison -b ${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/server/sql_parser -y  -d -p sql -r all ${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/server/sql_parser.y
-        COMMAND rm ${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/server/sql_parser.output)
+if(NOT(WIN32))
+	add_custom_target(sqlparser bison -b ${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/server/sql_parser -y  -d -p sql -r all ${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/server/sql_parser.y
+						COMMAND ${CMAKE_COMMAND} remove ${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/server/sql_parser.output)
+endif()
 
 set(SQLSCRIPTS                 "${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/scripts/09_like.sql")
 set(SQLSCRIPTS "${SQLSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/scripts/10_math.sql")
@@ -88,13 +90,18 @@ set(MALAUTO              "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/modules/01
 set(MALAUTO "${MALAUTO}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/modules/01_calc.mal")
 set(MALAUTO "${MALAUTO}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/sqlbackend/40_sql.mal")
 
-add_custom_target(inlines rm -rf build/inlines
-        COMMAND mkdir -p build/inlines/createdb
-        COMMAND mkdir -p build/inlines/autoload
-        COMMAND cp ${MALSCRIPTS}  build/inlines
-        COMMAND cp ${MALAUTO}     build/inlines/autoload
-        COMMAND cp ${SQLSCRIPTS}  build/inlines/createdb
-        COMMAND python ${CMAKE_SOURCE_DIR}/src/monetdblite/src/embedded/inlined_scripts.py build/inlines/ ${CMAKE_SOURCE_DIR}/src/monetdblite/src/embedded/inlined_scripts.c)
+if (EXISTS "${CMAKE_SOURCE_DIR}/build/inlines")
+	file(REMOVE_RECURSE "${CMAKE_SOURCE_DIR}/build/inlines")
+endif()
+file(MAKE_DIRECTORY     "${CMAKE_SOURCE_DIR}/build/inlines")
+file(MAKE_DIRECTORY     "${CMAKE_SOURCE_DIR}/build/inlines/createdb")
+file(MAKE_DIRECTORY     "${CMAKE_SOURCE_DIR}/build/inlines/autoload")
+file(COPY ${MALSCRIPTS} DESTINATION "${CMAKE_SOURCE_DIR}/build/inlines")
+file(COPY ${MALAUTO}    DESTINATION "${CMAKE_SOURCE_DIR}/build/inlines/autoload")
+file(COPY ${MALSCRIPTS} DESTINATION "${CMAKE_SOURCE_DIR}/build/inlines/createdb")
+
+add_custom_target(inlines 
+        COMMAND python "${CMAKE_SOURCE_DIR}/src/monetdblite/src/embedded/inlined_scripts.py" "${CMAKE_SOURCE_DIR}/build/inlines" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/embedded/inlined_scripts.c")
 
 set(INCLUDESDIRS )
 list(APPEND INCLUDESDIRS src/monetdblite/src)
@@ -493,7 +500,11 @@ list(APPEND SOURCEFILES src/embeddedjava/nl_cwi_monetdb_embedded_tables_MonetDBT
 
 add_library(monetdb5 SHARED ${SOURCEFILES})
 
-add_dependencies(monetdb5 sqlparser inlines)
+add_dependencies(monetdb5 inlines)
+
+if(NOT(WIN32))
+	add_dependencies(monetdb5 sqlparser)
+endif()
 
 if (UNIX AND NOT(DEFINED ENV{CROSS_COMPILING}))
     set_target_properties(monetdb5 PROPERTIES LINK_FLAGS "-lm -lrt -ldl -lpthread")
