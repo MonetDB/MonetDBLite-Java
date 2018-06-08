@@ -24,12 +24,10 @@ if(NOT(WIN32 OR UNIX OR APPLE))
     message( FATAL_ERROR "MonetDBLite is only available to Windows, Linux and MacOS X" )
 endif()
 
-if(NOT(WIN32))
-    find_package(BISON)
-    BISON_TARGET(BisonOutput ${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/server/sql_parser.y ${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/server/sql_parser.tab.c
-                COMPILE_FLAGS --report=none
-                DEFINES_FILE ${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/server/sql_parser.tab.h)
-endif()
+find_package(BISON)
+BISON_TARGET(BisonOutput ${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/server/sql_parser.y ${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/server/sql_parser.tab.c
+            COMPILE_FLAGS "-y -d -p sql --report=none"
+            DEFINES_FILE ${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/server/sql_parser.tab.h)
 
 set(SQLSCRIPTS                 "${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/scripts/09_like.sql")
 set(SQLSCRIPTS "${SQLSCRIPTS}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/scripts/10_math.sql")
