@@ -457,6 +457,8 @@ Embedded connection, these wrappers are not used, so only Strings and byte[] are
 
 ## Changelog
 
+* 2.38
+    * Fixed buffer in for batch execution in embedded JDBC connection.
 * 2.37
     * Created Cmake file for compilation. Merged with MonetDB Mar2018 release.
 * 2.36

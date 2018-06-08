@@ -25,8 +25,10 @@ if(NOT(WIN32 OR UNIX OR APPLE))
 endif()
 
 if(NOT(WIN32))
-	add_custom_target(sqlparser bison -b ${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/server/sql_parser -y  -d -p sql -r all ${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/server/sql_parser.y
-						COMMAND ${CMAKE_COMMAND} remove ${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/server/sql_parser.output)
+    find_package(BISON)
+    BISON_TARGET(BisonOutput ${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/server/sql_parser.y ${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/server/sql_parser.tab.c
+                COMPILE_FLAGS --report=none
+                DEFINES_FILE ${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/server/sql_parser.tab.h)
 endif()
 
 set(SQLSCRIPTS                 "${CMAKE_SOURCE_DIR}/src/monetdblite/src/sql/scripts/09_like.sql")
@@ -91,7 +93,7 @@ set(MALAUTO "${MALAUTO}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/modules/01
 set(MALAUTO "${MALAUTO}" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/mal/sqlbackend/40_sql.mal")
 
 if (EXISTS "${CMAKE_SOURCE_DIR}/build/inlines")
-	file(REMOVE_RECURSE "${CMAKE_SOURCE_DIR}/build/inlines")
+    file(REMOVE_RECURSE "${CMAKE_SOURCE_DIR}/build/inlines")
 endif()
 file(MAKE_DIRECTORY     "${CMAKE_SOURCE_DIR}/build/inlines")
 file(MAKE_DIRECTORY     "${CMAKE_SOURCE_DIR}/build/inlines/createdb")
@@ -501,10 +503,6 @@ list(APPEND SOURCEFILES src/embeddedjava/nl_cwi_monetdb_embedded_tables_MonetDBT
 add_library(monetdb5 SHARED ${SOURCEFILES})
 
 add_dependencies(monetdb5 inlines)
-
-if(NOT(WIN32))
-	add_dependencies(monetdb5 sqlparser)
-endif()
 
 if (UNIX AND NOT(DEFINED ENV{CROSS_COMPILING}))
     set_target_properties(monetdb5 PROPERTIES LINK_FLAGS "-lm -lrt -ldl -lpthread")
