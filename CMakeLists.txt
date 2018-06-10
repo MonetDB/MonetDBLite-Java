@@ -5,7 +5,7 @@ cmake_minimum_required (VERSION 3.8)
 
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS 1)
 
-add_definitions(-DLIBGDK -DLIBMAL -DLIBOPTIMIZER -DLIBSTREAM -DHAVE_EMBEDDED -DHAVE_EMBEDDED_JAVA)
+add_definitions(-DLIBGDK -DLIBMAL -DLIBOPTIMIZER -DLIBSTREAM -DLIBSQL -DHAVE_EMBEDDED -DHAVE_EMBEDDED_JAVA)
 
 if (WIN32)
     set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_CRT_SECURE_NO_WARNINGS -DMONETDBLITE_COMPILE")
@@ -98,7 +98,7 @@ file(MAKE_DIRECTORY     "${CMAKE_SOURCE_DIR}/build/inlines/createdb")
 file(MAKE_DIRECTORY     "${CMAKE_SOURCE_DIR}/build/inlines/autoload")
 file(COPY ${MALSCRIPTS} DESTINATION "${CMAKE_SOURCE_DIR}/build/inlines")
 file(COPY ${MALAUTO}    DESTINATION "${CMAKE_SOURCE_DIR}/build/inlines/autoload")
-file(COPY ${MALSCRIPTS} DESTINATION "${CMAKE_SOURCE_DIR}/build/inlines/createdb")
+file(COPY ${SQLSCRIPTS} DESTINATION "${CMAKE_SOURCE_DIR}/build/inlines/createdb")
 
 add_custom_target(inlines 
         COMMAND python "${CMAKE_SOURCE_DIR}/src/monetdblite/src/embedded/inlined_scripts.py" "${CMAKE_SOURCE_DIR}/build/inlines" "${CMAKE_SOURCE_DIR}/src/monetdblite/src/embedded/inlined_scripts.c")
