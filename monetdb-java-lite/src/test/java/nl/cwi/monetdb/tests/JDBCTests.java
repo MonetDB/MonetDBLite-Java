@@ -122,50 +122,103 @@ public class JDBCTests extends MonetDBJavaLiteTesting {
 	@Test
 	@DisplayName("Create some concurrent JDBC connections")
 	void timeToStress() throws InterruptedException {
-		int stress = 30;
-		List<Thread> stressers = new ArrayList<>(stress);
+		int stress = 8;
+		Thread[] stressers = new Thread[stress];
+		String[] messages = new String[stress];
 
 		for (int i = 0; i < stress; i++) {
 			final int threadID = i;
+			final int j = i;
 			Thread t = new Thread(() -> {
+				Connection con = null;
+				Statement stmt = null;
+				ResultSet rs = null;
 				try {
-					Connection con = createJDBCEmbeddedConnection();
-					Statement stmt = con.createStatement();
-					ResultSet rs = stmt.executeQuery("SELECT " + threadID);
+					con = createJDBCEmbeddedConnection();
+					stmt = con.createStatement();
+					rs = stmt.executeQuery("SELECT " + threadID);
 					if (!rs.next()) {
-						Assertions.fail("No response from the server in one of the Threads!");
+						messages[j] = "No response from the server in one of the Threads!";
 					} else {
-						Assertions.assertEquals(threadID, rs.getInt(1), "No response from the server in one of the Threads!");
+						int intt = rs.getInt(1);
+						if(threadID != intt) {
+							messages[j] = "No response from the server in one of the Threads!";
+						}
 					}
-					rs.close();
-					stmt.close();
-					con.close();
 				} catch (SQLException e) {
-					Assertions.fail(e.getMessage());
+					messages[j] = e.getMessage();
+				}
+				if(rs != null) {
+					try {
+						rs.close();
+					} catch (SQLException e1) {
+						if(messages[j] == null) {
+							messages[j] = e1.getMessage();
+						}
+					}
+				}
+				if(stmt != null) {
+					try {
+						stmt.close();
+					} catch (SQLException e2) {
+						if(messages[j] == null) {
+							messages[j] = e2.getMessage();
+						}
+					}
+				}
+				if(con != null) {
+					try {
+						con.close();
+					} catch (SQLException e3) {
+						if(messages[j] == null) {
+							messages[j] = e3.getMessage();
+						}
+					}
 				}
 			});
 			t.start();
-			stressers.add(t);
+			stressers[j] = t;
 		}
 
 		for (Thread t : stressers) {
 			t.join();
 		}
+		for(String ss : messages) {
+			if(ss != null) {
+				Assertions.fail(ss);
+			}
+		}
 	}
 
 	@Test
 	@DisplayName("Test more JDBC concurrent connections")
-	void otherStressTest() throws SQLException {
-		int stress = 50;
-		List<Connection> cons = new ArrayList<>(stress); //Create many simultaneous connections
-		for (int i = 0; i < stress; i++) {
-			Connection con = createJDBCEmbeddedConnection();
-			con.setAutoCommit(false);
-			cons.add(con);
+	void otherStressTest() {
+		int stress = 8;
+		String message = null;
+		Connection[] cons = new Connection[stress]; //Create many simultaneous connections
+		try {
+			for (int i = 0; i < stress; i++) {
+				Connection con = createJDBCEmbeddedConnection();
+				con.setAutoCommit(false);
+				cons[i] = con;
+			}
+		} catch (SQLException e1) {
+			message = e1.getMessage();
 		}
-		for (Connection con : cons) {
-			con.setAutoCommit(true);
-			con.close();
+		for (int i = 0; i < stress; i++) {
+			try {
+				if(cons[i] != null) {
+					cons[i].setAutoCommit(true);
+					cons[i].close();
+				}
+			} catch (SQLException e1) {
+				if(message == null) {
+					message = e1.getMessage();
+				}
+			}
+		}
+		if(message != null) {
+			Assertions.fail(message);
 		}
 	}
 

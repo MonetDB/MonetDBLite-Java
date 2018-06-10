@@ -91,26 +91,39 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 	@Test
 	@DisplayName("Just another race of MonetDBEmbeddedConnections")
 	void oneMoreRace() throws InterruptedException {
-		int stress = 30;
-		List<Thread> otherStressers = new ArrayList<>(stress);
+		int stress = 8;
+		Thread[] otherStressers = new Thread[stress];
+		String[] messages = new String[stress];
 
 		for (int i = 0; i < stress; i++) {
+			final int j = i;
 			Thread t = new Thread(() -> {
+				MonetDBEmbeddedConnection con = null;
+				QueryResultSet rs = null;
 				try {
-					MonetDBEmbeddedConnection con = MonetDBEmbeddedDatabase.createConnection();
-					QueryResultSet rs = con.executeQuery("SELECT * from tables;");
-					rs.close();
-					con.close();
+					con = MonetDBEmbeddedDatabase.createConnection();
+					rs = con.executeQuery("SELECT 1;");
 				} catch (MonetDBEmbeddedException e) {
-					Assertions.fail(e.getMessage());
+					messages[j] = e.getMessage();
+				}
+				if(rs != null) {
+					rs.close();
+				}
+				if(con != null) {
+					con.close();
 				}
 			});
 			t.start();
-			otherStressers.add(t);
+			otherStressers[j] = t;
 		}
 
 		for (Thread t : otherStressers) {
 			t.join();
+		}
+		for(String ss : messages) {
+			if(ss != null) {
+				Assertions.fail(ss);
+			}
 		}
 	}
 
