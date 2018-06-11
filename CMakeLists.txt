@@ -3,21 +3,15 @@
 #
 cmake_minimum_required (VERSION 3.8)
 
-set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS 1)
-
 add_definitions(-DLIBGDK -DLIBMAL -DLIBOPTIMIZER -DLIBSTREAM -DLIBSQL -DHAVE_EMBEDDED -DHAVE_EMBEDDED_JAVA)
 
 if (WIN32)
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS 1)
     set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_CRT_SECURE_NO_WARNINGS -DMONETDBLITE_COMPILE")
     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -D_CRT_SECURE_NO_WARNINGS -DMONETDBLITE_COMPILE -DNDEBUG")
-endif()
-
-if (UNIX OR APPLE)
-    IF(DEFINED ENV{OPT})
-        set(CMAKE_C_FLAGS "-O3 -fPIC -Wfatal-errors -Wall -DNDEBUG")
-    ELSE()
-        set(CMAKE_C_FLAGS "-g -O0 -fPIC -Wfatal-errors -Wall -Wextra -Werror -Wmissing-prototypes -Wold-style-definition")
-    ENDIF()
+elseif (UNIX OR APPLE)
+    set(CMAKE_C_FLAGS_DEBUG "-g -O0 -fPIC -Wfatal-errors -Wall -Wextra -Werror -Wmissing-prototypes -Wold-style-definition")
+    set(CMAKE_C_FLAGS_RELEASE "-O3 -fPIC -Wfatal-errors -Wall -DNDEBUG")
 endif()
 
 if(NOT(WIN32 OR UNIX OR APPLE))
@@ -504,8 +498,6 @@ add_dependencies(monetdb5 inlines)
 
 if (UNIX AND NOT(DEFINED ENV{CROSS_COMPILING}))
     set_target_properties(monetdb5 PROPERTIES LINK_FLAGS "-lm -lrt -ldl -lpthread")
-endif (UNIX AND NOT(DEFINED ENV{CROSS_COMPILING}))
-
-if (APPLE OR DEFINED ENV{CROSS_COMPILING})
+elseif (APPLE OR DEFINED ENV{CROSS_COMPILING})
     set_target_properties(monetdb5 PROPERTIES LINK_FLAGS "-ldl -lpthread")
-endif (APPLE OR DEFINED ENV{CROSS_COMPILING})
+endif()
