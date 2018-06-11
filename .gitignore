@@ -31,3 +31,10 @@ Project.cbp
 monetdb-java-lite/gradle.properties
 monetdb-java-lite/secring.gpg
 id_monetdb
+
+# Files controlled by versions
+build_and_upload.sh
+HEADER.html
+monetdb-java-lite/pom.xml
+monetdb-java-lite/build.gradle
+monetdb-java-lite/src/main/java/nl/cwi/monetdb/embedded/env/MonetDBJavaLiteLoader.java

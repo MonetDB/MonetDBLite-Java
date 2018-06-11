@@ -26,7 +26,7 @@ allprojects {
     targetCompatibility = 1.8
 }
 
-version = '2.38'
+version = '@MONETDBLITEJAVA_NEXT_MAJOR_VERSION@.@MONETDBLITEJAVA_NEXT_MINOR_VERSION@'
 ext.version = version
 group = 'monetdb'
 ext.group = group
@@ -36,8 +36,8 @@ ext.packaging = 'jar'
 
 dependencies {
     //New MonetDB JDBC driver
-    compile("${group}:monetdb-jdbc-new:2.36")
-    runtime("${group}:monetdb-jdbc-new:2.36")
+    compile("${group}:monetdb-jdbc-new:@NEW_JDBC_STABLE_MAJOR_VERSION@.@NEW_JDBC_STABLE_MINOR_VERSION@")
+    runtime("${group}:monetdb-jdbc-new:@NEW_JDBC_STABLE_MAJOR_VERSION@.@NEW_JDBC_STABLE_MINOR_VERSION@")
 
     //JUnit Jupiter API and TestEngine implementation
     testCompile('org.junit.jupiter:junit-jupiter-api:+')

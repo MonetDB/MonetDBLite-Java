@@ -97,7 +97,7 @@ public final class MonetDBJavaLiteLoader {
 	/**
 	 * The String representation of the latest version of the MonetDB JDBC driver.
 	 */
-	private static final String monetDBJDBCDriverString = "2-38";
+	private static final String monetDBJDBCDriverString = "@MONETDBLITEJAVA_NEXT_MAJOR_VERSION@-@MONETDBLITEJAVA_NEXT_MINOR_VERSION@";
 
 	static {
 		try {

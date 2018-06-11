@@ -27,7 +27,7 @@ mv ../HEADER.html synchronizing
 # Move the javadocs
 mv build/docs/javadoc/* synchronizing/javadocs/embedded/
 # Move the monetdb-java-lite jar
-mv build/libs/monetdb-java-lite-2.38.jar synchronizing
+mv build/libs/monetdb-java-lite-@MONETDBLITEJAVA_NEXT_MAJOR_VERSION@.@MONETDBLITEJAVA_NEXT_MINOR_VERSION@.jar synchronizing
 # Rsync the library files to the monet.org machine
 rsync -aqz --ignore-times synchronizing/* ferreira@monetdb.org:/var/www/html/downloads/Java-Experimental/
 # Remove it in the end

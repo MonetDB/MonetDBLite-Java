@@ -46,6 +46,10 @@ echo "Performing ${BUILDTYPE} build on ${1}"
 # Move into the script's directory
 BASEDIR=$(realpath `dirname $0`)
 cd $BASEDIR
+
+# Set the proper versions
+./versions.sh
+
 mkdir -p build/$BUILDTYPE/$BUILDSYS
 cd build/$BUILDTYPE/$BUILDSYS
 
