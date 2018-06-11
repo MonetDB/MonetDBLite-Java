@@ -2375,16 +2375,16 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 	private native void freeResultSet(long structPointer);
 
 	@Override
-	public void close() {
-		super.close();
-		this.structPointer = 0;
-	}
-
-	@Override
 	protected void closeResultImplementation() {
 		if(!this.isQueryResultSetClosed()) {
 			this.freeResultSet(this.structPointer);
 			this.structPointer = 0;
 		}
+	}
+
+	@Override
+	public void close() {
+		super.close();
+		this.closeResultImplementation();
 	}
 }
