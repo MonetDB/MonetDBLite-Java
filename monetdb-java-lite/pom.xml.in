@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>monetdb</groupId>
   <artifactId>monetdb-java-lite</artifactId>
-  <version>@MONETDBLITEJAVA_NEXT_MAJOR_VERSION@.@MONETDBLITEJAVA_NEXT_MINOR_VERSION@</version>
+  <version>@MONETDBLITEJAVA_NEXT_MAJOR_VERSION@.@MONETDBLITEJAVA_NEXT_MINOR_VERSION@@MONETDBLITEJAVA_NEXT_SNAPSHOT@</version>
   <name>monetdb-java-lite</name>
   <description>Serveless version of the MonetDB database in the JVM - JDBC compliant</description>
   <url>https://github.com/hannesmuehleisen/MonetDBLite-Java/tree/master</url>
@@ -43,7 +43,7 @@
     <dependency>
       <groupId>monetdb</groupId>
       <artifactId>monetdb-jdbc-new</artifactId>
-      <version>@NEW_JDBC_NEXT_MAJOR_VERSION@.@NEW_JDBC_NEXT_MINOR_VERSION@</version>
+      <version>@NEW_JDBC_NEXT_MAJOR_VERSION@.@NEW_JDBC_NEXT_MINOR_VERSION@@NEW_JDBC_NEXT_SNAPSHOT@</version>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
