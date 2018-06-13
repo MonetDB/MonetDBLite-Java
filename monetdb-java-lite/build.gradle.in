@@ -36,8 +36,8 @@ ext.packaging = 'jar'
 
 dependencies {
     //New MonetDB JDBC driver
-    compile("${group}:monetdb-jdbc-new:@NEW_JDBC_NEXT_MAJOR_VERSION@.@NEW_JDBC_NEXT_MINOR_VERSION@@NEW_JDBC_NEXT_SNAPSHOT@")
-    runtime("${group}:monetdb-jdbc-new:@NEW_JDBC_NEXT_MAJOR_VERSION@.@NEW_JDBC_NEXT_MINOR_VERSION@@NEW_JDBC_NEXT_SNAPSHOT@")
+    compile("${group}:monetdb-jdbc-new:+")
+    runtime("${group}:monetdb-jdbc-new:+")
 
     //JUnit Jupiter API and TestEngine implementation
     testCompile('org.junit.jupiter:junit-jupiter-api:+')
@@ -68,7 +68,7 @@ shadowJar { //Build instruction to the shadowJar (a jar which includes both the 
 }
 
 task wrapper(type: Wrapper) { //Set the gradle wrapper, so users don't have to install Gradle
-    gradleVersion = '4.7'
+    gradleVersion = '4.8'
 }
 
 task javadocJar(type: Jar) { //Generate the javadocs jar
