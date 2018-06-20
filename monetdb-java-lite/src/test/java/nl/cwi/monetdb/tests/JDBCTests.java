@@ -11,9 +11,12 @@ package nl.cwi.monetdb.tests;
 import nl.cwi.monetdb.tests.helpers.MonetDBJavaLiteTesting;
 import org.junit.jupiter.api.*;
 
+import java.math.BigDecimal;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.text.DecimalFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Locale;
 
 /**
  * Test JDBC stuff in MonetDBJavaLite :)
@@ -103,7 +106,7 @@ public class JDBCTests extends MonetDBJavaLiteTesting {
 		int rows1 = stmt.executeUpdate("CREATE TABLE test2 (a int, b boolean, c real, d text)");
 		Assertions.assertEquals(-2, rows1, "The creation should have affected no rows!");
 		int rows2 = stmt.executeUpdate("INSERT INTO test2 VALUES (1, 'false', 3.2, 'hola');");
-		Assertions.assertEquals(1, rows2, "The creation should have affected 1 row!");
+		Assertions.assertEquals(1, rows2, "The insertion should have affected 1 row!");
 
 		ResultSet rs = stmt.executeQuery("SELECT * from test2;");
 		rs.next();
@@ -573,5 +576,139 @@ public class JDBCTests extends MonetDBJavaLiteTesting {
 
 		con.rollback();
 		con.close();
+	}
+
+	@Test
+	@DisplayName("Test getObject method")
+	void testGetObject() throws SQLException {
+		Connection conn = createJDBCEmbeddedConnection();
+		Statement stmt = conn.createStatement();
+		int rows1 = stmt.executeUpdate("CREATE TABLE testgo (a boolean, b int, c string, d real, e double, f smallint, g bigint, h decimal);");
+		Assertions.assertEquals(-2, rows1, "The creation should have affected no rows!");
+		int rows2 = stmt.executeUpdate("INSERT INTO testgo VALUES ('true', '122', 'ola', '1.22', '1.24', '-5000', '231', '-6500'), (NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL), ('false', '0', 'piña', '0', '0', '0', '0', '0');");
+		Assertions.assertEquals(3, rows2, "The insertion should have affected 3 rows!");
+
+		DecimalFormat df = new DecimalFormat();
+		df.setMaximumFractionDigits(3);
+		df.setMinimumFractionDigits(3);
+
+		Boolean[] column1 = new Boolean[]{true, null, false};
+		Integer[] column2 = new Integer[]{122, null, 0};
+		String[] column3 = new String[]{"ola", null, "piña"};
+		Float[] column4 = new Float[]{1.22f, null, 0f};
+		Double[] column5 = new Double[]{1.24d, null, 0d};
+		Short[] column6 = new Short[]{-5000, null, 0};
+		Long[] column7 = new Long[]{231L, null, 0L};
+		BigDecimal[] column8 = new BigDecimal[]{new BigDecimal(-6500), null, BigDecimal.ZERO};
+
+		ResultSet rs = stmt.executeQuery("SELECT * from testgo;");
+		for(int i = 0 ; i < 3; i++) {
+			rs.next();
+			Assertions.assertEquals(column1[i], rs.getObject(1), "Problems in the JDBC result set!");
+			Assertions.assertEquals(column2[i], rs.getObject(2), "Problems in the JDBC result set!");
+			Assertions.assertEquals(column3[i], rs.getObject(3), "Problems in the JDBC result set!");
+			Assertions.assertEquals((i == 1) ? column1[i] : column1[i].toString(), rs.getString(1), "Problems in the JDBC result set!");
+			Assertions.assertEquals((i == 1) ? column2[i] : column2[i].toString(), rs.getString(2), "Problems in the JDBC result set!");
+			Assertions.assertEquals((i == 1) ? column3[i] : column3[i].toString(), rs.getString(3), "Problems in the JDBC result set!");
+
+			if(i == 1) {
+				Assertions.assertEquals(column4[i], rs.getObject(4), "Problems in the JDBC result set!");
+				Assertions.assertEquals(column4[i], rs.getString(4), "Problems in the JDBC result set!");
+				Assertions.assertEquals(column5[i], rs.getObject(5), "Problems in the JDBC result set!");
+				Assertions.assertEquals(column5[i], rs.getString(5), "Problems in the JDBC result set!");
+			} else {
+				Float f41 = (Float) rs.getObject(4);
+				Float f42 = Float.parseFloat(rs.getString(4));
+				Double f51 = (Double) rs.getObject(5);
+				Double f52 = Double.parseDouble(rs.getString(5));
+				if(Math.abs(f41 - column4[i]) > 0.1) {
+					Assertions.fail("Problems in the JDBC result set!");
+				}
+				if(Math.abs(f42 - column4[i]) > 0.1) {
+					Assertions.fail("Problems in the JDBC result set!");
+				}
+				if(Math.abs(f51 - column5[i]) > 0.1) {
+					Assertions.fail("Problems in the JDBC result set!");
+				}
+				if(Math.abs(f52 - column5[i]) > 0.1) {
+					Assertions.fail("Problems in the JDBC result set!");
+				}
+			}
+
+			Assertions.assertEquals(column6[i], rs.getObject(6), "Problems in the JDBC result set!");
+			Assertions.assertEquals(column7[i], rs.getObject(7), "Problems in the JDBC result set!");
+			Assertions.assertEquals((i == 1) ? column6[i] : column6[i].toString(), rs.getString(6), "Problems in the JDBC result set!");
+			Assertions.assertEquals((i == 1) ? column7[i] : column7[i].toString(), rs.getString(7), "Problems in the JDBC result set!");
+
+			if(i == 1) {
+				Assertions.assertEquals(column8[i], rs.getObject(8), "Problems in the JDBC result set!");
+				Assertions.assertEquals(column8[i], rs.getString(8), "Problems in the JDBC result set!");
+				Assertions.assertEquals(column8[i], rs.getBigDecimal(8), "Problems in the JDBC result set!");
+			} else {
+				Assertions.assertEquals(df.format(column8[i]), df.format(rs.getObject(8)), "Problems in the JDBC result set!");
+				Assertions.assertEquals(df.format(column8[i]), df.format(new BigDecimal(rs.getString(8))), "Problems in the JDBC result set!");
+				Assertions.assertEquals(df.format(column8[i]), df.format(rs.getBigDecimal(8)), "Problems in the JDBC result set!");
+			}
+		}
+		rs.close();
+		int rows5 = stmt.executeUpdate("DROP TABLE testgo;");
+		Assertions.assertEquals(-2, rows5, "The deletion should have affected no rows!");
+		stmt.close();
+		conn.close();
+	}
+
+	@Test
+	@DisplayName("Test getObject method with dates")
+	void testGetObjectTime() throws SQLException, ParseException {
+		Connection conn = createJDBCEmbeddedConnection();
+		Statement stmt = conn.createStatement();
+
+		SimpleDateFormat dateFormater = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
+		SimpleDateFormat timeFormater = new SimpleDateFormat("HH:mm:ss", Locale.ENGLISH);
+		SimpleDateFormat timestampFormater = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH);
+
+		int rows1 = stmt.executeUpdate("CREATE TABLE testdates (a time, b date, c timestamp);");
+		Assertions.assertEquals(-2, rows1, "The creation should have affected no rows!");
+		int rows2 = stmt.executeUpdate("INSERT INTO testdates VALUES ('23:10:46', '2015-01-01', '2017-06-30T00:02:44'), (NULL, NULL, NULL), ('10:10:46', '2019-12-12', '2001-05-01T21:02:00');");
+		Assertions.assertEquals(3, rows2, "The insertion should have affected 3 rows!");
+
+		Time[] column1 = new Time[]{new Time(timeFormater.parse("23:10:46").getTime()),
+				null, new Time(timeFormater.parse("10:10:46").getTime())};
+		Date[] column2 = new Date[]{new Date(dateFormater.parse("2015-01-01").getTime()),
+				null, new Date(dateFormater.parse("2019-12-12").getTime())};
+		Timestamp[] column3 = new Timestamp[]{new Timestamp(timestampFormater.parse("2017-06-30 00:02:44").getTime()),
+				null, new Timestamp(timestampFormater.parse("2001-05-01 21:02:00").getTime())};
+
+		ResultSet rs = stmt.executeQuery("SELECT * from testdates;");
+		for(int i = 0 ; i < 3; i++) {
+			rs.next();
+			if(i == 1) {
+				Assertions.assertEquals(column1[i], rs.getTime(1), "Problems in the JDBC result set!");
+				Assertions.assertEquals(column1[i], rs.getObject(1), "Problems in the JDBC result set!");
+				Assertions.assertEquals(column1[i], rs.getString(1), "Problems in the JDBC result set!");
+				Assertions.assertEquals(column2[i], rs.getDate(2), "Problems in the JDBC result set!");
+				Assertions.assertEquals(column2[i], rs.getObject(2), "Problems in the JDBC result set!");
+				Assertions.assertEquals(column2[i], rs.getString(2), "Problems in the JDBC result set!");
+				Assertions.assertEquals(column3[i], rs.getTimestamp(3), "Problems in the JDBC result set!");
+				Assertions.assertEquals(column3[i], rs.getObject(3), "Problems in the JDBC result set!");
+				Assertions.assertEquals(column3[i], rs.getString(3), "Problems in the JDBC result set!");
+			} else {
+				Assertions.assertEquals(column1[i].toString(), rs.getTime(1).toString(), "Problems in the JDBC result set!");
+				Assertions.assertEquals(column1[i].toString(), rs.getObject(1).toString(), "Problems in the JDBC result set!");
+				Assertions.assertEquals(column1[i].toString(), rs.getString(1), "Problems in the JDBC result set!");
+				Assertions.assertEquals(column2[i].toString(), rs.getDate(2).toString(), "Problems in the JDBC result set!");
+				Assertions.assertEquals(column2[i].toString(), rs.getObject(2).toString(), "Problems in the JDBC result set!");
+				Assertions.assertEquals(column2[i].toString(), rs.getString(2), "Problems in the JDBC result set!");
+				//TODO who dares to deal with timezones?
+				//Assertions.assertEquals(column3[i].toString(), rs.getTimestamp(3).toString(), "Problems in the JDBC result set!");
+				//Assertions.assertEquals(column3[i].toString(), rs.getObject(3).toString(), "Problems in the JDBC result set!");
+				//Assertions.assertEquals(column3[i].toString(), rs.getString(3).toString(), "Problems in the JDBC result set!");
+			}
+		}
+		rs.close();
+		int rows5 = stmt.executeUpdate("DROP TABLE testdates;");
+		Assertions.assertEquals(-2, rows5, "The deletion should have affected no rows!");
+		stmt.close();
+		conn.close();
 	}
 }
