@@ -102,7 +102,9 @@ and the Data Vaults extension.
 
 **The MonetDB Embedded Database has to be loaded in order to perform all the operations!** Due to the one database
 process restriction, the `MonetDBEmbeddedDatabase` class is a singleton. The `MonetDBEmbeddedDatabase` will create the
-MonetDB's farm if it's nonexistent in the directory, otherwise it will initialize the existing one. 
+MonetDB's farm if it's nonexistent in the directory, otherwise it will initialize the existing one. **MonetDBLite
+farm directories are NOT compatible with MonetDB Server ones.** To exchange data between the two systems, use SQL import
+and export statements such as the CSV import and export.
 
 Starting on `monetdb-java-lite` `2.33` and `monetdb-jdbc-new` `2.32` it is possible to start the in-memory mode by
 providing a `null` pointer, `:memory:` or an empty string in the path. In an in-memory connection data is not persisted
@@ -140,8 +142,8 @@ there is a explanation on how to easily check for SQL NULL values in query resul
 | smallint                             | short                                                                                       | System's [SHRT_MIN](http://en.cppreference.com/w/c/types/limits#Limits_of_integer_types) value               |
 | integer                              | int                                                                                         | System's [INT_MIN](http://en.cppreference.com/w/c/types/limits#Limits_of_integer_types) value                |
 | bigint                               | long                                                                                        | System's [LLONG_MIN](http://en.cppreference.com/w/c/types/limits#Limits_of_integer_types) value              |
-| real                                 | float                                                                                       | Inverse system's [FLT_MAX](http://en.cppreference.com/w/c/types/limits#Limits_of_floating_point_types) value |
-| double                               | double                                                                                      | Inverse system's [DBL_MAX](http://en.cppreference.com/w/c/types/limits#Limits_of_floating_point_types) value |
+| real                                 | float                                                                                       | System's [NaN](https://en.cppreference.com/w/cpp/numeric/math/NAN) value                                     |
+| double                               | double                                                                                      | System's [NaN](https://en.cppreference.com/w/cpp/numeric/math/NAN) value                                     |
 | decimal/numeric                      | [java.math.BigDecimal](https://docs.oracle.com/javase/8/docs/api/java/math/BigDecimal.html) | Null pointer                                                                                                 |
 | char/varchar/clob                    | [java.lang.String](https://docs.oracle.com/javase/8/docs/api/java/lang/String.html)         | Null pointer                                                                                                 |
 | date                                 | [java.sql.Date](https://docs.oracle.com/javase/8/docs/api/java/sql/Date.html)               | Null pointer                                                                                                 |
