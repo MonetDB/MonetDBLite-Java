@@ -36,6 +36,7 @@ static int executeQuery(JNIEnv *env, jlong connectionPointer, jstring query, jbo
 						int *query_type, size_t *lastId, lng *rowCount, lng *prepareID) {
 	const char *query_string_tmp;
 	char* err = NULL;
+	int foundExc = 0, i = 0;
 
 	if(connectionPointer == 0) {
 		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "Connection already closed?");
@@ -50,7 +51,12 @@ static int executeQuery(JNIEnv *env, jlong connectionPointer, jstring query, jbo
 	err = monetdb_query((monetdb_connection) connectionPointer, (char*) query_string_tmp, (char) execute, output, rowCount, prepareID);
 	(*env)->ReleaseStringUTFChars(env, query, query_string_tmp);
 	if (err) {
-		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), err);
+		while(err[i] && !foundExc) {
+			if(err[i] == '!')
+				foundExc = 1;
+			i++;
+		}
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), err + (foundExc ? i : 0));
 		GDKfree(err);
 		return 3;
 	}

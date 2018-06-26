@@ -18,15 +18,25 @@
 
 static void setErrorResponse(JNIEnv *env, jobject jdbccon, char* errorMessage) {
 	jintArray lineResponse = (jintArray) (*env)->GetObjectField(env, jdbccon, getServerResponsesID());
+	jint response[2] = {1,4}; //ERROR AND PROMPT
+	int foundExc = 0, i = 0;
+
 	if(lineResponse == NULL) {
 		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System out of memory!");
 		GDKfree(errorMessage);
 		return;
 	}
-	jint response[2] = {1,4}; //ERROR AND PROMPT
 	(*env)->SetIntArrayRegion(env, lineResponse, 0, 2, response);
-	(*env)->SetObjectField(env, jdbccon, getLastErrorID(), (*env)->NewStringUTF(env, errorMessage));
-	GDKfree(errorMessage);
+
+	if(errorMessage) {
+		while(errorMessage[i] && !foundExc) {
+			if(errorMessage[i] == '!')
+				foundExc = 1;
+			i++;
+		}
+		(*env)->SetObjectField(env, jdbccon, getLastErrorID(), (*env)->NewStringUTF(env, errorMessage + (foundExc ? i : 0)));
+		GDKfree(errorMessage);
+	}
 }
 
 JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection_getNextTableHeaderInternal

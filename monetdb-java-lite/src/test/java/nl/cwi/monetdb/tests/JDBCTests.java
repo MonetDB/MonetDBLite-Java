@@ -271,7 +271,7 @@ public class JDBCTests extends MonetDBJavaLiteTesting {
 		Statement stmt = conn.createStatement();
 		conn.setAutoCommit(false);
 		Assertions.assertThrows(SQLException.class, () -> stmt.execute("SELECT COUNT(*) FROM YouAreGoingToFail;"));
-		Assertions.assertFalse(conn.isValid(30), "Auto-commit not working?");
+		Assertions.assertTrue(conn.isValid(30), "Auto-commit not working?");
 
 		conn.rollback(); //we can rollback still
 		stmt.close();
