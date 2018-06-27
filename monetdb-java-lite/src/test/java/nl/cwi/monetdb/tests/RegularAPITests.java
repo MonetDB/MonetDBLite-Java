@@ -1031,6 +1031,14 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 		Assertions.assertEquals(-2, rows3, "The deletion should have affected no rows!");
 	}
 
+	@Test
+	@DisplayName("Test autocommit consistent")
+	void testAutoCommitAgain() throws MonetDBEmbeddedException {
+		Assertions.assertThrows(MonetDBEmbeddedException.class, () -> connection.executeUpdate("DROP TABLE dontexist;"));
+		connection.executeUpdate("CREATE TABLE beok (a int);");
+		connection.executeUpdate("DROP TABLE beok;");
+	}
+
 	@AfterAll
 	@DisplayName("Shutdown database at the end")
 	static void shutDatabase() throws MonetDBEmbeddedException, IOException {
