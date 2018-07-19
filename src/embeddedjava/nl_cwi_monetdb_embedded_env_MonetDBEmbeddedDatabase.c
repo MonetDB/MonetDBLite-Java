@@ -23,6 +23,7 @@ JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedDataba
 	jfieldID pathID;
 	jstring loadPath = NULL;
 	jobject result = NULL;
+	int i = 0, foundExc = 0;
 
 	if(dbDirectory) {
 		dbdir_string_tmp = (*env)->GetStringUTFChars(env, dbDirectory, NULL);
@@ -66,7 +67,12 @@ JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedDataba
 		err = monetdb_startup((char*) dbdir_string_tmp, (char) silentFlag, (char) sequentialFlag);
 		if (err) {
 			exceptionCls = (*env)->FindClass(env, "nl/cwi/monetdb/embedded/env/MonetDBEmbeddedException");
-			(*env)->ThrowNew(env, exceptionCls, err);
+			while(err[i] && !foundExc) {
+				if(err[i] == '!')
+					foundExc = 1;
+				i++;
+			}
+			(*env)->ThrowNew(env, exceptionCls, err + (foundExc ? i : 0));
 			GDKfree(err);
 			goto endofinit;
 		}
@@ -119,24 +125,27 @@ JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedDataba
 	jclass exceptionCls;
 	monetdb_connection conn = NULL;
 	jobject result = NULL;
+	char *err = NULL;
+	int i = 0, foundExc = 0;
 	(void) database;
 
-	if(monetdb_is_initialized()) {
-		conn = monetdb_connect();
-		if(!conn) {
-			exceptionCls = (*env)->FindClass(env, "nl/cwi/monetdb/embedded/env/MonetDBEmbeddedException");
-			(*env)->ThrowNew(env, exceptionCls, "The connection initialization failed!");
-		} else {
-			result = (*env)->NewObject(env, getMonetDBEmbeddedConnectionClassID(),
-									   getMonetDBEmbeddedConnectionConstructorID(), (jlong) conn);
-			if(!result) {
-				exceptionCls = (*env)->FindClass(env, "nl/cwi/monetdb/embedded/env/MonetDBEmbeddedException");
-				(*env)->ThrowNew(env, exceptionCls, "System out of memory!");
-			}
-		}
-	} else {
+	err = monetdb_connect(&conn);
+	if(err) {
 		exceptionCls = (*env)->FindClass(env, "nl/cwi/monetdb/embedded/env/MonetDBEmbeddedException");
-		(*env)->ThrowNew(env, exceptionCls, "The MonetDB Embedded database is not running!");
+		while(err[i] && !foundExc) {
+			if(err[i] == '!')
+				foundExc = 1;
+			i++;
+		}
+		(*env)->ThrowNew(env, exceptionCls, err + (foundExc ? i : 0));
+		GDKfree(err);
+	} else {
+		result = (*env)->NewObject(env, getMonetDBEmbeddedConnectionClassID(),
+								   getMonetDBEmbeddedConnectionConstructorID(), (jlong) conn);
+		if(!result) {
+			exceptionCls = (*env)->FindClass(env, "nl/cwi/monetdb/embedded/env/MonetDBEmbeddedException");
+			(*env)->ThrowNew(env, exceptionCls, "System out of memory!");
+		}
 	}
 	return result;
 }
@@ -146,24 +155,27 @@ JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedDataba
 	jclass exceptionCls;
 	monetdb_connection conn = NULL;
 	jobject result = NULL;
+	char *err = NULL;
+	int i = 0, foundExc = 0;
 	(void) database;
 
-	if(monetdb_is_initialized()) {
-		conn = monetdb_connect();
-		if(!conn) {
-			exceptionCls = (*env)->FindClass(env, "nl/cwi/monetdb/embedded/env/MonetDBEmbeddedException");
-			(*env)->ThrowNew(env, exceptionCls, "The connection initialization failed!");
-		} else {
-			result = (*env)->NewObject(env, getJDBCEmbeddedConnectionClassID(),
-									   getJDBCDBEmbeddedConnectionConstructorID(), (jlong) conn);
-			if(!result) {
-				exceptionCls = (*env)->FindClass(env, "nl/cwi/monetdb/embedded/env/MonetDBEmbeddedException");
-				(*env)->ThrowNew(env, exceptionCls, "System out of memory!");
-			}
-		}
-	} else {
+	err = monetdb_connect(&conn);
+	if(err) {
 		exceptionCls = (*env)->FindClass(env, "nl/cwi/monetdb/embedded/env/MonetDBEmbeddedException");
-		(*env)->ThrowNew(env, exceptionCls, "The MonetDB Embedded database is not running!");
+		while(err[i] && !foundExc) {
+			if(err[i] == '!')
+				foundExc = 1;
+			i++;
+		}
+		(*env)->ThrowNew(env, exceptionCls, err + (foundExc ? i : 0));
+		GDKfree(err);
+	} else {
+		result = (*env)->NewObject(env, getJDBCEmbeddedConnectionClassID(),
+								   getJDBCDBEmbeddedConnectionConstructorID(), (jlong) conn);
+		if(!result) {
+			exceptionCls = (*env)->FindClass(env, "nl/cwi/monetdb/embedded/env/MonetDBEmbeddedException");
+			(*env)->ThrowNew(env, exceptionCls, "System out of memory!");
+		}
 	}
 	return result;
 }

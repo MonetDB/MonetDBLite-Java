@@ -23,6 +23,6 @@ void sendReleaseCommand(monetdb_connection conn, int commandId);
 void sendCloseCommand(monetdb_connection conn, int commandId);
 void sendReplySizeCommand(monetdb_connection conn, int size);
 int getAutocommitFlag(monetdb_connection conn);
-void setAutocommitFlag(monetdb_connection conn, int autoCommit);
+char* setAutocommitFlag(monetdb_connection conn, int autoCommit);
 
 #endif

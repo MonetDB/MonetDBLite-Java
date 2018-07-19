@@ -26,10 +26,20 @@ JNIEXPORT jboolean JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConne
 
 JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnection_setAutoCommitInternal
 	(JNIEnv *env, jobject jconnection, jlong connectionPointer, jboolean autoCommit) {
-	int toSet = (autoCommit == JNI_FALSE) ? 0 : 1;
+	int toSet = (autoCommit == JNI_FALSE) ? 0 : 1, foundExc = 0, i = 0;
+	char* err = NULL;
+
 	(void) env;
 	(void) jconnection;
-	setAutocommitFlag((monetdb_connection) connectionPointer, toSet);
+	if((err = setAutocommitFlag((monetdb_connection) connectionPointer, toSet)) != MAL_SUCCEED) {
+		while(err[i] && !foundExc) {
+			if(err[i] == '!')
+				foundExc = 1;
+			i++;
+		}
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), err + (foundExc ? i : 0));
+		GDKfree(err);
+	}
 }
 
 static int executeQuery(JNIEnv *env, jlong connectionPointer, jstring query, jboolean execute, monetdb_result **output,

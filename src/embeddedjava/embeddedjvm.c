@@ -33,17 +33,17 @@ char* monetdb_find_table(monetdb_connection conn, sql_table** table, const char*
 		return msg;
 	s = mvc_bind_schema(m, schema_name);
 	if (s == NULL)
-		return createException(MAL, "embedded", "Missing schema!");
+		return createException(MAL, "embedded", SQLSTATE(3F000) "Missing schema!");
 	*table = mvc_bind_table(m, s, table_name);
 	if ((*table) == NULL)
-		return createException(MAL, "embedded", "Could not find table %s", table_name);
+		return createException(MAL, "embedded", SQLSTATE(3F000) "Could not find table %s", table_name);
 	return NULL;
 }
 
 char* sendAutoCommitCommand(monetdb_connection conn, int flag, int* result) {
 	Client connection = (Client) conn;
 	mvc* m = ((backend *) connection->sqlcontext)->mvc;
-	char *msg = MAL_SUCCEED;
+	char *msg = MAL_SUCCEED, *commit_msg = NULL;
 	int commit = (!m->session->auto_commit && flag);
 
 	m->session->auto_commit = (flag) != 0;
@@ -51,13 +51,19 @@ char* sendAutoCommitCommand(monetdb_connection conn, int flag, int* result) {
 	*result = m->session->auto_commit;
 	if (m->session->active) {
 		if (commit && mvc_commit(m, 0, NULL) < 0) {
-			msg = createException(MAL, "embedded", "auto_commit (commit) failed");
+			msg = createException(MAL, "embedded", SQLSTATE(42000) "auto_commit (commit) failed");
 		} else if (!commit && mvc_rollback(m, 0, NULL) < 0) {
-			msg = createException(MAL, "embedded", "auto_commit (rollback) failed");
+			msg = createException(MAL, "embedded", SQLSTATE(42000) "auto_commit (rollback) failed");
 		}
 	}
-	SQLautocommit(m);
-
+	commit_msg = SQLautocommit(m);
+	if ((msg != MAL_SUCCEED || commit_msg != MAL_SUCCEED)) {
+		if(msg == MAL_SUCCEED) {
+			msg = commit_msg;
+		} else if(commit_msg) {
+			GDKfree(commit_msg);
+		}
+	}
 	return msg;
 }
 
@@ -98,7 +104,7 @@ int getAutocommitFlag(monetdb_connection conn) {
 	return m->session->auto_commit;
 }
 
-void setAutocommitFlag(monetdb_connection conn, int autoCommit) {
+char* setAutocommitFlag(monetdb_connection conn, int autoCommit) {
 	Client connection = (Client) conn;
 	mvc* m = ((backend *) connection->sqlcontext)->mvc;
 
@@ -106,5 +112,5 @@ void setAutocommitFlag(monetdb_connection conn, int autoCommit) {
 	if(autoCommit == 0) {
 		m->session->status = 0;
 	}
-	SQLautocommit(m);
+	return SQLautocommit(m);
 }
