@@ -194,11 +194,13 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection_
 	(JNIEnv *env, jobject jdbccon, jlong connectionPointer, jint flag) {
 	int autoCommitStatus;
 	jobject result;
+	char *err = NULL;
 
-	char *err = sendAutoCommitCommand((monetdb_connection) connectionPointer, flag, &autoCommitStatus);
+	err = monetdb_set_autocommit((monetdb_connection) connectionPointer, (flag == 0) ? (char)0 : (char)1);
 	if (err) { //if there is an error set it and return
 		setErrorResponse(env, jdbccon, err);
 	} else {
+		autoCommitStatus = getAutocommitFlag((monetdb_connection) connectionPointer);
 		result = (*env)->NewObject(env, getAutoCommitResponseClassID(), getAutoCommitResponseConstructorID(),
 								   (autoCommitStatus) ? JNI_TRUE : JNI_FALSE);
 		if(result == NULL) {
@@ -208,23 +210,26 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection_
 	}
 }
 
-JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection_sendReplySizeCommandInternal
-	(JNIEnv *env, jobject jdbccon, jlong connectionPointer, jint size) {
-	(void) env;
-	(void) jdbccon;
-	sendReplySizeCommand((monetdb_connection) connectionPointer, size);
-}
-
 JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection_sendReleaseCommandInternal
 	(JNIEnv *env, jobject jdbccon, jlong connectionPointer, jint commandId) {
+	char *err = NULL;
 	(void) env;
 	(void) jdbccon;
-	sendReleaseCommand((monetdb_connection) connectionPointer, commandId);
+
+	if((err = monetdb_clear_prepare((monetdb_connection) connectionPointer, (size_t) commandId)) != MAL_SUCCEED) {
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), err);
+		GDKfree(err);
+	}
 }
 
 JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection_sendCloseCommandInternal
 	(JNIEnv *env, jobject jdbccon, jlong connectionPointer, jint commandId) {
+	char *err = NULL;
 	(void) env;
 	(void) jdbccon;
-	sendCloseCommand((monetdb_connection) connectionPointer, commandId);
+
+	if((err = monetdb_send_close((monetdb_connection) connectionPointer, (size_t) commandId)) != MAL_SUCCEED) {
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), err);
+		GDKfree(err);
+	}
 }

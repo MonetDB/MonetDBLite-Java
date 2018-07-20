@@ -18,11 +18,6 @@
 #include "sql.h"
 
 char* monetdb_find_table(monetdb_connection conn, sql_table** table, const char* schema_name, const char* table_name);
-char* sendAutoCommitCommand(monetdb_connection conn, int flag, int* result);
-void sendReleaseCommand(monetdb_connection conn, int commandId);
-void sendCloseCommand(monetdb_connection conn, int commandId);
-void sendReplySizeCommand(monetdb_connection conn, int size);
 int getAutocommitFlag(monetdb_connection conn);
-char* setAutocommitFlag(monetdb_connection conn, int autoCommit);
 
 #endif

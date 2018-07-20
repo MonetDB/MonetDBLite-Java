@@ -165,22 +165,12 @@ public final class JDBCEmbeddedConnection extends MonetDBEmbeddedConnection {
 	}
 
 	/**
-	 * Sends a reply size command to the server. (The reply size on an embedded connection is always fixed, hence this
-	 * method is here for completeness).
-	 *
-	 * @param size The reply size value to set
-	 */
-	void sendReplySizeCommand(int size) {
-		this.sendReplySizeCommandInternal(this.connectionPointer, size);
-	}
-
-	/**
 	 * Sends a release command to the server. (Used to release a prepared statement data, altough is not yet implemented
 	 * in an embedded connection, the command is here for future usage).
 	 *
 	 * @param resultSetId The prepared statement id
 	 */
-	void sendReleaseCommand(int resultSetId) {
+	void sendReleaseCommand(int resultSetId) throws MonetDBEmbeddedException {
 		this.sendReleaseCommandInternal(this.connectionPointer, resultSetId);
 	}
 
@@ -189,7 +179,7 @@ public final class JDBCEmbeddedConnection extends MonetDBEmbeddedConnection {
 	 *
 	 * @param queryId The query's id
 	 */
-	void sendCloseCommand(int queryId) {
+	void sendCloseCommand(int queryId) throws MonetDBEmbeddedException {
 		this.sendCloseCommandInternal(this.connectionPointer, queryId);
 	}
 
@@ -217,17 +207,13 @@ public final class JDBCEmbeddedConnection extends MonetDBEmbeddedConnection {
 	private native void sendAutocommitCommandInternal(long connectionPointer, int flag);
 
 	/**
-	 * Native implementation of the reply size command.
-	 */
-	private native void sendReplySizeCommandInternal(long connectionPointer, int size);
-
-	/**
 	 * Native implementation of the release command.
 	 */
-	private native void sendReleaseCommandInternal(long connectionPointer, int commandId);
+	private native void sendReleaseCommandInternal(long connectionPointer, int commandId)
+			throws MonetDBEmbeddedException;
 
 	/**
 	 * Native implementation of the close command.
 	 */
-	private native void sendCloseCommandInternal(long connectionPointer, int commandId);
+	private native void sendCloseCommandInternal(long connectionPointer, int commandId) throws MonetDBEmbeddedException;
 }

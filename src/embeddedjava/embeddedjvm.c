@@ -17,11 +17,8 @@
 
 #include "mal.h"
 #include "mal_client.h"
-#include "sql_scenario.h"
-#include "sql_execute.h"
 #include "sql.h"
 #include "sql_mvc.h"
-#include "res_table.h"
 
 char* monetdb_find_table(monetdb_connection conn, sql_table** table, const char* schema_name, const char* table_name) {
 	mvc *m;
@@ -37,80 +34,11 @@ char* monetdb_find_table(monetdb_connection conn, sql_table** table, const char*
 	*table = mvc_bind_table(m, s, table_name);
 	if ((*table) == NULL)
 		return createException(MAL, "embedded", SQLSTATE(3F000) "Could not find table %s", table_name);
-	return NULL;
-}
-
-char* sendAutoCommitCommand(monetdb_connection conn, int flag, int* result) {
-	Client connection = (Client) conn;
-	mvc* m = ((backend *) connection->sqlcontext)->mvc;
-	char *msg = MAL_SUCCEED, *commit_msg = NULL;
-	int commit = (!m->session->auto_commit && flag);
-
-	m->session->auto_commit = (flag) != 0;
-	m->session->ac_on_commit = m->session->auto_commit;
-	*result = m->session->auto_commit;
-	if (m->session->active) {
-		if (commit && mvc_commit(m, 0, NULL) < 0) {
-			msg = createException(MAL, "embedded", SQLSTATE(42000) "auto_commit (commit) failed");
-		} else if (!commit && mvc_rollback(m, 0, NULL) < 0) {
-			msg = createException(MAL, "embedded", SQLSTATE(42000) "auto_commit (rollback) failed");
-		}
-	}
-	commit_msg = SQLautocommit(m);
-	if ((msg != MAL_SUCCEED || commit_msg != MAL_SUCCEED)) {
-		if(msg == MAL_SUCCEED) {
-			msg = commit_msg;
-		} else if(commit_msg) {
-			GDKfree(commit_msg);
-		}
-	}
 	return msg;
-}
-
-void sendReleaseCommand(monetdb_connection conn, int commandId) {
-	Client connection = (Client) conn;
-	mvc* m = ((backend *) connection->sqlcontext)->mvc;
-
-	if(m->qc) {
-		cq *q = qc_find(m->qc, commandId);
-		if (q) {
-			qc_delete(m->qc, q);
-		}
-	}
-}
-
-void sendCloseCommand(monetdb_connection conn, int tableID) {
-	Client connection = (Client) conn;
-	mvc* m = ((backend *) connection->sqlcontext)->mvc;
-	res_table *t = res_tables_find(m->results, tableID);
-
-	if (t) {
-		m->results = res_tables_remove(m->results, t);
-	}
-}
-
-void sendReplySizeCommand(monetdb_connection conn, int size) {
-	Client connection = (Client) conn;
-	mvc* m = ((backend *) connection->sqlcontext)->mvc;
-
-	if(size >= -1) {
-		m->reply_size = size;
-	}
 }
 
 int getAutocommitFlag(monetdb_connection conn) {
 	Client connection = (Client) conn;
 	mvc* m = ((backend *) connection->sqlcontext)->mvc;
 	return m->session->auto_commit;
-}
-
-char* setAutocommitFlag(monetdb_connection conn, int autoCommit) {
-	Client connection = (Client) conn;
-	mvc* m = ((backend *) connection->sqlcontext)->mvc;
-
-	m->session->auto_commit = autoCommit;
-	if(autoCommit == 0) {
-		m->session->status = 0;
-	}
-	return SQLautocommit(m);
 }

@@ -1574,7 +1574,8 @@ public final class MonetDBEmbeddedPreparedStatement extends AbstractConnectionRe
 	/**
 	 * Release the prepared statement in the server!!!
 	 */
-	private native void freePreparedStatement(long connectionPointer, long preparedResultSetID);
+	private native void freePreparedStatement(long connectionPointer, long preparedResultSetID)
+			throws MonetDBEmbeddedException;
 
 	@Override
 	public void close() {
@@ -1585,7 +1586,9 @@ public final class MonetDBEmbeddedPreparedStatement extends AbstractConnectionRe
 	@Override
 	protected void closeResultImplementation() {
 		if(!this.isPreparedStatementClosed()) {
-			this.freePreparedStatement(this.getConnection().connectionPointer, this.id);
+			try {
+				this.freePreparedStatement(this.getConnection().connectionPointer, this.id);
+			} catch (MonetDBEmbeddedException ex) { }
 			this.id = 0;
 		}
 	}

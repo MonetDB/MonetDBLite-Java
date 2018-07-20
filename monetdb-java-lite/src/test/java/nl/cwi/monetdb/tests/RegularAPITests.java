@@ -240,12 +240,16 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 		try {
 			connection.releaseSavepoint(svp2);
 			Assertions.fail("The MonetDBEmbeddedException should be thrown!");
-		} catch (MonetDBEmbeddedException ex) { }
+		} catch (MonetDBEmbeddedException ex) {
+			connection.rollback();
+		}
 
 		try {
 			connection.rollback(svp2);
 			Assertions.fail("The MonetDBEmbeddedException should be thrown!");
-		} catch (MonetDBEmbeddedException ex) { }
+		} catch (MonetDBEmbeddedException ex) {
+			connection.rollback();
+		}
 
 		connection.setAutoCommit(true);
 	}

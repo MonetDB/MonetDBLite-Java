@@ -220,8 +220,7 @@ public final class EmbeddedConnection extends MonetConnection {
 			case ControlCommands.CLOSE:
 				((EmbeddedProtocol)protocol).getEmbeddedConnection().sendCloseCommand(data);
 				break;
-			case ControlCommands.REPLY_SIZE:
-				((EmbeddedProtocol)protocol).getEmbeddedConnection().sendReplySizeCommand(data);
+			//ControlCommands.REPLY_SIZE should never be sent
 		}
 	}
 

@@ -41,14 +41,6 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection_
 
 /*
  * Class:     nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection
- * Method:    sendReplySizeCommandInternal
- * Signature: (JI)V
- */
-JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection_sendReplySizeCommandInternal
-  (JNIEnv *, jobject, jlong, jint);
-
-/*
- * Class:     nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection
  * Method:    sendReleaseCommandInternal
  * Signature: (JI)V
  */
