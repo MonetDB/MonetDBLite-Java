@@ -1,3 +1,4 @@
 [submodule "src/monetdblite"]
 	path = src/monetdblite
 	url = git@github.com:PedroTadim/MonetDBLite-C.git
+	branch = master
