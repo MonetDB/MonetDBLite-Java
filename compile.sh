@@ -15,10 +15,14 @@ if [[ ! "$1" =~ ^(windows|macosx|linux)$ ]]; then
     echo_and_exit "The first parameter must either be 'windows', 'macosx' or 'linux'"
 fi
 
+if [[ ! "$2" =~ ^(Release|Debug)$ ]]; then
+    echo_and_exit "The second parameter must either be 'Release' or 'Debug'"
+fi
+
 case "$1" in
     windows)
         BUILDSYS=windows
-        BUILDINPUTLIBRARY=Release/monetdb5.dll
+        BUILDINPUTLIBRARY="$2"/monetdb5.dll
         BUILDOUTPUTLIBRARY=monetdb5.dll
         ;;
 
@@ -33,10 +37,6 @@ case "$1" in
         BUILDINPUTLIBRARY=libmonetdb5.so
         BUILDOUTPUTLIBRARY=libmonetdb5.so
 esac
-
-if [[ ! "$2" =~ ^(Release|Debug)$ ]]; then
-    echo_and_exit "The second parameter must either be 'Release' or 'Debug'"
-fi
 
 # A bash 4.0 way of converting a string to lowercase...
 BUILDTYPE="${2,,}"
