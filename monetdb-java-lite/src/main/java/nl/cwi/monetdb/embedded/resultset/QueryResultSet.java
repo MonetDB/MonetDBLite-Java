@@ -64,6 +64,8 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 				return "blob";
 			case 13:
 				return "decimal";
+			case 14:
+				return "oid";
 			default:
 				return "unknown";
 		}
@@ -202,6 +204,8 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 	private native BigDecimal getDecimalByColumnAndRowInternal(long structPointer, int column, int row);
 
 	private native byte[] getBlobByColumnAndRowInternal(long structPointer, int column, int row);
+
+	private native String getOidByColumnAndRowInternal(long structPointer, int column, int row);
 
 	private void checkRangesScalars(int column, int row) throws MonetDBEmbeddedException {
 		this.checkQueryResultSetIsNotClosed();
@@ -557,6 +561,8 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 			case 13:
 				aux = this.getDecimalByColumnAndRowInternal(this.structPointer, column, row);
 				break;
+			case 14:
+				return this.getOidByColumnAndRowInternal(this.structPointer, column, row);
 			default:
 				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to string!");
 		}
@@ -697,6 +703,26 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 				return this.getDecimalByColumnAndRowInternal(this.structPointer, column, row);
 			default:
 				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to decimal!");
+		}
+	}
+
+	/**
+	 * Retrieves a single oid value in the result set.
+	 *
+	 * @param column The column index starting from 1
+	 * @param row The row index starting from 1
+	 * @return The oid value
+	 * @throws MonetDBEmbeddedException If an error in the database occurred.
+	 */
+	public String getOidByColumnIndexAndRow(int column, int row) throws MonetDBEmbeddedException {
+		this.checkRangesScalars(column, row);
+		column--;
+		row--;
+		switch (this.typesIDs[column]) {
+			case 14:
+				return this.getOidByColumnAndRowInternal(this.structPointer, column, row);
+			default:
+				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to oid!");
 		}
 	}
 
@@ -869,6 +895,19 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 		return this.getDecimalByColumnIndexAndRow(index, row);
 	}
 
+	/**
+	 * Retrieves a single oid value in the result set by name.
+	 *
+	 * @param columnName The column name
+	 * @param row The row index starting from 1
+	 * @return The String oid value
+	 * @throws MonetDBEmbeddedException If an error in the database occurred.
+	 */
+	public String getOidByColumnNameAndRow(String columnName, int row) throws MonetDBEmbeddedException {
+		int index = this.getColumnIndexByName(columnName);
+		return this.getOidByColumnIndexAndRow(index, row);
+	}
+
 	private native void getBooleanColumnByIndexInternal(long structPointer, int column, boolean[] input, int offset, int length);
 
 	private native void getByteColumnByIndexInternal(long structPointer, int column, byte[] input, int offset, int length);
@@ -894,6 +933,8 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 	private native void getBlobColumnByIndexInternal(long structPointer, int column, byte[][] input, int offset, int length);
 
 	private native void getDecimalColumnByIndexInternal(long structPointer, int column, BigDecimal[] input, int offset, int length);
+
+	private native void getOidColumnByIndexInternal(long structPointer, int column, String[] input, int offset, int length);
 
 	private void checkRangesArrays(int column, Object input, int offset, int length) throws MonetDBEmbeddedException {
 		this.checkQueryResultSetIsNotClosed();
@@ -1507,6 +1548,9 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 					input[i] = (aux11[i] == null) ? null : aux11[i].toString();
 				}
 				break;
+			case 14:
+				this.getOidColumnByIndexInternal(this.structPointer, column, input, offset, length);
+				break;
 			default:
 				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to String[]!");
 		}
@@ -1710,6 +1754,27 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 	}
 
 	/**
+	 * Retrieves an oid column by index.
+	 *
+	 * @param column - The index of the column starting from 1.
+	 * @param input - The input oid array where the result will be copied to.
+	 * @param offset - The starting offset of the array.
+	 * @param length - The number of elements to copy.
+	 * @throws MonetDBEmbeddedException If an error in the database occurred.
+	 */
+	public void getOidColumnByIndex(int column, String[] input, int offset, int length) throws MonetDBEmbeddedException {
+		this.checkRangesArrays(column, input, offset, length);
+		column--;
+		switch (this.typesIDs[column]) {
+			case 14:
+				this.getOidColumnByIndexInternal(this.structPointer, column, input, offset, length);
+				break;
+			default:
+				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to String[]!");
+		}
+	}
+
+	/**
 	 * Retrieves a boolean column by name.
 	 *
 	 * @param columnName - The name of the column.
@@ -1892,6 +1957,20 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 	}
 
 	/**
+	 * Retrieves an oid column by name.
+	 *
+	 * @param columnName - The name of the column.
+	 * @param input - The input oid array where the result will be copied to.
+	 * @param offset - The starting offset of the array.
+	 * @param length - The number of elements to copy.
+	 * @throws MonetDBEmbeddedException If an error in the database occurred.
+	 */
+	public void getOidColumnByName(String columnName, String[] input, int offset, int length) throws MonetDBEmbeddedException {
+		int index = this.getColumnIndexByName(columnName);
+		this.getOidColumnByIndex(index, input, offset, length);
+	}
+
+	/**
 	 * Retrieves a boolean column by index.
 	 *
 	 * @param column - The index of the column starting from 1.
@@ -2032,6 +2111,17 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 	 */
 	public void getDecimalColumnByIndex(int column, BigDecimal[] input) throws MonetDBEmbeddedException {
 		this.getDecimalColumnByIndex(column, input, 0, input.length);
+	}
+
+	/**
+	 * Retrieves an oid column by index.
+	 *
+	 * @param column - The index of the column starting from 1.
+	 * @param input - The input String[] array where the result will be copied to.
+	 * @throws MonetDBEmbeddedException If an error in the database occurred.
+	 */
+	public void getOidColumnByIndex(int column, String[] input) throws MonetDBEmbeddedException {
+		this.getOidColumnByIndex(column, input, 0, input.length);
 	}
 
 	/**
@@ -2188,6 +2278,18 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 	public void getDecimalColumnByName(String columnName, BigDecimal[] input) throws MonetDBEmbeddedException {
 		int index = this.getColumnIndexByName(columnName);
 		this.getDecimalColumnByIndex(index, input, 0, input.length);
+	}
+
+	/**
+	 * Retrieves an oid column by name.
+	 *
+	 * @param columnName - The name of the column.
+	 * @param input - The input String array where the result will be copied to.
+	 * @throws MonetDBEmbeddedException If an error in the database occurred.
+	 */
+	public void getOidColumnByName(String columnName, String[] input) throws MonetDBEmbeddedException {
+		int index = this.getColumnIndexByName(columnName);
+		this.getOidColumnByIndex(index, input, 0, input.length);
 	}
 
 	/**

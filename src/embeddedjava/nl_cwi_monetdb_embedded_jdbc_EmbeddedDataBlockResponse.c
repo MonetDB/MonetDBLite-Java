@@ -127,6 +127,12 @@ JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_jdbc_EmbeddedDataBlockRes
 	}
 }
 
+JNIEXPORT jstring JNICALL Java_nl_cwi_monetdb_embedded_jdbc_EmbeddedDataBlockResponse_getOidValueInternal
+		(JNIEnv* env, jobject datablock, jlong structPointer, jint column, jint row) {
+	ANNOYING_RETRIEVAL
+	ANNOYING_RETRIEVAL_LEVEL_TWO(Oid)
+}
+
 JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_jdbc_EmbeddedDataBlockResponse_freeResultSet
 	(JNIEnv* env, jobject datablock, jlong structPointer) {
 	JResultSet* thisResultSet = (JResultSet*) structPointer;

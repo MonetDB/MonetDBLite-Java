@@ -129,6 +129,14 @@ JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_jdbc_EmbeddedDataBlockRes
 
 /*
  * Class:     nl_cwi_monetdb_embedded_jdbc_EmbeddedDataBlockResponse
+ * Method:    getOidValueInternal
+ * Signature: (JII)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_nl_cwi_monetdb_embedded_jdbc_EmbeddedDataBlockResponse_getOidValueInternal
+  (JNIEnv *, jobject, jlong, jint, jint);
+
+/*
+ * Class:     nl_cwi_monetdb_embedded_jdbc_EmbeddedDataBlockResponse
  * Method:    freeResultSet
  * Signature: (J)V
  */

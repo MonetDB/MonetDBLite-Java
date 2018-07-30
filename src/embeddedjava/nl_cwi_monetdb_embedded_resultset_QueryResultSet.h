@@ -145,6 +145,14 @@ JNIEXPORT jbyteArray JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultS
 
 /*
  * Class:     nl_cwi_monetdb_embedded_resultset_QueryResultSet
+ * Method:    getOidByColumnAndRowInternal
+ * Signature: (JII)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_getOidByColumnAndRowInternal
+  (JNIEnv *, jobject, jlong, jint, jint);
+
+/*
+ * Class:     nl_cwi_monetdb_embedded_resultset_QueryResultSet
  * Method:    getBooleanColumnByIndexInternal
  * Signature: (JI[ZII)V
  */
@@ -245,6 +253,14 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_get
  * Signature: (JI[Ljava/math/BigDecimal;II)V
  */
 JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_getDecimalColumnByIndexInternal
+  (JNIEnv *, jobject, jlong, jint, jobjectArray, jint, jint);
+
+/*
+ * Class:     nl_cwi_monetdb_embedded_resultset_QueryResultSet
+ * Method:    getOidColumnByIndexInternal
+ * Signature: (JI[Ljava/lang/String;II)V
+ */
+JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_getOidColumnByIndexInternal
   (JNIEnv *, jobject, jlong, jint, jobjectArray, jint, jint);
 
 /*

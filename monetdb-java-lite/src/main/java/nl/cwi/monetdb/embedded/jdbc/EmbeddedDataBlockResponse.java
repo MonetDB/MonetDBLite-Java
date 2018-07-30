@@ -31,8 +31,8 @@ public strictfp final class EmbeddedDataBlockResponse extends AbstractDataBlockR
 	/** If the underlying C struct has been initialized */
 	private boolean isInitialized;
 
-	EmbeddedDataBlockResponse(int rowcount, AbstractProtocol protocol, int[] JdbcSQLTypes) {
-		super(rowcount, protocol, JdbcSQLTypes);
+	EmbeddedDataBlockResponse(int rowcount, AbstractProtocol protocol, int[] JdbcSQLTypes, String[] types) {
+		super(rowcount, protocol, JdbcSQLTypes, types);
 	}
 
 	@Override
@@ -75,6 +75,8 @@ public strictfp final class EmbeddedDataBlockResponse extends AbstractDataBlockR
 	private native Calendar getTimestampAsCalendarValueInternal(long structPointer, int column, int row);
 
 	private native Calendar getTimeAsCalendarValueInternal(long structPointer, int column, int row);
+
+	private native String getOidValueInternal(long structPointer, int column, int row);
 
 	@Override
 	public boolean getBooleanValue(int column) {
@@ -212,10 +214,18 @@ public strictfp final class EmbeddedDataBlockResponse extends AbstractDataBlockR
 			case Types.CHAR:
 			case Types.VARCHAR:
 			case Types.LONGVARCHAR:
-			case Types.OTHER:
 				String res = this.getStringValueInternal(this.structPointer, column, this.blockLine);
 				this.lastReadWasNull = res == null;
 				return res;
+			case Types.OTHER:
+				String other;
+				if(this.types[column].equals("oid")) {
+					other = this.getOidValueInternal(this.structPointer, column, this.blockLine);
+				} else {
+					other = this.getStringValueInternal(this.structPointer, column, this.blockLine);
+				}
+				this.lastReadWasNull = other == null;
+				return other;
 			case Types.LONGVARBINARY:
 				byte[] bytes = this.getBlobValueInternal(this.structPointer, column, this.blockLine);
 				this.lastReadWasNull = bytes == null;
@@ -248,10 +258,18 @@ public strictfp final class EmbeddedDataBlockResponse extends AbstractDataBlockR
 			case Types.CHAR:
 			case Types.VARCHAR:
 			case Types.LONGVARCHAR:
-			case Types.OTHER:
 				String res = this.getStringValueInternal(this.structPointer, column, this.blockLine);
 				this.lastReadWasNull = res == null;
 				return res;
+			case Types.OTHER:
+				String other;
+				if(this.types[column].equals("oid")) {
+					other = this.getOidValueInternal(this.structPointer, column, this.blockLine);
+				} else {
+					other = this.getStringValueInternal(this.structPointer, column, this.blockLine);
+				}
+				this.lastReadWasNull = other == null;
+				return other;
 			case Types.LONGVARBINARY:
 				byte[] blob = this.getBlobValueInternal(this.structPointer, column, this.blockLine);
 				this.lastReadWasNull = blob == null;
@@ -284,10 +302,18 @@ public strictfp final class EmbeddedDataBlockResponse extends AbstractDataBlockR
 			case Types.CHAR:
 			case Types.VARCHAR:
 			case Types.LONGVARCHAR:
-			case Types.OTHER:
 				String res = this.getStringValueInternal(this.structPointer, column, this.blockLine);
 				this.lastReadWasNull = res == null;
 				return res;
+			case Types.OTHER:
+				String other;
+				if(this.types[column].equals("oid")) {
+					other = this.getOidValueInternal(this.structPointer, column, this.blockLine);
+				} else {
+					other = this.getStringValueInternal(this.structPointer, column, this.blockLine);
+				}
+				this.lastReadWasNull = other == null;
+				return other;
 			case Types.LONGVARBINARY:
 				byte[] blob = this.getBlobValueInternal(this.structPointer, column, this.blockLine);
 				if(blob == null) {

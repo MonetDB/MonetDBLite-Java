@@ -24,6 +24,7 @@ void checkDoubleNulls(JNIEnv* env, jbooleanArray input, jint size, BAT* b);
 void checkDateNulls(JNIEnv* env, jbooleanArray input, jint size, BAT* b);
 void checkTimeNulls(JNIEnv* env, jbooleanArray input, jint size, BAT* b);
 void checkTimestampNulls(JNIEnv* env, jbooleanArray input, jint size, BAT* b);
+void checkOidNulls(JNIEnv* env, jbooleanArray input, jint size, BAT* b);
 
 void checkStringNulls(JNIEnv* env, jbooleanArray input, jint size, BAT* b);
 void checkBlobNulls(JNIEnv* env, jbooleanArray input, jint size, BAT* b);

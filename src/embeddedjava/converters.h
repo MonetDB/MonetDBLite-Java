@@ -29,6 +29,7 @@ jobject getTimestampSingle(JNIEnv* env, jint position, BAT* b);
 jobject getGregorianCalendarDateSingle(JNIEnv* env, jint position, BAT* b);
 jobject getGregorianCalendarTimeSingle(JNIEnv* env, jint position, BAT* b);
 jobject getGregorianCalendarTimestampSingle(JNIEnv* env, jint position, BAT* b);
+jobject getOidSingle(JNIEnv* env, jint position, BAT* b);
 
 jobject getDecimalbteSingle(JNIEnv* env, jint position, BAT* b, jint scale);
 jobject getDecimalshtSingle(JNIEnv* env, jint position, BAT* b, jint scale);
@@ -59,6 +60,7 @@ void getDoubleColumnAsObject(JNIEnv* env, jobjectArray input, jint first, jint s
 void getDateColumn(JNIEnv* env, jobjectArray input, jint first, jint size, BAT* b);
 void getTimeColumn(JNIEnv* env, jobjectArray input, jint first, jint size, BAT* b);
 void getTimestampColumn(JNIEnv* env, jobjectArray input, jint first, jint size, BAT* b);
+void getOidColumn(JNIEnv* env, jobjectArray input, jint first, jint size, BAT* b);
 
 void getDecimalbteColumn(JNIEnv* env, jobjectArray input, jint first, jint size, BAT* b, jint scale);
 void getDecimalshtColumn(JNIEnv* env, jobjectArray input, jint first, jint size, BAT* b, jint scale);
@@ -81,6 +83,7 @@ void storeDoubleColumn(JNIEnv* env, BAT** b, jdoubleArray input, size_t cnt, jin
 void storeDateColumn(JNIEnv* env, BAT** b, jobjectArray input, size_t cnt, jint localtype);
 void storeTimeColumn(JNIEnv* env, BAT** b, jobjectArray input, size_t cnt, jint localtype);
 void storeTimestampColumn(JNIEnv* env, BAT** b, jobjectArray input, size_t cnt, jint localtype);
+void storeOidColumn(JNIEnv* env, BAT** b, jobjectArray input, size_t cnt, jint localtype);
 
 void storeDecimalbteColumn(JNIEnv* env, BAT** b, jobjectArray input, size_t cnt, jint localtype, jint scale, jint roundingMode);
 void storeDecimalshtColumn(JNIEnv* env, BAT** b, jobjectArray input, size_t cnt, jint localtype, jint scale, jint roundingMode);

@@ -148,6 +148,20 @@ FETCHING_LEVEL_TWO(GregorianCalendarDate, jint, GET_NEXT_JDATE, CHECK_NULL_BDATE
 FETCHING_LEVEL_TWO(GregorianCalendarTime, jint, GET_NEXT_JTIME, CHECK_NULL_BTIME, CREATE_JGREGORIAN, GREGORIAN_EXTRA)
 FETCHING_LEVEL_TWO(GregorianCalendarTimestamp, timestamp, GET_NEXT_JTIMESTAMP, CHECK_NULL_BTIMESTAMP, CREATE_JGREGORIAN, GREGORIAN_EXTRA)
 
+jobject getOidSingle(JNIEnv* env, jint position, BAT* b) {
+	const oid *array = (oid *) Tloc(b, 0);
+	oid nvalue = array[position];
+	jobject result;
+	if(!is_oid_nil(nvalue)) {
+		char store[BIG_INTEGERS_ARRAY_SIZE];
+		snprintf(store, BIG_INTEGERS_ARRAY_SIZE, OIDFMT "@0", nvalue);
+		result = (*env)->NewStringUTF(env, store);
+	} else {
+		result = NULL;
+	}
+	return result;
+}
+
 /* Decimals are harder! */
 
 #define FETCHING_LEVEL_THREE(BAT_CAST, CONVERSION_CAST) \
@@ -309,6 +323,36 @@ BATCH_LEVEL_ONE_OBJECT(Double, jdouble, dbl, CREATE_NEW_DOUBLE)
 BATCH_LEVEL_TWO(Date, jint, GET_NEXT_JDATE, CHECK_NULL_BDATE, CREATE_JDATE)
 BATCH_LEVEL_TWO(Time, jint, GET_NEXT_JTIME, CHECK_NULL_BTIME, CREATE_JTIME)
 BATCH_LEVEL_TWO(Timestamp, timestamp, GET_NEXT_JTIMESTAMP, CHECK_NULL_BTIMESTAMP, CREATE_JTIMESTAMP)
+
+void getOidColumn(JNIEnv* env, jobjectArray input, jint first, jint size, BAT* b) {
+	oid *array = (oid *) Tloc(b, 0);
+	oid nvalue;
+	jobject next;
+	jint i;
+	array += first;
+	if (b->tnonil && !b->tnil) {
+		for (i = 0; i < size; i++) {
+			char store[BIG_INTEGERS_ARRAY_SIZE];
+			snprintf(store, BIG_INTEGERS_ARRAY_SIZE, OIDFMT "@0", array[i]);
+			next = (*env)->NewStringUTF(env, store);
+			(*env)->SetObjectArrayElement(env, input, i, next);
+			(*env)->DeleteLocalRef(env, next);
+		}
+	} else {
+		for (i = 0; i < size; i++) {
+			nvalue = array[i];
+			if(!is_oid_nil(nvalue)) {
+				char store[BIG_INTEGERS_ARRAY_SIZE];
+				snprintf(store, BIG_INTEGERS_ARRAY_SIZE, OIDFMT "@0", array[i]);
+				next = (*env)->NewStringUTF(env, store);
+				(*env)->SetObjectArrayElement(env, input, i, next);
+				(*env)->DeleteLocalRef(env, next);
+			} else {
+				(*env)->SetObjectArrayElement(env, input, i, NULL);
+			}
+		}
+	}
+}
 
 #define BATCH_LEVEL_THREE(BAT_CAST, CONVERSION_CAST) \
 	void getDecimal##BAT_CAST##Column(JNIEnv* env, jobjectArray input, jint first, jint size, BAT* b, jint scale) { \
@@ -512,6 +556,64 @@ CONVERSION_LEVEL_ONE(Double, dbl, jdouble, Double)
 CONVERSION_LEVEL_TWO(Date, date, date_nil, JDATE_TO_BAT, EASY_CMP)
 CONVERSION_LEVEL_TWO(Time, daytime, daytime_nil, JTIME_TO_BAT, EASY_CMP)
 CONVERSION_LEVEL_TWO(Timestamp, timestamp, *timestamp_nil, JTIMESTAMP_TO_BAT, TIMESTAMP_CMP)
+
+void storeOidColumn(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint localtype) {
+	BAT *aux = COLnew(0, localtype, cnt, TRANSIENT);
+	size_t i;
+	oid *p;
+	if (!aux) {
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory!");
+		*b = NULL;
+		return;
+	}
+	aux->tnil = 0;
+	aux->tnonil = 1;
+	aux->tkey = 0;
+	aux->tsorted = 1;
+	aux->trevsorted = 1;
+	aux->tdense = 0;
+	p = (oid *) Tloc(aux, 0);
+	for(i = 0; i < cnt; i++) {
+		oid prev = oid_nil;
+		jstring jvalue = (*env)->GetObjectArrayElement(env, data, (jsize) i);
+		if (jvalue == NULL) {
+			aux->tnil = 1;
+			aux->tnonil = 0;
+			*p = oid_nil;
+		} else {
+			size_t slen;
+			ssize_t parsed;
+			const char *nvalue = (*env)->GetStringUTFChars(env, jvalue, 0);
+			if(nvalue == NULL) {
+				(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory!");
+				*b = NULL;
+				return;
+			}
+			slen = (size_t) (*env)->GetStringUTFLength(env, jvalue);
+			parsed = OIDfromStr(nvalue, &slen, &p);
+			(*env)->ReleaseStringUTFChars(env, jvalue, nvalue);
+			(*env)->DeleteLocalRef(env, jvalue);
+			if(parsed < 1) {
+				(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "Wrong OID format!");
+				*b = NULL;
+				return;
+			}
+		}
+		if (i > 0) {
+			if (*p > prev && aux->trevsorted) {
+				aux->trevsorted = 0;
+			} else if (*p < prev && aux->tsorted) {
+				aux->tsorted = 0;
+			}
+		}
+		prev = *p;
+		p++;
+	}
+	BATsetcount(aux, cnt);
+	BATsettrivprop(aux);
+	BBPkeepref(aux->batCacheid);
+	*b = aux;
+}
 
 /* Decimals are harder :P */
 

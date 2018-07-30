@@ -120,10 +120,21 @@ public final class EmbeddedProtocol extends AbstractProtocol {
 		return (AutoCommitResponse) connection.getLastServerResponse();
 	}
 
+	/**
+	 * Get an empty EmbeddedDataBlockResponse from the server.
+	 *
+	 * @param rowcount - Number of tuples
+	 * @param columncount - Number of tuples
+	 * @param protocol - This protocol
+	 * @param JdbcSQLTypes - the types array
+	 * @param types - the description of the types array
+	 * @return An EmbeddedDataBlockResponse instance
+	 */
 	@Override
 	public AbstractDataBlockResponse getAnEmptyDataBlockResponse(int rowcount, int columncount,
-																 AbstractProtocol protocol, int[] JdbcSQLTypes) {
-		return new EmbeddedDataBlockResponse(rowcount, protocol, JdbcSQLTypes);
+																 AbstractProtocol protocol, int[] JdbcSQLTypes,
+																 String[] types) {
+		return new EmbeddedDataBlockResponse(rowcount, protocol, JdbcSQLTypes, types);
 	}
 
 	/**

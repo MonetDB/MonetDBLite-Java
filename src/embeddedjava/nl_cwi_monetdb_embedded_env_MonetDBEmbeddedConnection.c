@@ -143,6 +143,8 @@ static jobject generateQueryResultSet(JNIEnv *env, jobject jconnection, jlong co
 			copy[i] = 12;
 		} else if(strncmp(nextSQLName, "decimal", 7) == 0) {
 			copy[i] = 13;
+		} else if(strncmp(nextSQLName, "oid", 3) == 0) {
+			copy[i] = 14;
 		} else {
 			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "Unknown MonetDB type!");
 		}

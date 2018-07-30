@@ -27,7 +27,8 @@ public enum MonetDBToJavaMapping {
 	Boolean(Boolean.class), Char(String.class), Varchar(String.class), Clob(String.class), Tinyint(Byte.class),
 	Smallint(Short.class), Int(Integer.class), Bigint(Long.class), Decimal(BigDecimal.class), Real(Float.class),
 	Double(Double.class), MonthInterval(Integer.class), SecondInterval(Long.class), Time(Time.class),
-	TimeTz(Time.class), Date(Date.class), Timestamp(Timestamp.class), TimestampTz(Timestamp.class), Blob(byte[].class);
+	TimeTz(Time.class), Date(Date.class), Timestamp(Timestamp.class), TimestampTz(Timestamp.class), Blob(byte[].class),
+	Oid(String.class);
 
 	/**
 	 * The mapping between MonetDB data types and enum values.
@@ -55,6 +56,7 @@ public enum MonetDBToJavaMapping {
 		monetDBMappings.put("timestamp", Timestamp);
 		monetDBMappings.put("timestamptz", TimestampTz);
 		monetDBMappings.put("blob", Blob);
+		monetDBMappings.put("oid", Oid);
 	}
 
 	/**

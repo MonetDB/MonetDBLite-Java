@@ -12,6 +12,9 @@ buildscript {
 
 repositories {
     mavenCentral()
+    maven {
+        url "http://oss.sonatype.org/content/repositories/snapshots"
+    }
 }
 
 apply plugin: 'java'
@@ -36,8 +39,8 @@ ext.packaging = 'jar'
 
 dependencies {
     //New MonetDB JDBC driver
-    compile("${group}:monetdb-jdbc-new:+")
-    runtime("${group}:monetdb-jdbc-new:+")
+    compile("${group}:monetdb-jdbc-new:@NEW_JDBC_NEXT_MAJOR_VERSION@.@NEW_JDBC_NEXT_MINOR_VERSION@@NEW_JDBC_NEXT_SNAPSHOT@")
+    runtime("${group}:monetdb-jdbc-new:@NEW_JDBC_NEXT_MAJOR_VERSION@.@NEW_JDBC_NEXT_MINOR_VERSION@@NEW_JDBC_NEXT_SNAPSHOT@")
 
     //JUnit Jupiter API and TestEngine implementation
     testCompile('org.junit.jupiter:junit-jupiter-api:+')

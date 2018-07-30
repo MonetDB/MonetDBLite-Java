@@ -387,6 +387,10 @@ JNIEXPORT jint JNICALL Java_nl_cwi_monetdb_embedded_tables_MonetDBTable_appendCo
 				CHECK_ARRAY_CLASS(getByteMatrixClassID(), "byte[]")
 				storeBlobColumn(env, &nextBAT, (jobjectArray) nextArray, numberOfRows, nextMonetDBIndex);
 				break;
+			case 19: //oid
+				CHECK_ARRAY_CLASS(getStringArrayClassID(), "java.lang.String")
+				storeOidColumn(env, &nextBAT, (jobjectArray) nextArray, numberOfRows, nextMonetDBIndex);
+				break;
 			default:
 				err = GDKstrdup("Unknown Java mapping class!");
 		}

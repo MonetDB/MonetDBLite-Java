@@ -67,13 +67,13 @@ public class JDBCTests extends MonetDBJavaLiteTesting {
 	void testSimpleTable() throws SQLException {
 		Connection conn = createJDBCEmbeddedConnection();
 		Statement stmt = conn.createStatement();
-		int rows1 = stmt.executeUpdate("CREATE TABLE test1 (a smallint, b varchar(32), c real, d int, e boolean);");
+		int rows1 = stmt.executeUpdate("CREATE TABLE test1 (a smallint, b varchar(32), c real, d int, e boolean, f oid);");
 		Assertions.assertEquals(-2, rows1, "The creation should have affected no rows!");
-		int rows2 = stmt.executeUpdate("INSERT INTO test1 VALUES (1, 'one', 3.223, 100, 'true');");
+		int rows2 = stmt.executeUpdate("INSERT INTO test1 VALUES (1, 'one', 3.223, 100, 'true', 1);");
 		Assertions.assertEquals(1, rows2, "The creation should have affected 1 row!");
-		int rows3 = stmt.executeUpdate("INSERT INTO test1 VALUES (2, NULL, NULL, -2032, 'false');");
+		int rows3 = stmt.executeUpdate("INSERT INTO test1 VALUES (2, NULL, NULL, -2032, 'false', 0);");
 		Assertions.assertEquals(1, rows3, "The creation should have affected 1 row!");
-		int rows4 = stmt.executeUpdate("INSERT INTO test1 VALUES (-3545, 'test', -7.858, 423423, NULL);");
+		int rows4 = stmt.executeUpdate("INSERT INTO test1 VALUES (-3545, 'test', -7.858, 423423, NULL, NULL);");
 		Assertions.assertEquals(1, rows4, "The creation should have affected 1 row!");
 
 		short[] column1 = new short[]{1, 2, -3545};
@@ -81,6 +81,7 @@ public class JDBCTests extends MonetDBJavaLiteTesting {
 		float[] column3 = new float[]{3.223f, 0.0f, -7.858f};
 		int[] column4 = new int[]{100, -2032, 423423};
 		boolean[] column5 = new boolean[]{true, false, false};
+		String[] column6 = new String[]{"1@0", "0@0", null};
 
 		ResultSet rs = stmt.executeQuery("SELECT * from test1;");
 		for(int i = 0 ; i < 3; i++) {
@@ -90,6 +91,7 @@ public class JDBCTests extends MonetDBJavaLiteTesting {
 			Assertions.assertEquals(column3[i], rs.getFloat(3), 0.01f, "Problems in the JDBC result set!");
 			Assertions.assertEquals(column4[i], rs.getInt(4), "Problems in the JDBC result set!");
 			Assertions.assertEquals(column5[i], rs.getBoolean(5), "Problems in the JDBC result set!");
+			Assertions.assertEquals(column6[i], rs.getString(6), "Problems in the JDBC result set!");
 		}
 		rs.close();
 		int rows5 = stmt.executeUpdate("DROP TABLE test1;");

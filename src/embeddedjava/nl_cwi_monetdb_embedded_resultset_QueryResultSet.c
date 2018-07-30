@@ -206,6 +206,12 @@ JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_
 	}
 }
 
+JNIEXPORT jbyteArray JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_getOidByColumnAndRowInternal
+	(JNIEnv *env, jobject queryResultSet, jlong structPointer, jint column, jint row) {
+	THIS_IS_ANNOYING
+	THIS_IS_ANNOYING_LEVEL_TWO(Oid)
+}
+
 #define ANOTHER_ANNOYING_TASK(TYPE_FUNCTION_CALL) \
 	JResultSet* thisResultSet = (JResultSet*) structPointer; \
 	BAT* dearBat = thisResultSet->bats[column]; \
@@ -294,6 +300,11 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_get
 	getDecimalColumn(env, thisResultSet, column, result, offset, length, dearBat);
 }
 
+JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_getOidColumnByIndexInternal
+	(JNIEnv *env, jobject queryResultSet, jlong structPointer, jint column, jobjectArray result, jint offset, jint length) {
+	ANOTHER_ANNOYING_TASK(Oid)
+}
+
 JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_getColumnNullMappingsByIndexInternal
 	(JNIEnv *env, jobject queryResultSet, jlong structPointer, jint column, jint typeID, jbooleanArray result) {
 	JResultSet* thisResultSet = (JResultSet*) structPointer;
@@ -350,6 +361,9 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_get
 				checkBigintNulls(env, result, numberOfRows, dearBat);
 			}
 			break;
+		case 14:
+			checkOidNulls(env, result, numberOfRows, dearBat);
+			break;
 		default:
 			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "Unknown MonetDB type!");
 	}
@@ -402,6 +416,9 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_map
 			break;
 		case 13:
 			getDecimalColumn(env, thisResultSet, column, result, 0, numberOfRows, dearBat);
+			break;
+		case 14:
+			getOidColumn(env, result, 0, numberOfRows, dearBat);
 			break;
 		default:
 		   (*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "Unknown MonetDB type!");

@@ -59,6 +59,8 @@ void checkTimestampNulls(JNIEnv* env, jbooleanArray input, jint size, BAT* b) {
 	}
 }
 
+CHECK_NULLS_LEVEL_ONE(Oid, oid, oid)
+
 #define GET_BAT_STRING_NULL      str nvalue = BUNtail(li, p);
 #define CHECK_NULL_STRING_NULL   strcmp((str) str_nil, nvalue) == 0
 
@@ -85,4 +87,3 @@ void checkTimestampNulls(JNIEnv* env, jbooleanArray input, jint size, BAT* b) {
 
 CHECK_NULLS_LEVEL_TWO(String, GET_BAT_STRING_NULL, CHECK_NULL_STRING_NULL)
 CHECK_NULLS_LEVEL_TWO(Blob, GET_BAT_BLOB_NULL, CHECK_NULL_BLOB_NULL)
-
