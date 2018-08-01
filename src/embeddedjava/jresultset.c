@@ -19,7 +19,8 @@
 
 JResultSet* createResultSet(monetdb_connection conn, monetdb_result* output) {
 	JResultSet* thisResultSet = (JResultSet*) GDKmalloc(sizeof(JResultSet));
-	int numberOfColumns, *quickerDigits, *quickerScales, i;
+	int *quickerDigits, *quickerScales;
+	size_t numberOfColumns, i, j;
 	BAT** dearBats;
 	if(thisResultSet) {
 		thisResultSet->conn = conn;
@@ -31,9 +32,12 @@ JResultSet* createResultSet(monetdb_connection conn, monetdb_result* output) {
 			thisResultSet->scales = (int*) GDKmalloc(sizeof(int) * numberOfColumns);
 
 			if(thisResultSet->bats == NULL || thisResultSet->digits == NULL || thisResultSet->scales == NULL) {
-				GDKfree(thisResultSet->bats);
-				GDKfree(thisResultSet->digits);
-				GDKfree(thisResultSet->scales);
+				if(thisResultSet->bats)
+					GDKfree(thisResultSet->bats);
+				if(thisResultSet->digits)
+					GDKfree(thisResultSet->digits);
+				if(thisResultSet->scales)
+					GDKfree(thisResultSet->scales);
 				GDKfree(thisResultSet);
 				thisResultSet = NULL;
 			} else {
@@ -41,8 +45,17 @@ JResultSet* createResultSet(monetdb_connection conn, monetdb_result* output) {
 				quickerDigits = thisResultSet->digits;
 				quickerScales = thisResultSet->scales;
 				for (i = 0; i < numberOfColumns; i++) {
-					res_col* col = (res_col*)  monetdb_result_fetch_rawcol(output, i);
-					dearBats[i] = BATdescriptor(col->b);
+					res_col* col = (res_col*) monetdb_result_fetch_rawcol(output, i);
+					if(!(dearBats[i] = BATdescriptor(col->b))) {
+						for (j = 0; j < i; j++)
+							BBPunfix(dearBats[j]->batCacheid);
+						monetdb_cleanup_result(thisResultSet->conn, thisResultSet->output);
+						GDKfree(thisResultSet->bats);
+						GDKfree(thisResultSet->digits);
+						GDKfree(thisResultSet->scales);
+						GDKfree(thisResultSet);
+						return NULL;
+					}
 					quickerDigits[i] = (int) col->type.digits;
 					quickerScales[i] = (int) col->type.scale;
 				}
@@ -64,9 +77,8 @@ void freeResultSet(JResultSet* thisResultSet) {
 			dearBats = thisResultSet->bats;
 			if(thisResultSet->output) {
 				numberOfColumns = thisResultSet->output->ncols;
-				for (i = 0; i < numberOfColumns; i++) {
+				for (i = 0; i < numberOfColumns; i++)
 					BBPunfix(dearBats[i]->batCacheid);
-				}
 			}
 			GDKfree(dearBats);
 			thisResultSet->bats = NULL;

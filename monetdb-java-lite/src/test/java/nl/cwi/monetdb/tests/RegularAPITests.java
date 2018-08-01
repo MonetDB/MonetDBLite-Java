@@ -91,23 +91,28 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 	@Test
 	@DisplayName("Just another race of MonetDBEmbeddedConnections")
 	void oneMoreRace() throws InterruptedException {
-		int stress = 8;
+		int stress = 16;
 		Thread[] otherStressers = new Thread[stress];
 		String[] messages = new String[stress];
 
 		for (int i = 0; i < stress; i++) {
+			final int threadID = i;
 			final int j = i;
 			Thread t = new Thread(() -> {
 				MonetDBEmbeddedConnection con = null;
-				QueryResultSet rs = null;
+				QueryResultSet qrs = null;
 				try {
 					con = MonetDBEmbeddedDatabase.createConnection();
-					rs = con.executeQuery("SELECT 1;");
+					qrs = con.executeQuery("SELECT " + threadID);
+					int intt = qrs.getIntegerByColumnIndexAndRow(1, 1);
+					if(threadID != intt) {
+						messages[j] = "No response from the server in one of the Threads!";
+					}
 				} catch (MonetDBEmbeddedException e) {
 					messages[j] = e.getMessage();
 				}
-				if(rs != null) {
-					rs.close();
+				if(qrs != null) {
+					qrs.close();
 				}
 				if(con != null) {
 					con.close();
@@ -130,25 +135,21 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 	@Test
 	@DisplayName("Empty result sets")
 	void testEmptyResulSets() throws MonetDBEmbeddedException {
-		MonetDBEmbeddedConnection con = MonetDBEmbeddedDatabase.createConnection();
-		QueryResultSet qrs = con.executeQuery("SELECT id from types WHERE 1=0;");
+		QueryResultSet qrs = connection.executeQuery("SELECT id from types WHERE 1=0;");
 		Assertions.assertThrows(ArrayIndexOutOfBoundsException.class, () -> qrs.getIntegerByColumnIndexAndRow(1, 1));
 		int numberOfRows = qrs.getNumberOfRows();
 		Assertions.assertEquals(0, numberOfRows, "The number of rows should be 0, got " + numberOfRows + " instead!");
 		qrs.close();
-		con.close();
 	}
 
 	@Test
 	@DisplayName("SELECT NULL")
 	void selectNull() throws MonetDBEmbeddedException {
-		MonetDBEmbeddedConnection con = MonetDBEmbeddedDatabase.createConnection();
-		QueryResultSet qrs = con.executeQuery("SELECT NULL AS stresser;");
+		QueryResultSet qrs = connection.executeQuery("SELECT NULL AS stresser;");
 		int numberOfRows = qrs.getNumberOfRows(), numberOfColumns = qrs.getNumberOfColumns();
 		Assertions.assertEquals(1, numberOfRows, "The number of rows should be 1, got " + numberOfRows + " instead!");
 		Assertions.assertEquals(1, numberOfColumns, "The number of columns should be 1, got " + numberOfColumns + " instead!");
 		qrs.close();
-		con.close();
 	}
 
 	@Test

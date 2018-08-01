@@ -125,13 +125,4 @@ public abstract class AbstractConnectionResult implements Closeable {
 	 * Close the result set internally.
 	 */
 	protected abstract void closeResultImplementation();
-
-	/**
-	 * Overriding the finalize method to clean the result set.
-	 */
-	@Override
-	protected void finalize() throws Throwable {
-		this.close();
-		super.finalize();
-	}
 }

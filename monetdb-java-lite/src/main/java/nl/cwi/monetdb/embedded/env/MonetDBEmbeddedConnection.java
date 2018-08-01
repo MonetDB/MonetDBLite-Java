@@ -372,7 +372,6 @@ public class MonetDBEmbeddedConnection implements Closeable {
 		}
 	}
 
-
 	/**
 	 * A brief description of the connection.
 	 */
@@ -390,15 +389,6 @@ public class MonetDBEmbeddedConnection implements Closeable {
 			this.closeConnectionImplementation();
 			MonetDBEmbeddedDatabase.removeConnection(this, false);
 		}
-	}
-
-	/**
-	 * Overriding the finalize method to close the connection
-	 */
-	@Override
-	protected void finalize() throws Throwable {
-		this.close();
-		super.finalize();
 	}
 
 	/**

@@ -365,19 +365,6 @@ public final class MonetDBEmbeddedDatabase {
 	}
 
 	/**
-	 * Overriding the finalize method to shut down the database. As the MonetDBEmbeddedDatabase is a static variable,
-	 * it will be garbage collected when the ClassLoader of this class gets Garbage Collected.
-	 */
-	@Override
-	protected void finalize() throws Throwable {
-		if(!isClosed) {
-			this.stopDatabaseInternal();
-			isClosed = true;
-		}
-		super.finalize();
-	}
-
-	/**
 	 * Internal implementation to start a database.
 	 */
 	private static native MonetDBEmbeddedDatabase startDatabaseInternal(String dbDirectory, boolean silentFlag,
