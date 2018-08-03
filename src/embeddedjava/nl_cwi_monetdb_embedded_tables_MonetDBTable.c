@@ -251,19 +251,9 @@ JNIEXPORT jobjectArray JNICALL Java_nl_cwi_monetdb_embedded_tables_MonetDBTable_
 	return result;
 }
 
-static char* generateWrongArrayErrorMessage(JNIEnv *env, int index, const char* arrayClass) {
-	char errorBuffer[64], *result;
-	snprintf(errorBuffer, 64, "The array at column %d must be a %s array!", index, arrayClass);
-	result = GDKstrdup(errorBuffer);
-	if(result == NULL) {
-		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System out of memory!");
-	}
-	return result;
-}
-
 #define CHECK_ARRAY_CLASS(METHOD, ARRAY_CLASS) \
 	if((*env)->IsInstanceOf(env, nextArray, METHOD) == JNI_FALSE) { \
-		err = generateWrongArrayErrorMessage(env, nextColumnIndex + 1, ARRAY_CLASS); \
+		err = createException(MAL, "append", SQLSTATE(42000) "The array at column %d must be a %s array!", nextColumnIndex + 1, ARRAY_CLASS); \
 		break; \
 	}
 
@@ -275,7 +265,7 @@ JNIEXPORT jint JNICALL Java_nl_cwi_monetdb_embedded_tables_MonetDBTable_appendCo
 	append_data* newdata;
 	jsize numberOfRows, nextSize;
 	sql_column *col;
-	int nextMonetDBIndex, nextColumnIndex;
+	int nextMonetDBIndex, nextColumnIndex, foundExc = 0, i = 0;
 	jint nextJavaIndex;
 	BAT* nextBAT;
 	jobject nextArray, columnDataZero;
@@ -316,7 +306,7 @@ JNIEXPORT jint JNICALL Java_nl_cwi_monetdb_embedded_tables_MonetDBTable_appendCo
 		nextArray = (*env)->GetObjectArrayElement(env, columnData, nextColumnIndex);
 		nextSize = (*env)->GetArrayLength(env, nextArray);
 		if(nextSize != numberOfRows) {
-			err = GDKstrdup("The row sizes between the columns are not consistent!");
+			err = createException(MAL, "append", SQLSTATE(42000) "The row sizes between columns are not consistent!");
 			break;
 		}
 
@@ -392,7 +382,7 @@ JNIEXPORT jint JNICALL Java_nl_cwi_monetdb_embedded_tables_MonetDBTable_appendCo
 				storeOidColumn(env, &nextBAT, (jobjectArray) nextArray, numberOfRows, nextMonetDBIndex);
 				break;
 			default:
-				err = GDKstrdup("Unknown Java mapping class!");
+				err = createException(MAL, "append", SQLSTATE(42000) "Unknown Java mapping class!");
 		}
 		(*env)->DeleteLocalRef(env, nextArray);
 		if(!err) {
@@ -409,7 +399,12 @@ JNIEXPORT jint JNICALL Java_nl_cwi_monetdb_embedded_tables_MonetDBTable_appendCo
 	GDKfree(newdata);
 
 	if (err) {
-		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), err);
+		while(err[i] && !foundExc) {
+			if(err[i] == '!')
+				foundExc = 1;
+			i++;
+		}
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), err + (foundExc ? i : 0));
 		GDKfree(err);
 		return -1;
 	} else {

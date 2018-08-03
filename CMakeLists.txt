@@ -5,17 +5,17 @@ cmake_minimum_required (VERSION 3.8)
 
 add_definitions(-DLIBGDK -DLIBMAL -DLIBOPTIMIZER -DLIBSTREAM -DLIBSQL -DHAVE_EMBEDDED -DHAVE_EMBEDDED_JAVA)
 
-if (WIN32)
+if (MSVC)
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS 1)
     set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_CRT_SECURE_NO_WARNINGS -DMONETDBLITE_COMPILE")
     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -D_CRT_SECURE_NO_WARNINGS -DMONETDBLITE_COMPILE -DNDEBUG")
-elseif (UNIX OR APPLE)
+elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE)
     set(CMAKE_C_FLAGS_DEBUG "-g -O0 -fPIC -Wall -Wextra -Werror -std=c99")
     set(CMAKE_C_FLAGS_RELEASE "-O3 -fPIC -DNDEBUG")
 endif()
 
-if(NOT(WIN32 OR UNIX OR APPLE))
-    message( FATAL_ERROR "MonetDBLite is only available to Windows, Linux and MacOS X" )
+if(NOT(MSVC OR ${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR APPLE))
+    message(FATAL_ERROR "MonetDBLite is only available for Windows, Linux and MacOS X")
 endif()
 
 find_package(BISON)
@@ -491,7 +491,7 @@ add_library(monetdb5 SHARED ${SOURCEFILES})
 
 add_dependencies(monetdb5 inlines)
 
-if (UNIX AND NOT(DEFINED ENV{CROSS_COMPILING}))
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Linux" AND NOT(DEFINED ENV{CROSS_COMPILING}))
     set_target_properties(monetdb5 PROPERTIES LINK_FLAGS "-lm -lrt -ldl -lpthread")
 elseif (APPLE OR DEFINED ENV{CROSS_COMPILING})
     set_target_properties(monetdb5 PROPERTIES LINK_FLAGS "-ldl -lpthread")
