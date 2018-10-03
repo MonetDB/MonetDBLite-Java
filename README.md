@@ -21,7 +21,7 @@ MonetDBJavaLite jar (`monetdb-java-lite-<version>.jar`). The former can be used 
 connections are desired. The latter contains the embedded server code. For both the Embedded API and the Embedded JDBC
 connections, the second jar is also required in the `CLASSPATH`.
 
-> The current version for `monetdb-java-lite` is 2.37 and `monetdb-jdbc-new` is 2.36
+> The current version for `monetdb-java-lite` is 2.38 and `monetdb-jdbc-new` is 2.36
 
 > **IMPORTANT** The version of the JDBC driver for MonetDBJavaLite is not synced with the version of the original
 MonetDB JDBC driver.
@@ -53,7 +53,7 @@ depends on `monetdb-jdbc-new`, so only the second one is required to add in a pr
 <dependency>
   <groupId>monetdb</groupId>
   <artifactId>monetdb-java-lite</artifactId>
-  <version>2.37</version>
+  <version>2.38</version>
 </dependency>
 ```
 
@@ -461,6 +461,7 @@ Embedded connection, these wrappers are not used, so only Strings and byte[] are
 
 * 2.38
     * Fixed buffer in for batch execution in embedded JDBC connection.
+    * Merged with MonetDB Aug2018 release.
 * 2.37
     * Created Cmake file for compilation. Merged with MonetDB Mar2018 release.
 * 2.36
