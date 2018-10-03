@@ -448,7 +448,6 @@ BATCH_LEVEL_FOUR(Blob, GET_BAT_BLOB, CHECK_NULL_BLOB, BAT_TO_JBLOB, blob*, jbyte
 		aux->tkey = 0; \
 		aux->tsorted = 1; \
 		aux->trevsorted = 1; \
-		aux->tdense = 0; \
 		p = (BAT_CAST *) Tloc(aux, 0); \
 		(*env)->Get##COPY_METHOD##ArrayRegion(env, data, 0, (jsize) cnt, (JAVA_CAST *) p); \
 		for(i = 0; i < cnt; i++, p++) { \
@@ -526,7 +525,6 @@ CONVERSION_LEVEL_ONE(Double, dbl, jdouble, Double)
 		aux->tkey = 0; \
 		aux->tsorted = 1; \
 		aux->trevsorted = 1; \
-		aux->tdense = 0; \
 		p = (BAT_CAST *) Tloc(aux, 0); \
 		for(i = 0; i < cnt; i++, p++) { \
 			value = (*env)->GetObjectArrayElement(env, data, (jsize) i); \
@@ -571,7 +569,6 @@ void storeOidColumn(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint lo
 	aux->tkey = 0;
 	aux->tsorted = 1;
 	aux->trevsorted = 1;
-	aux->tdense = 0;
 	p = (oid *) Tloc(aux, 0);
 	for(i = 0; i < cnt; i++) {
 		oid prev = oid_nil;
@@ -638,7 +635,6 @@ void storeOidColumn(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint lo
 		aux->tkey = 0; \
 		aux->tsorted = 1; \
 		aux->trevsorted = 1; \
-		aux->tdense = 0; \
 		p = (BAT_CAST *) Tloc(aux, 0); \
 		for(i = 0; i < cnt; i++, p++) { \
 			value = (*env)->GetObjectArrayElement(env, data, (jsize) i); \
