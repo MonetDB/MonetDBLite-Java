@@ -60,15 +60,17 @@ done
 
 # Remove the snapshot string
 if [ "$MONETDBLITEJAVA_NEXT_SNAPSHOT" = false ] ; then
+    OUT_FILE=`mktemp`
     for entry in "${TO_UPDATE[@]}"
     do
-        sed 's/@MONETDBLITEJAVA_NEXT_SNAPSHOT@//' "${entry::-3}" > thissnapshot && mv thissnapshot "${entry::-3}"
+        sed 's/@MONETDBLITEJAVA_NEXT_SNAPSHOT@//' "${entry::-3}" > $OUT_FILE && mv $OUT_FILE "${entry::-3}"
     done
 fi
 
 if [ "$NEW_JDBC_NEXT_SNAPSHOT" = false ] ; then
+    OUT_FILE=`mktemp`
     for entry in "${TO_UPDATE[@]}"
     do
-        sed 's/@NEW_JDBC_NEXT_SNAPSHOT@//' "${entry::-3}" > thissnapshot && mv thissnapshot "${entry::-3}"
+        sed 's/@NEW_JDBC_NEXT_SNAPSHOT@//' "${entry::-3}" > $OUT_FILE && mv $OUT_FILE "${entry::-3}"
     done
 fi
