@@ -17,9 +17,9 @@ import java.util.Locale;
 
 /**
  * Class responsible to load MonetDB's embedded library. On the resources directory of the JAR inside the libs directory
- * there is present a library file for each of the operating systems MonetDBJavaLite is compiled for.
+ * there is present a library file for each of the operating systems MonetDBLite-Java is compiled for.
  *
- * Currently we support Windows NT, Mac OS X and Linux on 64-bit architectures only.
+ * Currently we support Windows NT, Mac OS X for x86_64 and Linux on both x86_64 and arm64.
  *
  * @author <a href="mailto:pedro.ferreira@monetdbsolutions.com">Pedro Ferreira</a>
  */
@@ -28,60 +28,59 @@ public final class MonetDBJavaLiteLoader {
 	private MonetDBJavaLiteLoader() {}
 
 	/**
-	 * Operating Systems Listening and their respective MonetDB embedded libraries locations inside the MonetDBJavaLite
-	 * jar.
+	 * Operating Systems supported by MonetDBLite-Java.
 	 */
-	public enum OSLibraries {
-		/* Please don't change the order and the paths without expertise! ;) */
+	private enum SupportedOS {
+		WindowsNT,
+		MacOSX,
+		Linux
+	}
 
-		/**
-		 * Windows NT
-		 */
-		Windows("/libs/windows", "monetdb5.dll"),
+	/**
+	 * Architectures supported by MonetDBLite-Java.
+	 */
+	private enum SupportedArc {
+		X86_X64,
+		ARM64 //Only on Linux
+	}
 
-		/**
-		 * Mac OS X
-		 */
-		MacOSX("/libs/macosx", "libmonetdb5.dylib"),
-
-		/**
-		 * Linux
-		 */
-		Linux("/libs/linux", "libmonetdb5.so");
-
-		OSLibraries(String libraryFilePath, String libraryFileName) {
-			this.libraryFilePath = libraryFilePath;
-			this.libraryFileName = libraryFileName;
+	/**
+	 * Retrieve native library file name from the underlying operating system naming convention.
+	 */
+	private static String getLibraryFileName(SupportedOS os) throws MonetDBEmbeddedException {
+		switch(os) {
+			case WindowsNT:
+				return "monetdb5.dll";
+			case MacOSX:
+				return "libmonetdb5.dylib";
+			case Linux:
+				return "libmonetdb5.so";
 		}
+		throw new MonetDBEmbeddedException("Unknown operating system");
+	}
 
-		/**
-		 * The full library path from where this class is loaded. (Hopefully will always be from the same class as the
-		 * others in this JAR) :)
-		 */
-		private final String libraryFilePath;
-
-		/**
-		 * The library file name.
-		 */
-		private final String libraryFileName;
-
-		/**
-		 * Get the library file path.
-		 *
-		 * @return The library file path.
-		 */
-		public String getLibraryFilePath() {
-			return libraryFilePath;
+	/**
+	 * Retrieve native library file base path depending on the underlying operating system and architecture.
+	 */
+	private static String getLibraryFileBasePath(SupportedOS os, SupportedArc arc) throws MonetDBEmbeddedException {
+		switch(os) {
+			case WindowsNT:
+				if(arc != SupportedArc.X86_X64) {
+					throw new MonetDBEmbeddedException("Architecture not supported on Windows NT");
+				}
+				return "/libs/windows/x86x64";
+			case MacOSX:
+				if(arc != SupportedArc.X86_X64) {
+					throw new MonetDBEmbeddedException("Architecture not supported on MacOS X");
+				}
+				return "/libs/macosx/x86x64";
+			case Linux:
+				if(arc != SupportedArc.X86_X64 && arc != SupportedArc.ARM64) {
+					throw new MonetDBEmbeddedException("Architecture not supported on Linux");
+				}
+				return "/libs/linux/" + (arc == SupportedArc.X86_X64 ? "x86x64" : "arm64") + "/";
 		}
-
-		/**
-		 * Get the library file name.
-		 *
-		 * @return The library file name.
-		 */
-		public String getLibraryFileName() {
-			return libraryFileName;
-		}
+		throw new MonetDBEmbeddedException("Unknown operating system");
 	}
 
 	/**
@@ -104,53 +103,75 @@ public final class MonetDBJavaLiteLoader {
 			Class.forName("nl.cwi.monetdb.jdbc.MonetDriver");
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
-			System.err.println("Monet new JDBC driver not found! Please add monetdb-jdbc-new jar to the CLASSPATH");
+			System.err.println("monetdb-jdbc-new driver not found, add monetdb-jdbc-new jar to the CLASSPATH");
 			System.exit(1);
 		}
 	}
 
 	/**
-	 * Check if MonetDBJavaLite native library was loaded or not.
+	 * Check if MonetDBLite-Java native library was loaded or not.
 	 *
-	 * @return A boolean indicating if the MonetDBJavaLite native library was loaded or not
+	 * @return A boolean indicating if the MonetDBLite-Java native library was loaded or not
 	 */
 	public static synchronized boolean isNativeLibraryLoaded() {
 		return loadedLibraryFullPath != null;
 	}
 
 	/**
-	 * Detects the operating system from the os.name System property and returns the respective library location.
+	 * Detects the operating system from the os.name System property.
 	 *
-	 * @return The library path and file indication
+	 * @return The operating system found
 	 * @throws MonetDBEmbeddedException If the running operative system could not be detected
 	 */
-	private static OSLibraries detectRunningOperatingSystemAndLoadLibrary() throws MonetDBEmbeddedException {
+	private static SupportedOS detectRunningOperatingSystem() throws MonetDBEmbeddedException {
 		String OS = System.getProperty("os.name", "generic").toLowerCase(Locale.ENGLISH);
 
-		//Check the CPU architecture
-		//http://stackoverflow.com/questions/1856565/how-do-you-determine-32-or-64-bit-architecture-of-windows-using-java/2269242#2269242
-		boolean is64bit;
-		if (OS.contains("win")) {
-			is64bit = (System.getenv("ProgramFiles(x86)") != null);
-		} else {
-			is64bit = (System.getProperty("os.arch").contains("64"));
-		}
-		if(!is64bit) {
-			throw new MonetDBEmbeddedException("Currently we only support 64-bit architectures! Sorry! :(");
-		}
-
-		//Check the running OS
+		//Check running OS
 		//http://stackoverflow.com/questions/228477/how-do-i-programmatically-determine-operating-system-in-java#answer-18417382
 		if ((OS.contains("mac")) || (OS.contains("darwin"))) {
-			return OSLibraries.MacOSX;
+			return SupportedOS.MacOSX;
 		} else if (OS.contains("win")) {
-			return OSLibraries.Windows;
+			return SupportedOS.WindowsNT;
 		} else if (OS.contains("nux")) {
-			return OSLibraries.Linux;
-		} else {
-			throw new MonetDBEmbeddedException("The operating system " + OS +  " is currently not supported by " +
-												"MonetDBJavaLite! Sorry! :(");
+			return SupportedOS.Linux;
 		}
+		throw new MonetDBEmbeddedException("The operating system " + OS + " is not currently supported by MonetDBLite-Java");
+	}
+
+	/**
+	 * Detects the underlying CPU architecture and checks if MonetDBLite-Java supports it
+	 *
+	 * @return The CPU architecture found
+	 * @throws MonetDBEmbeddedException If the architecture is not supported
+	 */
+	private static SupportedArc detectCPUArchitecture(SupportedOS os) throws MonetDBEmbeddedException {
+		String arch = System.getProperty("os.arch").toLowerCase(Locale.ENGLISH);
+		boolean is_x86_64, is_arm64;
+
+		//Check CPU architecture
+		if (os == SupportedOS.WindowsNT) {
+			is_x86_64 = (System.getenv("ProgramFiles(x86)") != null);
+			is_arm64 = false;
+		} else {
+			is_x86_64 = (arch.contains("amd64") || arch.contains("x86_64") || arch.contains("x8664"));
+			is_arm64 = (arch.contains("arm64") || arch.contains("aarch64"));
+		}
+
+		if((os == SupportedOS.WindowsNT || os == SupportedOS.MacOSX) && !is_x86_64) {
+			String desc = (os == SupportedOS.WindowsNT) ? "Windows" : "MacOS X";
+			throw new MonetDBEmbeddedException("MonetDBLite-Java is only supported on x86_64 architectures on " + desc);
+		} else if(os == SupportedOS.Linux && !is_x86_64 && !is_arm64) {
+			throw new MonetDBEmbeddedException("MonetDBLite-Java is only supported on x86_64 and arm64 architectures on Linux");
+		} else if(is_x86_64 && is_arm64) {
+			throw new MonetDBEmbeddedException("Ambiguous architecture detected");
+		}
+
+		if(is_x86_64) {
+			return SupportedArc.X86_X64;
+		} else if(is_arm64) {
+			return SupportedArc.ARM64;
+		}
+		throw new MonetDBEmbeddedException("The architecture " + arch + " is not currently supported by MonetDBLite-Java");
 	}
 
 	/**
@@ -203,7 +224,7 @@ public final class MonetDBJavaLiteLoader {
 	private static String loadLibraryIntoDirectory(String libraryFilePath, String prefix, String libraryFileName,
 												   String destinationDirectory) throws MonetDBEmbeddedException {
 		try {
-			String nativeLibraryFilePath = libraryFilePath + "/" + libraryFileName;
+			String nativeLibraryFilePath = libraryFilePath + libraryFileName;
 			String extractedLibFileName = prefix + libraryFileName;
 			File extractedLibFile = new File(destinationDirectory, extractedLibFileName);
 
@@ -238,7 +259,7 @@ public final class MonetDBJavaLiteLoader {
 	}
 
 	/**
-	 * Loads MonetDBJavaLite native library into the JVM if it hasn't been loaded yet.
+	 * Loads MonetDBLite-Java native library into the JVM if it hasn't been loaded yet.
 	 *
 	 * @throws MonetDBEmbeddedException If an IO error occurred
 	 */
@@ -247,19 +268,19 @@ public final class MonetDBJavaLiteLoader {
 			return;
 		}
 
-		OSLibraries toLoad = detectRunningOperatingSystemAndLoadLibrary();
-		String nativeLibraryPath = toLoad.getLibraryFilePath();
-		String nativeLibraryName = toLoad.getLibraryFileName();
+		SupportedOS foundOS = detectRunningOperatingSystem();
+		SupportedArc foundArc = detectCPUArchitecture(foundOS);
+		String nativeLibraryPath = getLibraryFileBasePath(foundOS, foundArc);
+		String nativeLibraryName = getLibraryFileName(foundOS);
 
-		if (MonetDBJavaLiteLoader.class.getResource(nativeLibraryPath + "/" + nativeLibraryName) == null) {
+		if (MonetDBJavaLiteLoader.class.getResource(nativeLibraryPath + nativeLibraryName) == null) {
 			loadedLibraryFullPath = null;
-			throw new MonetDBEmbeddedException("Error while loading library: " + nativeLibraryPath + "/" +
-					nativeLibraryName);
+			throw new MonetDBEmbeddedException("Error while loading library: " + nativeLibraryPath + nativeLibraryName);
 		}
 
-		int ordinalOSEnumValue = toLoad.ordinal();
 		// Extract the libraries from the jar
-		if(ordinalOSEnumValue == 0) { //On Windows we have to extract the Visual C/C++ Runtime library dependency
+		if(foundOS == SupportedOS.WindowsNT) {
+			//On Windows we have to extract the Visual C/C++ Runtime library dependency
 			//Check https://msdn.microsoft.com/en-us/library/ms235299.aspx for details
 			loadLibraryIntoDirectory(nativeLibraryPath, "", "vcruntime140.dll", tempDirectory);
 		}
