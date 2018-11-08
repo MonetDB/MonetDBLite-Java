@@ -62,15 +62,15 @@ cd "$BASEDIR"
 # Set the proper versions
 ./versions.sh
 
-mkdir -p build/"$BUILDTYPE"/"$BUILDSYS"
-cd build/"$BUILDTYPE"/"$BUILDSYS"
+mkdir -p build/"$BUILDTYPE"/"$BUILDSYS"/"$ARCH_DIR"
+cd build/"$BUILDTYPE"/"$BUILDSYS"/"$ARCH_DIR"
 
 # Time to compile
 if [[ "$1" == "windows" ]] ; then
-    cmake -G "Visual Studio 15 2017 Win64" ../../..
+    cmake -G "Visual Studio 15 2017 Win64" ../../../..
     cmake --build . --target ALL_BUILD --config "$3"
 else
-    cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE="$3" ../../..
+    cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE="$3" ../../../..
     # For MacOS builds, change -Wl,-soname linker option
     if [[ "$1" == "macosx" ]] ; then
         sed -i "s/-Wl,-soname,${BUILDINPUTLIBRARY}/-Wl,-install_name,${BUILDINPUTLIBRARY}/g" CMakeFiles/monetdb5.dir/link.txt
@@ -82,7 +82,7 @@ fi
 cd "$BASEDIR"
 mkdir -p monetdb-java-lite/src/main/resources/libs/"$BUILDSYS"/"$ARCH_DIR"
 
-mv build/"$BUILDTYPE"/"$BUILDSYS"/"$BUILDINPUTLIBRARY" monetdb-java-lite/src/main/resources/libs/"$BUILDSYS"/"$ARCH_DIR"/"$BUILDOUTPUTLIBRARY"
+mv build/"$BUILDTYPE"/"$BUILDSYS"/"$ARCH_DIR"/"$BUILDINPUTLIBRARY" monetdb-java-lite/src/main/resources/libs/"$BUILDSYS"/"$ARCH_DIR"/"$BUILDOUTPUTLIBRARY"
 
 # On Windows copy the runtime library
 if [[ "$1" == "windows" ]] ; then
