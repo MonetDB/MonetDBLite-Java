@@ -68,12 +68,12 @@ public final class MonetDBJavaLiteLoader {
 				if(arc != SupportedArc.X86_X64) {
 					throw new MonetDBEmbeddedException("Architecture not supported on Windows NT");
 				}
-				return "/libs/windows/x86x64";
+				return "/libs/windows/x86x64/";
 			case MacOSX:
 				if(arc != SupportedArc.X86_X64) {
 					throw new MonetDBEmbeddedException("Architecture not supported on MacOS X");
 				}
-				return "/libs/macosx/x86x64";
+				return "/libs/macosx/x86x64/";
 			case Linux:
 				if(arc != SupportedArc.X86_X64 && arc != SupportedArc.ARM64) {
 					throw new MonetDBEmbeddedException("Architecture not supported on Linux");
