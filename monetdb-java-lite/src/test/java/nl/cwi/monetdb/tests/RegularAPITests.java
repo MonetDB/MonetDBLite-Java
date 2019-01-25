@@ -1056,6 +1056,40 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 		connection.executeUpdate("DROP TABLE beok;");
 	}
 
+	@Test
+	@DisplayName("Test schemas")
+	void testSchemas() throws MonetDBEmbeddedException {
+		int numberOfRows, numberOfColumns;
+		connection.executeUpdate("create schema bar;");
+		connection.executeUpdate("set schema bar;");
+		connection.executeUpdate("create table foo (a int, b int);");
+		connection.executeUpdate("insert into foo values (1, 2);");
+
+		QueryResultSet qrs = connection.executeQuery("select * from foo;");
+		numberOfRows = qrs.getNumberOfRows();
+		numberOfColumns = qrs.getNumberOfColumns();
+		Assertions.assertEquals(1, numberOfRows, "The number of rows should be 1, got " + numberOfRows + " instead!");
+		Assertions.assertEquals(2, numberOfColumns, "The number of columns should be 2, got " + numberOfColumns + " instead!");
+		qrs.close();
+
+		QueryResultSet qrs2 = connection.executeQuery("select * from bar.foo;");
+		numberOfRows = qrs2.getNumberOfRows();
+		numberOfColumns = qrs2.getNumberOfColumns();
+		Assertions.assertEquals(1, numberOfRows, "The number of rows should be 1, got " + numberOfRows + " instead!");
+		Assertions.assertEquals(2, numberOfColumns, "The number of columns should be 2, got " + numberOfColumns + " instead!");
+		qrs2.close();
+
+		connection.executeUpdate("set schema sys;");
+		connection.executeUpdate("drop schema bar cascade;");
+
+		Assertions.assertThrows(MonetDBEmbeddedException.class, () -> connection.executeUpdate("set schema bar;"));
+		Assertions.assertThrows(MonetDBEmbeddedException.class, () -> connection.executeQuery("select * from bar.foo;"));
+
+		connection.executeUpdate("create schema other;");
+		connection.executeUpdate("drop schema other;");
+		Assertions.assertThrows(MonetDBEmbeddedException.class, () -> connection.executeUpdate("set schema other;"));
+	}
+
 	@AfterAll
 	@DisplayName("Shutdown database at the end")
 	static void shutDatabase() throws MonetDBEmbeddedException, IOException {

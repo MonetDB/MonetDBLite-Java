@@ -15,12 +15,9 @@ fi
 # bash compile.sh windows x86_64 Release
 # bash compile.sh linux x86_64 Release
 # docker run -it --rm -v $(pwd):/workdir:Z --privileged=true -e CROSS_TRIPLE=x86_64-apple-darwin -e NATIVE_LIBRARY_ONLY=1 -e CROSS_COMPILING=1 pedrotadim/compilemonetdblite bash compile.sh macosx x86_64 Release
-# dockcross-linux-arm64 bash -c '/work/compile.sh linux arm64 Release'
+# docker run -it --rm -v $(pwd):/workdir:Z --privileged=true -e NATIVE_LIBRARY_ONLY=1 -e CROSS_COMPILING=1 dockcross/linux-arm64 bash -c '/workdir/compile.sh linux arm64 Release'
 
 cd monetdb-java-lite
-
-./gradlew -i build
-./gradlew javadoc
 
 # Prepare the directory to upload to our website
 mkdir -p synchronizing/javadocs/embedded
