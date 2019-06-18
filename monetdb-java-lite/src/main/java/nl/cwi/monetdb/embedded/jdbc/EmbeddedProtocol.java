@@ -172,7 +172,11 @@ public final class EmbeddedProtocol extends AbstractProtocol {
 	@Override
 	public int getNextTableHeader(String[] columnNames, int[] columnLengths, String[] types, String[] tableNames)
 			throws ProtocolException {
-		return connection.fillTableHeaders(columnNames, columnLengths, types, tableNames);
+		try {
+			return connection.fillTableHeaders(columnNames, columnLengths, types, tableNames);
+		} catch (MonetDBEmbeddedException ex) {
+			throw new ProtocolException(ex.getMessage(), 0);
+		}
 	}
 
 	/**
@@ -213,6 +217,10 @@ public final class EmbeddedProtocol extends AbstractProtocol {
 	 */
 	@Override
 	public void writeNextQuery(String prefix, String query, String suffix) throws IOException {
-		connection.processNextQuery(query);
+		try {
+			connection.processNextQuery(query);
+		} catch (MonetDBEmbeddedException ex) {
+			throw new IOException(ex.getMessage());
+		}
 	}
 }

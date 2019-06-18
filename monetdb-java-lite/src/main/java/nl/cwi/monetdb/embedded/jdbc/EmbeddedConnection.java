@@ -175,7 +175,7 @@ public final class EmbeddedConnection extends MonetConnection {
 	 */
 	@Override
 	public int getSoTimeout() throws SocketException {
-		throw new SocketException("Cannot get a timeout on a embedded connection!");
+		throw new SocketException("Cannot get a timeout on a embedded connection");
 	}
 
 	/**
@@ -186,7 +186,7 @@ public final class EmbeddedConnection extends MonetConnection {
 	 */
 	@Override
 	public void setSoTimeout(int timeout) throws SocketException {
-		throw new SocketException("Cannot set a timeout on a embedded connection!");
+		throw new SocketException("Cannot set a timeout on a embedded connection");
 	}
 
 	/**

@@ -9,25 +9,32 @@
 #include "nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnection.h"
 
 #include "monetdb_config.h"
-#include "embedded.h"
-#include "embeddedjvm.h"
+#include "mal_exception.h"
+#include "monetdb_embedded.h"
 #include "javaids.h"
 #include "jresulset.h"
 #include "res_table.h"
 #include "mal_type.h"
+#include "sql_querytype.h"
 
 JNIEXPORT jboolean JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnection_getAutoCommitInternal
 	(JNIEnv *env, jobject jconnection, jlong connectionPointer) {
-	int result = getAutocommitFlag((monetdb_connection) connectionPointer);
+	int result;
+	char *err;
 	(void) env;
 	(void) jconnection;
+
+	if((err = monetdb_get_autocommit((monetdb_connection) connectionPointer, &result)) != MAL_SUCCEED) {
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), err);
+		freeException(err);
+	}
 	return (result == 0) ? JNI_FALSE : JNI_TRUE;
 }
 
 JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnection_setAutoCommitInternal
 	(JNIEnv *env, jobject jconnection, jlong connectionPointer, jboolean autoCommit) {
-	char toSet = (autoCommit == JNI_FALSE) ? (char)0 : (char)1, *err = NULL;
-	int foundExc = 0, i = 0;
+	char *err = NULL;
+	int foundExc = 0, i = 0, toSet = (autoCommit == JNI_FALSE) ? 0 : 1;
 
 	(void) env;
 	(void) jconnection;
@@ -38,27 +45,29 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnectio
 			i++;
 		}
 		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), err + (foundExc ? i : 0));
-		GDKfree(err);
+		freeException(err);
 	}
 }
 
 static int executeQuery(JNIEnv *env, jlong connectionPointer, jstring query, jboolean execute, monetdb_result **output,
-						int *query_type, size_t *lastId, lng *rowCount, lng *prepareID) {
+						int *query_type, lng *lastId, lng *rowCount, int *prepareID) {
 	const char *query_string_tmp;
 	char* err = NULL;
 	int foundExc = 0, i = 0;
 
+	(void) execute;
 	if(connectionPointer == 0) {
 		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "Connection already closed?");
 		return 1;
 	}
 	query_string_tmp = (*env)->GetStringUTFChars(env, query, NULL);
 	if(query_string_tmp == NULL) {
-		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System out of memory!");
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 		return 2;
 	}
 	// Execute the query
-	err = monetdb_query((monetdb_connection) connectionPointer, (char*) query_string_tmp, (char) execute, output, rowCount, prepareID);
+	err = monetdb_query((monetdb_connection) connectionPointer, (char*) query_string_tmp, output,
+						rowCount, prepareID);
 	(*env)->ReleaseStringUTFChars(env, query, query_string_tmp);
 	if (err) {
 		while(err[i] && !foundExc) {
@@ -67,56 +76,62 @@ static int executeQuery(JNIEnv *env, jlong connectionPointer, jstring query, jbo
 			i++;
 		}
 		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), err + (foundExc ? i : 0));
-		GDKfree(err);
+		freeException(err);
 		return 3;
 	}
 	if(*output) {
-		if(query_type) {
-			*query_type = (int) ((*output)->type);
-		}
-		if(lastId) {
-			*lastId = (size_t) ((*output)->id);
-		}
+		if(query_type)
+			*query_type = (*output)->type;
+		if(lastId)
+			*lastId = (*output)->id;
 	}
 	return 0;
 }
 
 static jobject generateQueryResultSet(JNIEnv *env, jobject jconnection, jlong connectionPointer, monetdb_result *output,
-									  int query_type, lng prepareID) {
-	int i, numberOfColumns;
+									  int query_type, int prepareID) {
+	size_t i, numberOfColumns;
 	jobject result = NULL;
 	jintArray typesIDs;
 	jint* copy = NULL;
 	JResultSet* thisResultSet = NULL;
+	char* err = NULL;
+	monetdb_connection conn = (monetdb_connection) connectionPointer;
 
 	// Check if we had results, otherwise we send an exception
 	if (output && (query_type == Q_TABLE || query_type == Q_PREPARE || query_type == Q_BLOCK) && output->ncols > 0) {
-		numberOfColumns = (int) output->ncols;
+		numberOfColumns = output->ncols;
 	} else {
+		char* other;
 		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "There query returned no results?");
-		monetdb_cleanup_result((monetdb_connection) connectionPointer, output);
+		if((other = monetdb_cleanup_result((monetdb_connection) connectionPointer, output)) != MAL_SUCCEED)
+			freeException(other);
 		return result;
 	}
 
-	copy = GDKmalloc(sizeof(jint) * numberOfColumns);
-	thisResultSet = createResultSet((monetdb_connection) connectionPointer, output);
-	if(copy == NULL || thisResultSet == NULL) {
-		GDKfree(copy);
-		freeResultSet(thisResultSet);
-		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System out of memory!");
-		return result;
+	if((err = createResultSet(conn, &thisResultSet, output)) != MAL_SUCCEED) {
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), err);
+		freeException(err);
 	}
+	copy = GDKmalloc(sizeof(jint) * numberOfColumns);
 	typesIDs = (*env)->NewIntArray(env, numberOfColumns);
-	if(typesIDs == NULL) {
-		GDKfree(copy);
+	if(copy == NULL || typesIDs == NULL) {
+		if(copy)
+			GDKfree(copy);
 		freeResultSet(thisResultSet);
-		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System out of memory!");
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 		return result;
 	}
 
 	for (i = 0; i < numberOfColumns; i++) {
-		res_col* col = (res_col*) monetdb_result_fetch_rawcol(output, i);
-		char* nextSQLName = col->type.type->sqlname;
+		res_col* col = NULL;
+		char* nextSQLName, *err;
+		if((err = monetdb_result_fetch_rawcol(conn, &col, output, i)) != MAL_SUCCEED) {
+			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), err);
+			freeException(err);
+			break;
+		}
+		nextSQLName = col->type.type->sqlname;
 		if(strncmp(nextSQLName, "boolean", 7) == 0) {
 			copy[i] = 1;
 		} else if(strncmp(nextSQLName, "tinyint", 7) == 0) {
@@ -146,7 +161,7 @@ static jobject generateQueryResultSet(JNIEnv *env, jobject jconnection, jlong co
 		} else if(strncmp(nextSQLName, "oid", 3) == 0) {
 			copy[i] = 14;
 		} else {
-			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "Unknown MonetDB type!");
+			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "Unknown MonetDB type");
 		}
 	}
 
@@ -155,17 +170,16 @@ static jobject generateQueryResultSet(JNIEnv *env, jobject jconnection, jlong co
 	} else {
 		(*env)->SetIntArrayRegion(env, typesIDs, 0, numberOfColumns, copy);
 		if(prepareID) {
-			//public PreparedQueryResultSet(MonetDBEmbeddedConnection connection, long structPointer, int numberOfColumns, int numberOfRows, int[] typesIDs, long preparedID)
+			//public PreparedQueryResultSet(MonetDBEmbeddedConnection connection, long structPointer, int numberOfColumns, int numberOfRows, int[] typesIDs, int preparedID)
 			result = (*env)->NewObject(env, getPreparedQueryResultSetClassID(), getPreparedQueryResultSetClassConstructorID(), jconnection,
-									   (jlong) thisResultSet, numberOfColumns, (jint) output->nrows, typesIDs, (jlong) prepareID);
+									   (jlong) thisResultSet, numberOfColumns, (jint) output->nrows, typesIDs, prepareID);
 		} else {
 			//QueryResultSet(MonetDBEmbeddedConnection connection, long structPointer, int numberOfColumns, int numberOfRows, int[] typesIDs)
 			result = (*env)->NewObject(env, getQueryResultSetID(), getQueryResultSetConstructorID(), jconnection,
 									   (jlong) thisResultSet, numberOfColumns, (jint) output->nrows, typesIDs);
 		}
-		if(result == NULL) {
-			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System out of memory!");
-		}
+		if(result == NULL)
+			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 	}
 	GDKfree(copy);
 	return result;
@@ -177,10 +191,12 @@ JNIEXPORT jint JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnectio
 	lng rowCount;
 	jint returnValue = -1;
 	int query_type = Q_UPDATE, res;
+	char* other;
 
 	(void) jconnection;
 	res = executeQuery(env, connectionPointer, query, execute, &output, &query_type, NULL, &rowCount, NULL);
-	monetdb_cleanup_result((monetdb_connection) connectionPointer, output);
+	if((other = monetdb_cleanup_result((monetdb_connection) connectionPointer, output)) != MAL_SUCCEED)
+		freeException(other);
 	if(res) {
 		return returnValue;
 	} else if(query_type == Q_UPDATE) {
@@ -200,8 +216,10 @@ JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnec
 	if(res) {
 		return NULL;
 	} else if(query_type != Q_TABLE && query_type != Q_BLOCK) {
-		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The query did not produce a result set!");
-		monetdb_cleanup_result((monetdb_connection) connectionPointer, output);
+		char* other;
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The query did not produce a result set");
+		if((other = monetdb_cleanup_result((monetdb_connection) connectionPointer, output)) != MAL_SUCCEED)
+			freeException(other);
 		return NULL;
 	} else {
 		return generateQueryResultSet(env, jconnection, connectionPointer, output, query_type, 0);
@@ -210,16 +228,17 @@ JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnec
 
 JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnection_prepareStatementInternal
 	(JNIEnv *env, jobject jconnection, jlong connectionPointer, jstring query, jboolean execute) {
-	int query_type = Q_PREPARE, res;
+	int query_type = Q_PREPARE, res, prepareID;
 	monetdb_result *output = NULL;
-	lng prepareID;
 
 	res = executeQuery(env, connectionPointer, query, execute, &output, &query_type, NULL, NULL, &prepareID);
 	if(res) {
 		return NULL;
 	} else if(query_type != Q_PREPARE) {
-		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The query did not produce a prepared statement!");
-		monetdb_cleanup_result((monetdb_connection) connectionPointer, output);
+		char* other;
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The query did not produce a prepared statement");
+		if((other = monetdb_cleanup_result((monetdb_connection) connectionPointer, output)) != MAL_SUCCEED)
+			freeException(other);
 		return NULL;
 	} else {
 		return generateQueryResultSet(env, jconnection, connectionPointer, output, query_type, prepareID);
@@ -234,6 +253,7 @@ JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnec
 	jobject resultSet = NULL, result;
 	jint returnValue = -1;
 	jboolean retStatus = JNI_FALSE;
+	char* other;
 
 	res = executeQuery(env, connectionPointer, query, execute, &output, &query_type, NULL, &rowCount, NULL);
 	if(res) {
@@ -247,22 +267,25 @@ JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnec
 		} else if(query_type == Q_SCHEMA) {
 			returnValue = -2;
 		}
-		monetdb_cleanup_result((monetdb_connection) connectionPointer, output);
+		if((other = monetdb_cleanup_result((monetdb_connection) connectionPointer, output)) != MAL_SUCCEED)
+			freeException(other);
 	}
 	//public ExecResultSet(boolean status, QueryResultSet resultSet, int numberOfRows)
 	result = (*env)->NewObject(env, getExecResultSetClassID(), getExecResultSetClassConstructorID(), retStatus, resultSet, returnValue);
-	if(result == NULL) {
-		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System out of memory!");
-	}
+	if(result == NULL)
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 	return result;
 }
 
 JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnection_executePrepareStatementAndIgnoreInternal
 	(JNIEnv *env, jobject jconnection, jlong connectionPointer, jstring query, jboolean execute) {
 	monetdb_result *output = NULL;
+	char* other;
 	(void) jconnection;
+
 	(void) executeQuery(env, connectionPointer, query, execute, &output, NULL, NULL, NULL, NULL);
-	monetdb_cleanup_result((monetdb_connection) connectionPointer, output);
+	if((other = monetdb_cleanup_result((monetdb_connection) connectionPointer, output)) != MAL_SUCCEED)
+		freeException(other);
 }
 
 JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnection_getMonetDBTableInternal
@@ -272,37 +295,38 @@ JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnec
 	sql_table* table;
 	jobject result;
 
-	schema_name_tmp = (*env)->GetStringUTFChars(env, tableSchema, NULL);
-	if(schema_name_tmp == NULL) {
-		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System out of memory!");
+	if((schema_name_tmp = (*env)->GetStringUTFChars(env, tableSchema, NULL)) == NULL) {
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 		return NULL;
 	}
-	table_name_tmp = (*env)->GetStringUTFChars(env, tableName, NULL);
-	if(table_name_tmp == NULL) {
+	if((table_name_tmp = (*env)->GetStringUTFChars(env, tableName, NULL)) == NULL) {
 		(*env)->ReleaseStringUTFChars(env, tableSchema, schema_name_tmp);
-		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System out of memory!");
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 		return NULL;
 	}
 
-	err = monetdb_find_table((monetdb_connection) connectionPointer, &table, schema_name_tmp, table_name_tmp);
+	err = monetdb_get_table((monetdb_connection) connectionPointer, &table, schema_name_tmp, table_name_tmp);
 	(*env)->ReleaseStringUTFChars(env, tableSchema, schema_name_tmp);
 	(*env)->ReleaseStringUTFChars(env, tableName, table_name_tmp);
 	if (err) {
-		GDKfree(err);
 		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), err);
+		freeException(err);
 		return NULL;
 	}
 	result = (*env)->NewObject(env, getMonetDBTableClassID(), getMonetDBTableClassConstructorID(), jconnection, tableSchema, tableName);
-	if(result == NULL) {
-		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System out of memory!");
-	}
+	if(result == NULL)
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 	return result;
 }
 
 JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnection_closeConnectionInternal
 	(JNIEnv *env, jobject jconnection, jlong connectionPointer) {
+	char *err = NULL;
 	(void) env;
 	(void) jconnection;
 
-	monetdb_disconnect((monetdb_connection) connectionPointer);
+	if ((err = monetdb_disconnect((monetdb_connection) connectionPointer)) != MAL_SUCCEED) {
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), err);
+		freeException(err);
+	}
 }

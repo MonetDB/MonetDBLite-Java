@@ -41,7 +41,7 @@ public final class MonetDBTable extends AbstractConnectionResult {
 	}
 
 	@Override
-	public native int getNumberOfColumns();
+	public native int getNumberOfColumns() throws MonetDBEmbeddedException;
 
 	/**
 	 * Gets the current number of rows in the table, or -1 if an error in the database has occurred.
@@ -62,19 +62,19 @@ public final class MonetDBTable extends AbstractConnectionResult {
 		return res;
 	}
 
-	protected native void getColumnNamesInternal(String[] input);
+	protected native void getColumnNamesInternal(String[] input) throws MonetDBEmbeddedException;
 
-	protected native void getColumnTypesInternal(String[] input);
+	protected native void getColumnTypesInternal(String[] input) throws MonetDBEmbeddedException;
 
-	protected native void getMappingsInternal(MonetDBToJavaMapping[] input);
+	protected native void getMappingsInternal(MonetDBToJavaMapping[] input) throws MonetDBEmbeddedException;
 
-	protected native void getColumnDigitsInternal(int[] input);
+	protected native void getColumnDigitsInternal(int[] input) throws MonetDBEmbeddedException;
 
-	protected native void getColumnScalesInternal(int[] input);
+	protected native void getColumnScalesInternal(int[] input) throws MonetDBEmbeddedException;
 
-	protected native void getColumnNullableIndexesInternal(boolean[] input);
+	protected native void getColumnNullableIndexesInternal(boolean[] input) throws MonetDBEmbeddedException;
 
-	protected native void getColumnDefaultValuesInternal(String[] input);
+	protected native void getColumnDefaultValuesInternal(String[] input) throws MonetDBEmbeddedException;
 
 	/**
 	 * Gets the table schema name.
@@ -108,7 +108,7 @@ public final class MonetDBTable extends AbstractConnectionResult {
 	 */
 	public void setRoundingMode(int roundingMode) {
 		if(roundingMode < BigDecimal.ROUND_HALF_UP || roundingMode > BigDecimal.ROUND_HALF_EVEN) {
-			throw new IllegalArgumentException("Unexpected rounding mode!");
+			throw new IllegalArgumentException("Unexpected rounding mode");
 		}
 		this.roundingMode = roundingMode;
 	}
@@ -147,8 +147,9 @@ public final class MonetDBTable extends AbstractConnectionResult {
 	 * Gets the columns nullable indexes as an array.
 	 *
 	 * @param input The columns nullable indexes array to fill
+	 * @throws MonetDBEmbeddedException If an error in the database occurred.
 	 */
-	public void getColumnNullableIndexes(boolean[] input) {
+	public void getColumnNullableIndexes(boolean[] input) throws MonetDBEmbeddedException {
 		this.checkMetadataArrayLength(input);
 		this.getColumnNullableIndexesInternal(input);
 	}
@@ -157,8 +158,9 @@ public final class MonetDBTable extends AbstractConnectionResult {
 	 * Gets the columns default values in an array.
 	 *
 	 * @param input The columns default values array to fill
+	 * @throws MonetDBEmbeddedException If an error in the database occurred.
 	 */
-	public void getColumnDefaultValues(String[] input) {
+	public void getColumnDefaultValues(String[] input) throws MonetDBEmbeddedException {
 		this.checkMetadataArrayLength(input);
 		this.getColumnDefaultValuesInternal(input);
 	}
@@ -168,23 +170,26 @@ public final class MonetDBTable extends AbstractConnectionResult {
 	 *
 	 * @param index The column index (starting from 1)
 	 * @return The column metadata, {@code null} if index not in bounds
+	 * @throws MonetDBEmbeddedException If an error in the database occurred.
 	 */
-	public native MonetDBTableColumn getColumnMetadataByIndex(int index);
+	public native MonetDBTableColumn getColumnMetadataByIndex(int index) throws MonetDBEmbeddedException;
 
 	/**
 	 * Gets a column metadata by name.
 	 *
 	 * @param name The column name
 	 * @return The column metadata, {@code null} if not found
+	 * @throws MonetDBEmbeddedException If an error in the database occurred.
 	 */
-	public native MonetDBTableColumn getColumnMetadataByName(String name);
+	public native MonetDBTableColumn getColumnMetadataByName(String name) throws MonetDBEmbeddedException;
 
 	/**
 	 * Gets all columns metadata.
 	 *
 	 * @return An array instance of columns metadata
+	 * @throws MonetDBEmbeddedException If an error in the database occurred.
 	 */
-	public native MonetDBTableColumn[] getAllColumnsMetadata();
+	public native MonetDBTableColumn[] getAllColumnsMetadata() throws MonetDBEmbeddedException;
 
 	/**
 	 * Private method to check the limits of iteration.
@@ -249,7 +254,7 @@ public final class MonetDBTable extends AbstractConnectionResult {
 	public int appendColumns(Object[] input) throws MonetDBEmbeddedException {
 		int numberOfColumns = this.getNumberOfColumns();
 		if (input.length != numberOfColumns) {
-			throw new ArrayStoreException("The number of columns between the input and the table is not consistent!");
+			throw new ArrayStoreException("The number of columns between the input and the table is not consistent");
 		}
 		MonetDBToJavaMapping[] mappings = new MonetDBToJavaMapping[numberOfColumns];
 		this.getMappings(mappings);

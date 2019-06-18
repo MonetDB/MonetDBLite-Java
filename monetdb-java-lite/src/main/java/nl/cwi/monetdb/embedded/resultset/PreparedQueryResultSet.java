@@ -18,10 +18,10 @@ import nl.cwi.monetdb.embedded.env.MonetDBEmbeddedConnection;
 public final strictfp class PreparedQueryResultSet extends QueryResultSet {
 
 	/** The prepared statement ID */
-	private final long preparedID;
+	private final int preparedID;
 
 	private PreparedQueryResultSet(MonetDBEmbeddedConnection connection, long structPointer, int numberOfColumns,
-								   int numberOfRows, int[] typesIDs, long preparedID) {
+								   int numberOfRows, int[] typesIDs, int preparedID) {
 		super(connection, structPointer, numberOfColumns, numberOfRows, typesIDs);
 		this.preparedID = preparedID;
 	}
@@ -31,7 +31,7 @@ public final strictfp class PreparedQueryResultSet extends QueryResultSet {
 	 *
 	 * @return The prepared statement ID
 	 */
-	public long getPreparedID() {
+	public int getPreparedID() {
 		return preparedID;
 	}
 }

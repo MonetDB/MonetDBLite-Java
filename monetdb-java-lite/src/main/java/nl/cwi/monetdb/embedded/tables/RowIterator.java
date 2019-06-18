@@ -42,7 +42,7 @@ public final class RowIterator extends AbstractRowSet {
 	}
 
 	@Override
-	public int getColumnIndexByName(String columnName) {
+	public int getColumnIndexByName(String columnName) throws MonetDBEmbeddedException {
 		int numberOfColumns = this.getQueryResultTable().getNumberOfColumns();
 		String[] columnNames = new String[numberOfColumns];
 		try {
@@ -58,7 +58,7 @@ public final class RowIterator extends AbstractRowSet {
 			}
 			index++;
 		}
-		throw new ArrayIndexOutOfBoundsException("The column is not present in the result set!");
+		throw new ArrayIndexOutOfBoundsException("The column is not present in the result set");
 	}
 
 	/**
@@ -141,8 +141,9 @@ public final class RowIterator extends AbstractRowSet {
 	 * @param columnName The name of the column
 	 * @param javaClass The Java class
 	 * @return The column value as a Java class
+	 * @throws MonetDBEmbeddedException If an error in the database occurred.
 	 */
-	public <T> T getColumnByName(String columnName, Class<T> javaClass) {
+	public <T> T getColumnByName(String columnName, Class<T> javaClass) throws MonetDBEmbeddedException {
 		int index = this.getColumnIndexByName(columnName);
 		return this.getColumnByIndex(index, javaClass);
 	}
@@ -153,8 +154,9 @@ public final class RowIterator extends AbstractRowSet {
 	 * @param <T> A Java class mapped to a MonetDB data type
 	 * @param columnName The name of the column
 	 * @return The column value as a Java class
+	 * @throws MonetDBEmbeddedException If an error in the database occurred.
 	 */
-	public <T> T getColumnByName(String columnName) {
+	public <T> T getColumnByName(String columnName) throws MonetDBEmbeddedException {
 		int index = this.getColumnIndexByName(columnName);
 		return this.getColumnByIndex(index);
 	}

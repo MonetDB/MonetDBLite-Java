@@ -9,8 +9,8 @@
 #include "nl_cwi_monetdb_embedded_tables_MonetDBTable.h"
 
 #include "monetdb_config.h"
-#include "embedded.h"
-#include "embeddedjvm.h"
+#include "monetdb_embedded.h"
+#include "mal_exception.h"
 #include "res_table.h"
 #include "converters.h"
 #include "javaids.h"
@@ -24,10 +24,9 @@ static char* loadTable(JNIEnv *env, jobject monetDBTable, sql_table** table, int
 	const char *name = (*env)->GetStringUTFChars(env, tableName, NULL);
 
 	*connectionPointer = (*env)->GetLongField(env, connection, getGetConnectionLongID());
-	err = monetdb_find_table((monetdb_connection) (*connectionPointer), table, schema, name);
-	if (!err) {
+	err = monetdb_get_table((monetdb_connection) (*connectionPointer), table, schema, name);
+	if (!err)
 		*ncols = (*table)->columns.set->cnt;
-	}
 	(*env)->ReleaseStringUTFChars(env, schemaName, schema);
 	(*env)->ReleaseStringUTFChars(env, tableName, name);
 
@@ -48,7 +47,7 @@ static char* loadTable(JNIEnv *env, jobject monetDBTable, sql_table** table, int
 #define AFTERLOAD \
 	if (err) { \
 		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), err); \
-		GDKfree(err); \
+		freeException(err); \
 	}
 
 JNIEXPORT jint JNICALL Java_nl_cwi_monetdb_embedded_tables_MonetDBTable_getNumberOfColumns
@@ -111,7 +110,7 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_tables_MonetDBTable_getColum
 	fdigits = GDKmalloc(ncols * sizeof(jint));
 
 	if(fdigits == NULL) {
-		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System out of memory!");
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 		return;
 	}
 
@@ -131,7 +130,7 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_tables_MonetDBTable_getColum
 	fscales = GDKmalloc(ncols * sizeof(jint));
 
 	if(fscales == NULL) {
-		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System out of memory!");
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 		return;
 	}
 
@@ -151,7 +150,7 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_tables_MonetDBTable_getColum
 	fnulls = GDKmalloc(ncols * sizeof(jboolean));
 
 	if(fnulls == NULL) {
-		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System out of memory!");
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 		return;
 	}
 
@@ -215,7 +214,7 @@ JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_tables_MonetDBTable_getCo
 	col_name_tmp = (*env)->GetStringUTFChars(env, colname, NULL);
 
 	if(col_name_tmp == NULL) {
-		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System out of memory!");
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 		return NULL;
 	}
 
@@ -238,7 +237,7 @@ JNIEXPORT jobjectArray JNICALL Java_nl_cwi_monetdb_embedded_tables_MonetDBTable_
 	result = (*env)->NewObjectArray(env, ncols, getMonetDBTableColumnClassID(), NULL);
 
 	if(result == NULL) {
-		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System out of memory!");
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 		return NULL;
 	}
 
@@ -253,7 +252,7 @@ JNIEXPORT jobjectArray JNICALL Java_nl_cwi_monetdb_embedded_tables_MonetDBTable_
 
 #define CHECK_ARRAY_CLASS(METHOD, ARRAY_CLASS) \
 	if((*env)->IsInstanceOf(env, nextArray, METHOD) == JNI_FALSE) { \
-		err = createException(MAL, "append", SQLSTATE(42000) "The array at column %d must be a %s array!", nextColumnIndex + 1, ARRAY_CLASS); \
+		err = createException(MAL, "append", "The array at column %d must be a %s array!", nextColumnIndex + 1, ARRAY_CLASS); \
 		break; \
 	}
 
@@ -262,7 +261,7 @@ JNIEXPORT jint JNICALL Java_nl_cwi_monetdb_embedded_tables_MonetDBTable_appendCo
 	LOADTABLEDATA
 
 	jint *jindexes;
-	append_data* newdata;
+	bat* newdata;
 	jsize numberOfRows, nextSize;
 	sql_column *col;
 	int nextMonetDBIndex, nextColumnIndex, foundExc = 0, i = 0;
@@ -272,26 +271,24 @@ JNIEXPORT jint JNICALL Java_nl_cwi_monetdb_embedded_tables_MonetDBTable_appendCo
 
 	AFTERLOAD
 
-	if((*env)->ExceptionCheck(env) == JNI_TRUE) {
+	if((*env)->ExceptionCheck(env) == JNI_TRUE)
 		return -1;
-	}
-
 	jindexes = (*env)->GetIntArrayElements(env, javaIndexes, NULL);
 	if(jindexes == NULL) {
-		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System out of memory!");
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 		return -1;
 	}
 	columnDataZero = (*env)->GetObjectArrayElement(env, columnData, 0);
 	if(columnDataZero == NULL) {
 		(*env)->ReleaseIntArrayElements(env, javaIndexes, jindexes, JNI_ABORT);
-		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System out of memory!");
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 		return -1;
 	}
 	numberOfRows = (*env)->GetArrayLength(env, columnDataZero);
-	newdata = GDKmalloc(ncols * sizeof(append_data));
+	newdata = GDKmalloc(ncols * sizeof(bat*));
 	if(newdata == NULL) {
 		(*env)->ReleaseIntArrayElements(env, javaIndexes, jindexes, JNI_ABORT);
-		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System out of memory!");
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 		return -1;
 	}
 
@@ -300,13 +297,12 @@ JNIEXPORT jint JNICALL Java_nl_cwi_monetdb_embedded_tables_MonetDBTable_appendCo
 		nextMonetDBIndex = col->type.type->localtype;
 		nextColumnIndex = col->colnr;
 		nextJavaIndex = jindexes[nextColumnIndex];
-		newdata[nextColumnIndex].colname = col->base.name;
 
 		nextBAT = NULL;
 		nextArray = (*env)->GetObjectArrayElement(env, columnData, nextColumnIndex);
 		nextSize = (*env)->GetArrayLength(env, nextArray);
 		if(nextSize != numberOfRows) {
-			err = createException(MAL, "append", SQLSTATE(42000) "The row sizes between columns are not consistent!");
+			err = createException(MAL, "append", "The row sizes between columns are not consistent");
 			break;
 		}
 
@@ -382,19 +378,18 @@ JNIEXPORT jint JNICALL Java_nl_cwi_monetdb_embedded_tables_MonetDBTable_appendCo
 				storeOidColumn(env, &nextBAT, (jobjectArray) nextArray, numberOfRows, nextMonetDBIndex);
 				break;
 			default:
-				err = createException(MAL, "append", SQLSTATE(42000) "Unknown Java mapping class!");
+				err = createException(MAL, "append", "Unknown Java mapping class");
 		}
 		(*env)->DeleteLocalRef(env, nextArray);
 		if(!err) {
-			newdata[nextColumnIndex].batid = nextBAT->batCacheid;
+			newdata[nextColumnIndex] = nextBAT->batCacheid;
 		} else {
 			break;
 		}
 	}
 
-	if(!err) {
+	if(!err)
 		err = monetdb_append((monetdb_connection) connectionPointer, tableData->s->base.name, tableData->base.name, newdata, ncols);
-	}
 	(*env)->ReleaseIntArrayElements(env, javaIndexes, jindexes, JNI_ABORT);
 	GDKfree(newdata);
 
@@ -405,7 +400,7 @@ JNIEXPORT jint JNICALL Java_nl_cwi_monetdb_embedded_tables_MonetDBTable_appendCo
 			i++;
 		}
 		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), err + (foundExc ? i : 0));
-		GDKfree(err);
+		freeException(err);
 		return -1;
 	} else {
 		return numberOfRows;

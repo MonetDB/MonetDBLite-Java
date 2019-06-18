@@ -40,11 +40,11 @@ public class MonetDBJavaLiteTesting {
 
 	public static void startupDatabase(String directory) throws MonetDBEmbeddedException {
 		MonetDBEmbeddedDatabase.startDatabase(directory, true, false);
-		Assertions.assertTrue(MonetDBEmbeddedDatabase::isDatabaseRunning, "The database should be running!");
+		Assertions.assertTrue(MonetDBEmbeddedDatabase::isDatabaseRunning, "The database should be running");
 	}
 
 	public static void shutdownDatabase() throws MonetDBEmbeddedException {
 		MonetDBEmbeddedDatabase.stopDatabase();
-		Assertions.assertFalse(MonetDBEmbeddedDatabase::isDatabaseRunning, "The database should be closed!");
+		Assertions.assertFalse(MonetDBEmbeddedDatabase::isDatabaseRunning, "The database should be closed");
 	}
 }

@@ -9,12 +9,13 @@
 #include "nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection.h"
 
 #include "monetdb_config.h"
-#include "embedded.h"
-#include "embeddedjvm.h"
+#include "monetdb_embedded.h"
+#include "mal_exception.h"
 #include "javaids.h"
 #include "jresulset.h"
 #include "res_table.h"
 #include "gdk.h"
+#include "sql_querytype.h"
 
 static void setErrorResponse(JNIEnv *env, jobject jdbccon, char* errorMessage) {
 	jintArray lineResponse = (jintArray) (*env)->GetObjectField(env, jdbccon, getServerResponsesID());
@@ -22,8 +23,8 @@ static void setErrorResponse(JNIEnv *env, jobject jdbccon, char* errorMessage) {
 	int foundExc = 0, i = 0;
 
 	if(lineResponse == NULL) {
-		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System out of memory!");
-		GDKfree(errorMessage);
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
+		freeException(errorMessage);
 		return;
 	}
 	(*env)->SetIntArrayRegion(env, lineResponse, 0, 2, response);
@@ -35,28 +36,35 @@ static void setErrorResponse(JNIEnv *env, jobject jdbccon, char* errorMessage) {
 			i++;
 		}
 		(*env)->SetObjectField(env, jdbccon, getLastErrorID(), (*env)->NewStringUTF(env, errorMessage + (foundExc ? i : 0)));
-		GDKfree(errorMessage);
+		freeException(errorMessage);
 	}
 }
 
 JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection_getNextTableHeaderInternal
-	(JNIEnv *env, jobject jdbccon, jlong resultSetPointer, jobjectArray columnNames, jintArray columnLengths,
-	jobjectArray types, jobjectArray tableNames) {
+	(JNIEnv *env, jobject jdbccon, jlong connectionPointer, jlong resultSetPointer, jobjectArray columnNames,
+	jintArray columnLengths, jobjectArray types, jobjectArray tableNames) {
 	monetdb_result *output = (monetdb_result *) resultSetPointer;
-	int numberOfColumns = (*env)->GetArrayLength(env, columnNames), i;
+	size_t i, numberOfColumns = (size_t) (*env)->GetArrayLength(env, columnNames);
 	jint* columnLengthsFound;
 	jstring colname, sqlname, tablename;
+	res_col* col;
+	char *err = NULL;
 	(void) jdbccon;
 
 	if(numberOfColumns > 0) {
 		columnLengthsFound = GDKmalloc(numberOfColumns * sizeof(jint));
 		if(columnLengthsFound == NULL) {
-			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System out of memory!");
+			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 			return;
 		}
 
 		for (i = 0; i < numberOfColumns; i++) {
-			res_col* col = (res_col*) monetdb_result_fetch_rawcol(output, i);
+			if((err = monetdb_result_fetch_rawcol((monetdb_connection) connectionPointer, &col, output, i)) != MAL_SUCCEED) {
+				(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), err);
+				freeException(err);
+				GDKfree(columnLengthsFound);
+				return;
+			}
 			columnLengthsFound[i] = col->type.digits;
 			colname = (*env)->NewStringUTF(env, col->name);
 			sqlname = (*env)->NewStringUTF(env, col->type.type->sqlname);
@@ -76,23 +84,23 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection_
 
 JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection_initializePointersInternal
 	(JNIEnv *env, jobject jdbccon, jlong connectionPointer, jlong lastResultSetPointer,
-		jobject embeddedDataBlockResponse) {
+	jobject embeddedDataBlockResponse) {
 	monetdb_result* output = (monetdb_result*) lastResultSetPointer;
 	JResultSet* thisResultSet;
+	char* err = NULL;
 	(void) jdbccon;
 
-	thisResultSet = createResultSet((monetdb_connection) connectionPointer, output);
-	if(thisResultSet == NULL) {
-		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System out of memory!");
+	if((err = createResultSet((monetdb_connection) connectionPointer, &thisResultSet, output)) != MAL_SUCCEED) {
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), err);
+		freeException(err);
 	}
 	(*env)->SetLongField(env, embeddedDataBlockResponse, getStructPointerID(), (jlong) thisResultSet);
 }
 
 JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection_sendQueryInternal
 	(JNIEnv *env, jobject jdbccon, jlong connectionPointer, jstring query, jboolean execute) {
-	lng rowCount = 0, prepareID = 0;
-	size_t lastId = 0;
-	int lineResponseCounter = 0, query_type = 0, autoCommitStatus = 1;
+	lng rowCount = 0, lastId = 0;
+	int lineResponseCounter = 0, query_type = 0, autoCommitStatus = 1, prepareID = 0;
 	jint nextResponses[4], responseParameters[3];
 	const char *query_string_tmp;
 	char *err = NULL;
@@ -101,28 +109,30 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection_
 	jobject result;
 	monetdb_connection conn = (monetdb_connection) connectionPointer;
 
+	(void) execute;
 	if(conn == NULL) {
 		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "Connection already closed?");
 		return;
 	}
 
-	query_string_tmp = (*env)->GetStringUTFChars(env, query, NULL);
-	if(query_string_tmp == NULL) {
-		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System out of memory!");
+	if((query_string_tmp = (*env)->GetStringUTFChars(env, query, NULL)) == NULL) {
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 		return;
 	}
 
-	err = monetdb_query(conn, (char*) query_string_tmp, (char) execute, &output, &rowCount, &prepareID);
+	err = monetdb_query(conn, (char*) query_string_tmp, &output, &rowCount, &prepareID);
 	(*env)->ReleaseStringUTFChars(env, query, query_string_tmp);
 	if (err) { //if there are errors, set the error string and exit
+		char* other;
 		setErrorResponse(env, jdbccon, err);
-		monetdb_cleanup_result(conn, output);
+		if((other = monetdb_cleanup_result(conn, output)) != MAL_SUCCEED)
+			freeException(other);
 		return;
 	}
 
 	if(output) {
 		query_type = (int) (output->type);
-		lastId = (size_t) (output->id);
+		lastId = output->id;
 	}
 	//set the result set pointer
 	(*env)->SetLongField(env, jdbccon, getLastResultSetPointerID(), (jlong) output);
@@ -138,7 +148,7 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection_
 		case Q_BLOCK: //BLOCK
 			//set the Table Headers values
 			if(output) {
-				responseParameters[0] = (query_type == Q_PREPARE) ? (int) prepareID : (int) lastId;
+				responseParameters[0] = (query_type == Q_PREPARE) ? prepareID : (int) lastId;
 				responseParameters[1] = (jint) output->nrows; //number of rows
 			} else {
 				responseParameters[0] = -1;
@@ -152,41 +162,42 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection_
 			//IMPORTANT Due to the Embedded architecture, we can skip the RESULT header in the response
 			lastServerResponseParameters = (jintArray) (*env)->GetObjectField(env, jdbccon,
 																			  getLastServerResponseParametersID());
-			if(lastServerResponseParameters == NULL) {
-				(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System out of memory!");
-			} else {
+			if(lastServerResponseParameters == NULL)
+				(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
+			else
 				(*env)->SetIntArrayRegion(env, lastServerResponseParameters, 0, 3, responseParameters);
-			}
 			break;
 		case Q_UPDATE: //UPDATE
 			result = (*env)->NewObject(env, getUpdateResponseClassID(), getUpdateResponseConstructorID(),
 									   (jint) lastId, (jint) rowCount);
-			if(result == NULL) {
-				(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System out of memory!");
-			}
+			if(result == NULL)
+				(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 			(*env)->SetObjectField(env, jdbccon, getLastServerResponseID(), result);
 			break;
 		case Q_TRANS: //TRANSACTION
-			autoCommitStatus = getAutocommitFlag(conn);
-			result = (*env)->NewObject(env, getAutoCommitResponseClassID(), getAutoCommitResponseConstructorID(),
-									   (autoCommitStatus) ? JNI_TRUE : JNI_FALSE);
-			if(result == NULL) {
-				(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System out of memory!");
+			if((err = monetdb_get_autocommit(conn, &autoCommitStatus)) != MAL_SUCCEED) {
+				setErrorResponse(env, jdbccon, err);
+			} else {
+				result = (*env)->NewObject(env, getAutoCommitResponseClassID(), getAutoCommitResponseConstructorID(),
+										   (autoCommitStatus) ? JNI_TRUE : JNI_FALSE);
+				if(result == NULL)
+					(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
+				(*env)->SetObjectField(env, jdbccon, getLastServerResponseID(), result);
 			}
-			(*env)->SetObjectField(env, jdbccon, getLastServerResponseID(), result);
 			break;
 	}
 	nextResponses[lineResponseCounter++] = 4; //PROMPT
 	//set the line response headers
 	lineResponse = (jintArray) (*env)->GetObjectField(env, jdbccon, getServerResponsesID());
-	if(lineResponse == NULL) {
-		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System out of memory!");
-	} else {
+	if(lineResponse == NULL)
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
+	else
 		(*env)->SetIntArrayRegion(env, lineResponse, 0, lineResponseCounter, nextResponses);
-	}
 
 	if(query_type != Q_TABLE && query_type != Q_PREPARE && output) { //if the result is not a table or a prepare, delete it right away
-		monetdb_cleanup_result(conn, output);
+		char* other;
+		if((other = monetdb_cleanup_result(conn, output)) != MAL_SUCCEED)
+			freeException(other);
 	}
 }
 
@@ -194,18 +205,19 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection_
 	(JNIEnv *env, jobject jdbccon, jlong connectionPointer, jint flag) {
 	int autoCommitStatus;
 	jobject result;
+	monetdb_connection conn = (monetdb_connection) connectionPointer;
 	char *err = NULL;
 
-	err = monetdb_set_autocommit((monetdb_connection) connectionPointer, (flag == 0) ? (char)0 : (char)1);
+	err = monetdb_set_autocommit(conn, (flag == 0) ? 0 : 1);
 	if (err) { //if there is an error set it and return
 		setErrorResponse(env, jdbccon, err);
+	} else if ((err = monetdb_get_autocommit(conn, &autoCommitStatus)) != MAL_SUCCEED) {
+		setErrorResponse(env, jdbccon, err);
 	} else {
-		autoCommitStatus = getAutocommitFlag((monetdb_connection) connectionPointer);
 		result = (*env)->NewObject(env, getAutoCommitResponseClassID(), getAutoCommitResponseConstructorID(),
 								   (autoCommitStatus) ? JNI_TRUE : JNI_FALSE);
-		if(result == NULL) {
-			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System out of memory!");
-		}
+		if(result == NULL)
+			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 		(*env)->SetObjectField(env, jdbccon, getLastServerResponseID(), result);
 	}
 }
@@ -216,9 +228,9 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection_
 	(void) env;
 	(void) jdbccon;
 
-	if((err = monetdb_clear_prepare((monetdb_connection) connectionPointer, (size_t) commandId)) != MAL_SUCCEED) {
+	if((err = monetdb_clear_prepare((monetdb_connection) connectionPointer, commandId)) != MAL_SUCCEED) {
 		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), err);
-		GDKfree(err);
+		freeException(err);
 	}
 }
 
@@ -228,8 +240,8 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection_
 	(void) env;
 	(void) jdbccon;
 
-	if((err = monetdb_send_close((monetdb_connection) connectionPointer, (size_t) commandId)) != MAL_SUCCEED) {
+	if((err = monetdb_send_close((monetdb_connection) connectionPointer, commandId)) != MAL_SUCCEED) {
 		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), err);
-		GDKfree(err);
+		freeException(err);
 	}
 }

@@ -10,10 +10,10 @@ extern "C" {
 /*
  * Class:     nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection
  * Method:    getNextTableHeaderInternal
- * Signature: (J[Ljava/lang/String;[I[Ljava/lang/String;[Ljava/lang/String;)V
+ * Signature: (JJ[Ljava/lang/String;[I[Ljava/lang/String;[Ljava/lang/String;)V
  */
 JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection_getNextTableHeaderInternal
-  (JNIEnv *, jobject, jlong, jobjectArray, jintArray, jobjectArray, jobjectArray);
+  (JNIEnv *, jobject, jlong, jlong, jobjectArray, jintArray, jobjectArray, jobjectArray);
 
 /*
  * Class:     nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection

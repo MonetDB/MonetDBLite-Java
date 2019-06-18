@@ -11,17 +11,19 @@
 
 #include "monetdb_config.h"
 
-#if defined(__linux) || defined(__linux__)
+#define java_export extern __attribute__((__visibility__("hidden")))
+
+#if defined(__linux) || defined(__linux__) || defined(linux)
 #include "inclinux/jni_md.h"
 #include "inclinux/jni.h"
-#elif defined(__APPLE__)
+#elif defined(__APPLE__) || defined(__MACH__)
 #include "incmacosx/jni_md.h"
 #include "incmacosx/jni.h"
-#elif defined(NATIVE_WIN32) || defined(_WIN64)
+#elif defined(_WIN32) || defined(__WIN32__) || defined(WIN32) || defined(NATIVE_WIN32)
 #include "incwindows/jni_md.h"
 #include "incwindows/jni.h"
 #else
-#error Could not determine the running OS for JNI header files
+#error MonetDBLite-Java is not available for the target OS
 #endif
 
 #endif //MONETDB_JNI_H

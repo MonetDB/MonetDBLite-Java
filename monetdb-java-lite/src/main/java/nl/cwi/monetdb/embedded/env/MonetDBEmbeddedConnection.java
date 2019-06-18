@@ -57,7 +57,7 @@ public class MonetDBEmbeddedConnection implements Closeable {
 
 	private void checkConnectionIsNotClosed() throws MonetDBEmbeddedException {
 		if(this.isClosed()) {
-			throw new MonetDBEmbeddedException("This connection is already closed!");
+			throw new MonetDBEmbeddedException("This connection is already closed");
 		}
 	}
 
@@ -367,7 +367,9 @@ public class MonetDBEmbeddedConnection implements Closeable {
 		}
 		this.results.clear();
 		if(!this.isClosed()) {
-			this.closeConnectionInternal(this.connectionPointer);
+			try {
+				this.closeConnectionInternal(this.connectionPointer);
+			} catch (MonetDBEmbeddedException e) { }
 			this.connectionPointer = 0;
 		}
 	}
@@ -387,7 +389,9 @@ public class MonetDBEmbeddedConnection implements Closeable {
 	public void close() {
 		if(!this.isClosed()) {
 			this.closeConnectionImplementation();
-			MonetDBEmbeddedDatabase.removeConnection(this, false);
+			try {
+				MonetDBEmbeddedDatabase.removeConnection(this, false);
+			} catch (MonetDBEmbeddedException e) { }
 		}
 	}
 
@@ -446,5 +450,5 @@ public class MonetDBEmbeddedConnection implements Closeable {
 	/**
 	 * Internal implementation to close a connection.
 	 */
-	private native void closeConnectionInternal(long connectionPointer);
+	private native void closeConnectionInternal(long connectionPointer) throws MonetDBEmbeddedException;
 }

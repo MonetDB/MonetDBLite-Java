@@ -34,7 +34,7 @@ public abstract class AbstractRowSet {
 	 */
 	protected final MonetDBRow[] rows;
 
-	protected AbstractRowSet(AbstractConnectionResult table, Object[][] rows) {
+	protected AbstractRowSet(AbstractConnectionResult table, Object[][] rows) throws MonetDBEmbeddedException {
 		this.table = table;
 		int numberOfColumns = table.getNumberOfColumns();
 		this.mappings = new MonetDBToJavaMapping[numberOfColumns];
@@ -68,6 +68,7 @@ public abstract class AbstractRowSet {
 	 *
 	 * @param columnName The column name
 	 * @return The index number
+	 * @throws MonetDBEmbeddedException If an error in the database occurred.
 	 */
-	public abstract int getColumnIndexByName(String columnName);
+	public abstract int getColumnIndexByName(String columnName) throws MonetDBEmbeddedException;
 }

@@ -9,13 +9,12 @@
 #include "converters.h"
 
 #include "monetdb_config.h"
+#include "jni.h"
 #include "javaids.h"
-#include "gdk_utils.h"
+#include "gdk.h"
+#include "blob.h"
+#include "mtime.h"
 #include "sql.h"
-
-#include <jni.h>
-#include <string.h>
-#include <stdlib.h>
 
 #define DO_NOTHING                        ;
 #define BIG_INTEGERS_ARRAY_SIZE           64
@@ -116,10 +115,10 @@ FETCHING_LEVEL_ONE(Double, jdouble)
 #define CHECK_NULL_BTIME         nvalue != daytime_nil
 #define CREATE_JTIME             (*env)->NewObject(env, getTimeClassID(),  getTimeConstructorID(), value)
 
-#define GET_NEXT_JTIMESTAMP      value = ((jlong) nvalue.payload.p_days - 719528L) * 86400000L + (jlong) nvalue.payload.p_msecs;
+#define GET_NEXT_JTIMESTAMP      value = ((jlong) timestamp_date(nvalue) - 719528L) * 86400000L + (jlong) timestamp_daytime(nvalue);
 
-#define CHECK_NULL_BTIMESTAMP    !ts_isnil(nvalue)
-#define CREATE_JTIMESTAMP        (*env)->NewObject(env, getTimestampClassID(),  getTimestampConstructorID(), value)
+#define CHECK_NULL_BTIMESTAMP    nvalue != timestamp_nil
+#define CREATE_JTIMESTAMP        (*env)->NewObject(env, getTimestampClassID(), getTimestampConstructorID(), value)
 
 #define CREATE_JGREGORIAN        (*env)->NewObject(env, getGregorianCalendarClassID(), getGregorianCalendarConstructorID())
 #define GREGORIAN_EXTRA          (*env)->CallVoidMethod(env, result, getGregorianCalendarSetterID(), value);
@@ -141,11 +140,11 @@ FETCHING_LEVEL_ONE(Double, jdouble)
 	}
 
 FETCHING_LEVEL_TWO(Date, jint, GET_NEXT_JDATE, CHECK_NULL_BDATE, CREATE_JDATE, DO_NOTHING)
-FETCHING_LEVEL_TWO(Time, jint, GET_NEXT_JTIME, CHECK_NULL_BTIME, CREATE_JTIME, DO_NOTHING)
+FETCHING_LEVEL_TWO(Time, jlong, GET_NEXT_JTIME, CHECK_NULL_BTIME, CREATE_JTIME, DO_NOTHING)
 FETCHING_LEVEL_TWO(Timestamp, timestamp, GET_NEXT_JTIMESTAMP, CHECK_NULL_BTIMESTAMP, CREATE_JTIMESTAMP, DO_NOTHING)
 
 FETCHING_LEVEL_TWO(GregorianCalendarDate, jint, GET_NEXT_JDATE, CHECK_NULL_BDATE, CREATE_JGREGORIAN, GREGORIAN_EXTRA)
-FETCHING_LEVEL_TWO(GregorianCalendarTime, jint, GET_NEXT_JTIME, CHECK_NULL_BTIME, CREATE_JGREGORIAN, GREGORIAN_EXTRA)
+FETCHING_LEVEL_TWO(GregorianCalendarTime, jlong, GET_NEXT_JTIME, CHECK_NULL_BTIME, CREATE_JGREGORIAN, GREGORIAN_EXTRA)
 FETCHING_LEVEL_TWO(GregorianCalendarTimestamp, timestamp, GET_NEXT_JTIMESTAMP, CHECK_NULL_BTIMESTAMP, CREATE_JGREGORIAN, GREGORIAN_EXTRA)
 
 jobject getOidSingle(JNIEnv* env, jint position, BAT* b) {
@@ -223,7 +222,7 @@ FETCHING_LEVEL_FOUR(Blob, jbyteArray, GET_BAT_BLOB, CHECK_NULL_BLOB, BAT_TO_JBLO
 		const JAVA_CAST* array = (const JAVA_CAST*) Tloc(b, 0); \
 		JAVA_CAST* inputConverted = (JAVA_CAST*) (*env)->GetPrimitiveArrayCritical(env, input, &isCopy); \
 		if(inputConverted == NULL) { \
-			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory!"); \
+			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
 		} else { \
 			if(isCopy == JNI_FALSE) { \
 				memcpy(inputConverted, array + first, size * INTERNAL_SIZE); \
@@ -321,7 +320,7 @@ BATCH_LEVEL_ONE_OBJECT(Double, jdouble, dbl, CREATE_NEW_DOUBLE)
 	}
 
 BATCH_LEVEL_TWO(Date, jint, GET_NEXT_JDATE, CHECK_NULL_BDATE, CREATE_JDATE)
-BATCH_LEVEL_TWO(Time, jint, GET_NEXT_JTIME, CHECK_NULL_BTIME, CREATE_JTIME)
+BATCH_LEVEL_TWO(Time, jlong, GET_NEXT_JTIME, CHECK_NULL_BTIME, CREATE_JTIME)
 BATCH_LEVEL_TWO(Timestamp, timestamp, GET_NEXT_JTIMESTAMP, CHECK_NULL_BTIMESTAMP, CREATE_JTIMESTAMP)
 
 void getOidColumn(JNIEnv* env, jobjectArray input, jint first, jint size, BAT* b) {
@@ -439,7 +438,7 @@ BATCH_LEVEL_FOUR(Blob, GET_BAT_BLOB, CHECK_NULL_BLOB, BAT_TO_JBLOB, blob*, jbyte
 		BAT_CAST *p; \
 		BAT_CAST value, prev = BAT_CAST##_nil; \
 		if (!aux) { \
-			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory!"); \
+			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
 			*b = NULL; \
 			return; \
 		} \
@@ -499,12 +498,9 @@ CONVERSION_LEVEL_ONE(Double, dbl, jdouble, Double)
 								 *p = (daytime) (nvalue + 3600000L);                             \
 								 (void) aux1;
 
-#define JTIMESTAMP_TO_BAT        nvalue = (*env)->CallLongMethod(env, value, getTimestampToLongID()); \
-								 aux1 = DIVMOD_HELPER_SEC                                             \
-								 p->payload.p_days = (date) (aux1.quot + 719529L);                    \
-								 p->payload.p_msecs = (daytime) (aux1.rem);
-
-#define TIMESTAMP_CMP            p->payload.p_days + p->payload.p_msecs - prev.payload.p_days - prev.payload.p_msecs
+#define JTIMESTAMP_TO_BAT        nvalue = (*env)->CallLongMethod(env, value, getTimestampToLongID());       \
+								 aux1 = DIVMOD_HELPER_SEC                                                   \
+								 *p = timestamp_create((date) (aux1.quot + 719529L), (daytime) (aux1.rem));
 
 #define CONVERSION_LEVEL_TWO(NAME, BAT_CAST, NULL_CONST, CONVERT_TO_BAT, ORDER_CMP) \
 	void store##NAME##Column(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint localtype) { \
@@ -516,7 +512,7 @@ CONVERSION_LEVEL_ONE(Double, dbl, jdouble, Double)
 		jobject value; \
 		DIVMOD_HELPER_FIR \
 		if (!aux) { \
-			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory!"); \
+			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
 			*b = NULL; \
 			return; \
 		} \
@@ -553,14 +549,14 @@ CONVERSION_LEVEL_ONE(Double, dbl, jdouble, Double)
 
 CONVERSION_LEVEL_TWO(Date, date, date_nil, JDATE_TO_BAT, EASY_CMP)
 CONVERSION_LEVEL_TWO(Time, daytime, daytime_nil, JTIME_TO_BAT, EASY_CMP)
-CONVERSION_LEVEL_TWO(Timestamp, timestamp, *timestamp_nil, JTIMESTAMP_TO_BAT, TIMESTAMP_CMP)
+CONVERSION_LEVEL_TWO(Timestamp, timestamp, timestamp_nil, JTIMESTAMP_TO_BAT, EASY_CMP)
 
 void storeOidColumn(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint localtype) {
 	BAT *aux = COLnew(0, localtype, cnt, TRANSIENT);
 	size_t i;
 	oid *p;
 	if (!aux) {
-		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory!");
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory");
 		*b = NULL;
 		return;
 	}
@@ -582,16 +578,16 @@ void storeOidColumn(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint lo
 			ssize_t parsed;
 			const char *nvalue = (*env)->GetStringUTFChars(env, jvalue, 0);
 			if(nvalue == NULL) {
-				(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory!");
+				(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory");
 				*b = NULL;
 				return;
 			}
 			slen = (size_t) (*env)->GetStringUTFLength(env, jvalue);
-			parsed = OIDfromStr(nvalue, &slen, &p);
+			parsed = OIDfromStr(nvalue, &slen, &p, true);
 			(*env)->ReleaseStringUTFChars(env, jvalue, nvalue);
 			(*env)->DeleteLocalRef(env, jvalue);
 			if(parsed < 1) {
-				(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "Wrong OID format!");
+				(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "Wrong OID format");
 				*b = NULL;
 				return;
 			}
@@ -626,7 +622,7 @@ void storeOidColumn(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint lo
 		jstring nvalue; \
 		const char *representation; \
 		if (!aux) { \
-			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory!"); \
+			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
 			*b = NULL; \
 			return; \
 		} \
@@ -647,7 +643,7 @@ void storeOidColumn(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint lo
 				nvalue = (*env)->CallObjectMethod(env, bigDecimal, lbigDecimalToStringID); \
 				representation = (*env)->GetStringUTFChars(env, nvalue, NULL); \
 				if(representation == NULL) { \
-					(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory!"); \
+					(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
 					*p = BAT_CAST##_nil; \
 				} else { \
 					*p = (BAT_CAST) decimal_from_str_java(representation); \
@@ -681,12 +677,12 @@ CONVERSION_LEVEL_THREE(lng)
 
 #define JSTRING_TO_BAT      nvalue = (*env)->GetStringUTFChars(env, value, 0);                                                     \
 							if(nvalue == NULL) {                                                                                   \
-								(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory!");     \
+								(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory");     \
 								p = NULL;                                                                                          \
 							} else {                                                                                               \
 								p = GDKstrdup(nvalue);                                                                             \
 								if(p == NULL) {                                                                                    \
-									(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory!"); \
+									(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
 								}                                                                                                  \
 								(*env)->ReleaseStringUTFChars(env, value, nvalue);                                                 \
 							}
@@ -704,7 +700,7 @@ CONVERSION_LEVEL_THREE(lng)
 							len = (*env)->GetArrayLength(env, nvalue);                                                         \
 							p = GDKmalloc(blobsize(len));                                                                      \
 							if(p == NULL) {                                                                                    \
-								(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory!"); \
+								(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
 							} else {                                                                                           \
 								p->nitems = len;                                                                               \
 								(*env)->GetByteArrayRegion(env, nvalue, 0, len, (jbyte*) p->data);                             \
@@ -713,6 +709,8 @@ CONVERSION_LEVEL_THREE(lng)
 #define BLOB_START          var_t bun_offset = 0; \
 							jsize len;            \
 							jbyteArray nvalue;
+
+extern var_t BLOBput(Heap *h, var_t *bun, const blob *val);
 
 #define PUT_BLOB_IN_HEAP    BLOBput(aux->tvheap, &bun_offset, p);          \
 							if (BUNappend(aux, p, FALSE) != GDK_SUCCEED) { \
@@ -732,7 +730,7 @@ CONVERSION_LEVEL_THREE(lng)
 		jobject value; \
 		START_STEP \
 		if (!aux) { \
-			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory!"); \
+			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
 			*b = NULL; \
 			return; \
 		} \

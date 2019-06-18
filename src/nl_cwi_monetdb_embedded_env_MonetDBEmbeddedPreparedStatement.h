@@ -10,10 +10,10 @@ extern "C" {
 /*
  * Class:     nl_cwi_monetdb_embedded_env_MonetDBEmbeddedPreparedStatement
  * Method:    freePreparedStatement
- * Signature: (JJ)V
+ * Signature: (JI)V
  */
 JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedPreparedStatement_freePreparedStatement
-  (JNIEnv *, jobject, jlong, jlong);
+  (JNIEnv *, jobject, jlong, jint);
 
 #ifdef __cplusplus
 }

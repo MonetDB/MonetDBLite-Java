@@ -50,11 +50,10 @@ public final class MonetDBJavaLiteLoader {
 	private static String getLibraryFileName(SupportedOS os) throws MonetDBEmbeddedException {
 		switch(os) {
 			case WindowsNT:
-				return "monetdb5.dll";
+				return "monetdblitejava.dll";
 			case MacOSX:
-				return "libmonetdb5.dylib";
 			case Linux:
-				return "libmonetdb5.so";
+				return "libmonetdblitejava.so";
 		}
 		throw new MonetDBEmbeddedException("Unknown operating system");
 	}
@@ -153,7 +152,7 @@ public final class MonetDBJavaLiteLoader {
 			is_x86_64 = (System.getenv("ProgramFiles(x86)") != null);
 			is_arm64 = false;
 		} else {
-			is_x86_64 = (arch.contains("amd64") || arch.contains("x86_64") || arch.contains("x8664"));
+			is_x86_64 = (arch.contains("amd64") || arch.contains("x64") || arch.contains("x86_64") || arch.contains("x8664"));
 			is_arm64 = (arch.contains("arm64") || arch.contains("aarch64"));
 		}
 

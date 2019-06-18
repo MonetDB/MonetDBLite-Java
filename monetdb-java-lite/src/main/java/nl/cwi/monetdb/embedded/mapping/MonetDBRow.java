@@ -8,6 +8,8 @@
 
 package nl.cwi.monetdb.embedded.mapping;
 
+import nl.cwi.monetdb.embedded.env.MonetDBEmbeddedException;
+
 import java.util.Arrays;
 import java.util.ListIterator;
 
@@ -54,7 +56,7 @@ public final class MonetDBRow implements Iterable {
 	 */
 	public void setAllColumns(Object[] values) {
 		if(values.length != this.columns.length)
-			throw new ArrayStoreException("The values array and the columns length differ!");
+			throw new ArrayStoreException("The values array and the columns length differ");
 		this.columns = values;
 	}
 
@@ -94,8 +96,9 @@ public final class MonetDBRow implements Iterable {
 	 * @param columnName The name of the column
 	 * @param javaClass The Java class
 	 * @return The column value as a Java class
+	 * @throws MonetDBEmbeddedException If an error in the database occurred.
 	 */
-	public <T> T getColumnByName(String columnName, Class<T> javaClass) {
+	public <T> T getColumnByName(String columnName, Class<T> javaClass) throws MonetDBEmbeddedException {
 		int index =  this.getRowSet().getColumnIndexByName(columnName);
 		return javaClass.cast(columns[index - 1]);
 	}
@@ -106,8 +109,9 @@ public final class MonetDBRow implements Iterable {
 	 * @param <T> A Java class mapped to a MonetDB data type
 	 * @param columnName The name of the column
 	 * @return The column value as a Java class
+	 * @throws MonetDBEmbeddedException If an error in the database occurred.
 	 */
-	public <T> T getColumnByName(String columnName) {
+	public <T> T getColumnByName(String columnName) throws MonetDBEmbeddedException {
 		int index =  this.getRowSet().getColumnIndexByName(columnName);
 		Class<T> javaClass = this.originalSet.mappings[index - 1].getJavaClass();
 		return javaClass.cast(columns[index - 1]);
@@ -142,8 +146,9 @@ public final class MonetDBRow implements Iterable {
 	 * @param <T> A Java class mapped to a MonetDB data type
 	 * @param columnName The name of the column
 	 * @param value The value to set
+	 * @throws MonetDBEmbeddedException If an error in the database occurred.
 	 */
-	public <T> void setColumnByName(String columnName, T value) {
+	public <T> void setColumnByName(String columnName, T value) throws MonetDBEmbeddedException {
 		int index =  this.getRowSet().getColumnIndexByName(columnName);
 		this.columns[index - 1] = this.originalSet.mappings[index - 1].getJavaClass().cast(value);
 	}
@@ -155,8 +160,9 @@ public final class MonetDBRow implements Iterable {
 	 * @param columnName The name of the column
 	 * @param javaClass The Java class
 	 * @param value The value to set
+	 * @throws MonetDBEmbeddedException If an error in the database occurred.
 	 */
-	public <T> void setColumnByName(String columnName, Class<T> javaClass, T value) {
+	public <T> void setColumnByName(String columnName, Class<T> javaClass, T value) throws MonetDBEmbeddedException {
 		int index =  this.getRowSet().getColumnIndexByName(columnName);
 		this.columns[index - 1] = javaClass.cast(value);
 	}

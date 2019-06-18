@@ -51,7 +51,7 @@ public class QueryResultRowSet extends AbstractRowSet implements Iterable {
 	public MonetDBRow getSingleRow(int row) { return rows[row - 1]; }
 
 	@Override
-	public int getColumnIndexByName(String columnName) {
+	public int getColumnIndexByName(String columnName) throws MonetDBEmbeddedException {
 		return ((QueryResultSet) this.getQueryResultTable()).getColumnIndexByName(columnName);
 	}
 
@@ -89,8 +89,9 @@ public class QueryResultRowSet extends AbstractRowSet implements Iterable {
 	 * @param columnName The name of the column to retrieve
 	 * @param javaClass The Java class to map
 	 * @return The value mapped to a instance of the provided class
+	 * @throws MonetDBEmbeddedException If an error in the database occurred.
 	 */
-	public <T> T getSingleValueByName(int row, String columnName, Class<T> javaClass) {
+	public <T> T getSingleValueByName(int row, String columnName, Class<T> javaClass) throws MonetDBEmbeddedException {
 		int index = this.getColumnIndexByName(columnName);
 		return this.getSingleValueByIndex(row, index, javaClass);
 	}
@@ -102,8 +103,9 @@ public class QueryResultRowSet extends AbstractRowSet implements Iterable {
 	 * @param row The index of the row to retrieve
 	 * @param columnName The name of the column to retrieve
 	 * @return The value mapped to a instance of the provided class
+	 * @throws MonetDBEmbeddedException If an error in the database occurred.
 	 */
-	public <T> T getSingleValueByName(int row, String columnName) {
+	public <T> T getSingleValueByName(int row, String columnName) throws MonetDBEmbeddedException {
 		int index = this.getColumnIndexByName(columnName);
 		return this.getSingleValueByIndex(row, index);
 	}
@@ -148,8 +150,9 @@ public class QueryResultRowSet extends AbstractRowSet implements Iterable {
 	 * @param columnName The name of the column to retrieve
 	 * @param javaClass The Java class
 	 * @return The value mapped to a instance of the provided class
+	 * @throws MonetDBEmbeddedException If an error in the database occurred.
 	 */
-	public <T> T[] getColumnByName(String columnName, Class<T> javaClass) {
+	public <T> T[] getColumnByName(String columnName, Class<T> javaClass) throws MonetDBEmbeddedException {
 		int index = this.getColumnIndexByName(columnName);
 		return this.getColumnByIndex(index, javaClass);
 	}
@@ -160,8 +163,9 @@ public class QueryResultRowSet extends AbstractRowSet implements Iterable {
 	 * @param <T> A Java class mapped to a MonetDB data type
 	 * @param columnName The name of the column to retrieve
 	 * @return The value mapped to a instance of the provided class
+	 * @throws MonetDBEmbeddedException If an error in the database occurred.
 	 */
-	public <T> T[] getColumnByName(String columnName) {
+	public <T> T[] getColumnByName(String columnName) throws MonetDBEmbeddedException {
 		int index = this.getColumnIndexByName(columnName);
 		return this.getColumnByIndex(index);
 	}

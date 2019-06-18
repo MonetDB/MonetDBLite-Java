@@ -18,7 +18,7 @@ import nl.cwi.monetdb.embedded.resultset.QueryResultSet;
 import nl.cwi.monetdb.embedded.tables.IMonetDBTableCursor;
 import nl.cwi.monetdb.embedded.tables.MonetDBTable;
 import nl.cwi.monetdb.embedded.tables.RowIterator;
-import nl.cwi.monetdb.embedded.utils.ForkJavaProcess;
+import nl.cwi.monetdb.tests.helpers.ForkJavaProcess;
 import nl.cwi.monetdb.tests.helpers.MonetDBJavaLiteTesting;
 import nl.cwi.monetdb.tests.helpers.TryStartMonetDBEmbeddedDatabase;
 import org.junit.jupiter.api.*;
@@ -57,7 +57,7 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 		//Cannot have two MonetDBEmbeddedDatabase instances
 		try {
 			MonetDBEmbeddedDatabase.startDatabase("/", true, false);
-			Assertions.fail("The MonetDBEmbeddedException should be thrown!");
+			Assertions.fail("The MonetDBEmbeddedException should be thrown");
 		} catch (MonetDBEmbeddedException ignored) {
 			//I was getting unexpected results with this inside of a Assertions.assertThrows, so I made this...
 		}
@@ -106,7 +106,7 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 					qrs = con.executeQuery("SELECT " + threadID);
 					int intt = qrs.getIntegerByColumnIndexAndRow(1, 1);
 					if(threadID != intt) {
-						messages[j] = "No response from the server in one of the Threads!";
+						messages[j] = "No response from the server in one of the Threads";
 					}
 				} catch (MonetDBEmbeddedException e) {
 					messages[j] = e.getMessage();
@@ -138,7 +138,7 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 		QueryResultSet qrs = connection.executeQuery("SELECT id from types WHERE 1=0;");
 		Assertions.assertThrows(ArrayIndexOutOfBoundsException.class, () -> qrs.getIntegerByColumnIndexAndRow(1, 1));
 		int numberOfRows = qrs.getNumberOfRows();
-		Assertions.assertEquals(0, numberOfRows, "The number of rows should be 0, got " + numberOfRows + " instead!");
+		Assertions.assertEquals(0, numberOfRows, "The number of rows should be 0, got " + numberOfRows + " instead");
 		qrs.close();
 	}
 
@@ -147,8 +147,8 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 	void selectNull() throws MonetDBEmbeddedException {
 		QueryResultSet qrs = connection.executeQuery("SELECT NULL AS stresser;");
 		int numberOfRows = qrs.getNumberOfRows(), numberOfColumns = qrs.getNumberOfColumns();
-		Assertions.assertEquals(1, numberOfRows, "The number of rows should be 1, got " + numberOfRows + " instead!");
-		Assertions.assertEquals(1, numberOfColumns, "The number of columns should be 1, got " + numberOfColumns + " instead!");
+		Assertions.assertEquals(1, numberOfRows, "The number of rows should be 1, got " + numberOfRows + " instead");
+		Assertions.assertEquals(1, numberOfColumns, "The number of columns should be 1, got " + numberOfColumns + " instead");
 		qrs.close();
 	}
 
@@ -157,12 +157,12 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 	void testSingleValues() throws MonetDBEmbeddedException {
 		QueryResultSet qrs = connection.executeQuery("SELECT 1+1 AS a1, 'monetdb' AS a2, AVG(2.3) as a3;");
 		int numberOfRows = qrs.getNumberOfRows(), numberOfColumns = qrs.getNumberOfColumns();
-		Assertions.assertEquals(1, numberOfRows, "The number of rows should be 1, got " + numberOfRows + " instead!");
-		Assertions.assertEquals(3, numberOfColumns, "The number of columns should be 3, got " + numberOfColumns + " instead!");
+		Assertions.assertEquals(1, numberOfRows, "The number of rows should be 1, got " + numberOfRows + " instead");
+		Assertions.assertEquals(3, numberOfColumns, "The number of columns should be 3, got " + numberOfColumns + " instead");
 
 		String[] columnNames = new String[numberOfColumns];
 		qrs.getColumnNames(columnNames);
-		Assertions.assertArrayEquals(new String[]{"a1", "a2", "a3"}, columnNames, "Column names not correctly retrieved!");
+		Assertions.assertArrayEquals(new String[]{"a1", "a2", "a3"}, columnNames, "Column names not correctly retrieved");
 
 		byte sum = qrs.getByteByColumnIndexAndRow(1,1);
 		String monetDB = qrs.getStringByColumnNameAndRow("a2",1);
@@ -172,17 +172,17 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 		Assertions.assertEquals("monetdb", monetDB, "The sum is not 2?");
 		Assertions.assertEquals(2.3, avg, 0.01, "The avg is not right?");
 		qrs.close();
-		Assertions.assertTrue(qrs::isQueryResultSetClosed, "The query result set should be closed!");
+		Assertions.assertTrue(qrs::isQueryResultSetClosed, "The query result set should be closed");
 	}
 
 	@Test
 	@DisplayName("Test the autocommit mode")
 	void testAutoCommit() throws MonetDBEmbeddedException {
-		Assertions.assertTrue(connection.getAutoCommit(), "The default autocommit mode should be true!");
+		Assertions.assertTrue(connection.getAutoCommit(), "The default autocommit mode should be true");
 		connection.setAutoCommit(false);
-		Assertions.assertFalse(connection.getAutoCommit(), "The autocommit mode should be false!");
+		Assertions.assertFalse(connection.getAutoCommit(), "The autocommit mode should be false");
 		connection.setAutoCommit(true);
-		Assertions.assertTrue(connection.getAutoCommit(), "The autocommit mode should be true!");
+		Assertions.assertTrue(connection.getAutoCommit(), "The autocommit mode should be true");
 
 		connection.startTransaction();
 		connection.executeUpdate("CREATE TABLE testcomm (a int);");
@@ -196,9 +196,9 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 		connection.setAutoCommit(false);
 		QueryResultSet qrs = connection.executeQuery("SELECT count(*) FROM testcomm;");
 		int numberOfRows = qrs.getNumberOfRows();
-		Assertions.assertEquals(1, numberOfRows, "The number of rows should be 1, got " + numberOfRows + " instead!");
+		Assertions.assertEquals(1, numberOfRows, "The number of rows should be 1, got " + numberOfRows + " instead");
 		int retrivedValue = qrs.getIntegerByColumnIndexAndRow(1, 1);
-		Assertions.assertEquals(1, retrivedValue, "The transaction didn't go well!");
+		Assertions.assertEquals(1, retrivedValue, "The transaction didn't go well");
 		qrs.close();
 
 		connection.executeUpdate("DROP TABLE testcomm;");
@@ -216,38 +216,38 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 		Savepoint svp1 = connection.setSavepoint("emptytable");
 
 		QueryResultSet qrs1 = connection.executeQuery("SELECT id FROM testsave;");
-		Assertions.assertEquals(0, qrs1.getNumberOfRows(), "The number of rows should be 0!");
+		Assertions.assertEquals(0, qrs1.getNumberOfRows(), "The number of rows should be 0");
 		qrs1.close();
 
 		connection.executeUpdate("INSERT INTO testsave VALUES (1), (2), (3);");
 		Savepoint svp2 = connection.setSavepoint("threevalues");
 
 		QueryResultSet qrs2 = connection.executeQuery("SELECT id FROM testsave;");
-		Assertions.assertEquals(3, qrs2.getNumberOfRows(), "The number of rows should be 3!");
+		Assertions.assertEquals(3, qrs2.getNumberOfRows(), "The number of rows should be 3");
 		qrs2.close();
 
 		connection.releaseSavepoint(svp2);
 
 		QueryResultSet qrs3 = connection.executeQuery("SELECT id FROM testsave;");
-		Assertions.assertEquals(3, qrs3.getNumberOfRows(), "The number of rows should be 3!");
+		Assertions.assertEquals(3, qrs3.getNumberOfRows(), "The number of rows should be 3");
 		qrs3.close();
 
 		connection.rollback(svp1);
 
 		QueryResultSet qrs4 = connection.executeQuery("SELECT id FROM testsave;");
-		Assertions.assertEquals(0, qrs4.getNumberOfRows(), "The number of rows should be 0!");
+		Assertions.assertEquals(0, qrs4.getNumberOfRows(), "The number of rows should be 0");
 		qrs4.close();
 
 		try {
 			connection.releaseSavepoint(svp2);
-			Assertions.fail("The MonetDBEmbeddedException should be thrown!");
+			Assertions.fail("The MonetDBEmbeddedException should be thrown");
 		} catch (MonetDBEmbeddedException ex) {
 			connection.rollback();
 		}
 
 		try {
 			connection.rollback(svp2);
-			Assertions.fail("The MonetDBEmbeddedException should be thrown!");
+			Assertions.fail("The MonetDBEmbeddedException should be thrown");
 		} catch (MonetDBEmbeddedException ex) {
 			connection.rollback();
 		}
@@ -265,44 +265,44 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 
 		QueryResultSet qrs = connection.executeQuery("SELECT * FROM testbasics;");
 		int numberOfRows = qrs.getNumberOfRows(), numberOfColumns = qrs.getNumberOfColumns();
-		Assertions.assertEquals(3, numberOfRows, "The number of rows should be 3, got " + numberOfRows + " instead!");
-		Assertions.assertEquals(9, numberOfColumns, "The number of columns should be 9, got " + numberOfColumns + " instead!");
+		Assertions.assertEquals(3, numberOfRows, "The number of rows should be 3, got " + numberOfRows + " instead");
+		Assertions.assertEquals(9, numberOfColumns, "The number of columns should be 9, got " + numberOfColumns + " instead");
 
 		boolean[] array1 = new boolean[3];
 		qrs.getBooleanColumnByIndex(1, array1);
-		Assertions.assertArrayEquals(new boolean[]{true, false, true}, array1, "Booleans not correctly retrieved!");
+		Assertions.assertArrayEquals(new boolean[]{true, false, true}, array1, "Booleans not correctly retrieved");
 
 		String[] array2 = new String[3];
 		qrs.getStringColumnByIndex(2, array2);
-		Assertions.assertArrayEquals(new String[]{"a1ñ212#da ", "another with spaces", "0"}, array2, "Strings not correctly retrieved!");
+		Assertions.assertArrayEquals(new String[]{"a1ñ212#da ", "another with spaces", "0"}, array2, "Strings not correctly retrieved");
 
 		byte[] array3 = new byte[3];
 		qrs.getByteColumnByIndex(3, array3);
-		Assertions.assertArrayEquals(new byte[]{1, -2, 0}, array3, "Tinyints not correctly retrieved!");
+		Assertions.assertArrayEquals(new byte[]{1, -2, 0}, array3, "Tinyints not correctly retrieved");
 
 		short[] array4 = new short[3];
 		qrs.getShortColumnByIndex(4, array4);
-		Assertions.assertArrayEquals(new short[]{1, -2, 0}, array4, "Smallints not correctly retrieved!");
+		Assertions.assertArrayEquals(new short[]{1, -2, 0}, array4, "Smallints not correctly retrieved");
 
 		int[] array5 = new int[3];
 		qrs.getIntColumnByIndex(5, array5);
-		Assertions.assertArrayEquals(new int[]{1, -2, 0}, array5, "Integers not correctly retrieved!");
+		Assertions.assertArrayEquals(new int[]{1, -2, 0}, array5, "Integers not correctly retrieved");
 
 		long[] array6 = new long[3];
 		qrs.getLongColumnByIndex(6, array6);
-		Assertions.assertArrayEquals(new long[]{1, -2, 0}, array6, "Integers not correctly retrieved!");
+		Assertions.assertArrayEquals(new long[]{1, -2, 0}, array6, "Integers not correctly retrieved");
 
 		float[] array7 = new float[3];
 		qrs.getFloatColumnByIndex(7, array7);
-		Assertions.assertArrayEquals(new float[]{1.22f, -1.59f, 0}, array7, 0.1f, "Floats not correctly retrieved!");
+		Assertions.assertArrayEquals(new float[]{1.22f, -1.59f, 0}, array7, 0.1f, "Floats not correctly retrieved");
 
 		double[] array8 = new double[3];
 		qrs.getDoubleColumnByIndex(8, array8);
-		Assertions.assertArrayEquals(new double[]{1.33d, -1.69d, 0}, array8, 0.1d, "Doubles not correctly retrieved!");
+		Assertions.assertArrayEquals(new double[]{1.33d, -1.69d, 0}, array8, 0.1d, "Doubles not correctly retrieved");
 
 		String[] array9 = new String[3];
 		qrs.getOidColumnByIndex(9, array9);
-		Assertions.assertArrayEquals(new String[]{"1@0", "2@0", "0@0"}, array9, "Oids not correctly retrieved!");
+		Assertions.assertArrayEquals(new String[]{"1@0", "2@0", "0@0"}, array9, "Oids not correctly retrieved");
 
 		qrs.close();
 		connection.executeUpdate("DROP TABLE testbasics;");
@@ -325,8 +325,8 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 
 		QueryResultSet qrs = connection.executeQuery("SELECT * FROM testdates;");
 		int numberOfRows = qrs.getNumberOfRows(), numberOfColumns = qrs.getNumberOfColumns();
-		Assertions.assertEquals(4, numberOfRows, "The number of rows should be 4, got " + numberOfRows + " instead!");
-		Assertions.assertEquals(7, numberOfColumns, "The number of columns should be 7, got " + numberOfColumns + " instead!");
+		Assertions.assertEquals(4, numberOfRows, "The number of rows should be 4, got " + numberOfRows + " instead");
+		Assertions.assertEquals(7, numberOfColumns, "The number of columns should be 7, got " + numberOfColumns + " instead");
 
 		Date[] array1 = new Date[4];
 		qrs.getDateColumnByIndex(1, array1);
@@ -335,7 +335,7 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 				new Date(dateFormater.parse("1998-10-27").getTime()),
 				new Date(dateFormater.parse("2014-12-02").getTime()),
 				new Date(dateFormater.parse("1950-02-12").getTime())
-		}, array1, "Dates not correctly retrieved!");
+		}, array1, "Dates not correctly retrieved");
 
 		Time[] array2 = new Time[4];
 		qrs.getTimeColumnByIndex(2, array2);
@@ -344,7 +344,7 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 				new Time(timeFormater.parse("0:10:47").getTime()),
 				new Time(timeFormater.parse("10:10:47").getTime()),
 				new Time(timeFormater.parse("20:10:47").getTime())
-		}, array2, "Times not correctly retrieved!");
+		}, array2, "Times not correctly retrieved");
 
 		Time[] array3 = new Time[4];
 		qrs.getTimeColumnByIndex(3, array3);
@@ -353,7 +353,7 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 				new Time(timeFormater.parse("21:10:47").getTime()),
 				new Time(timeFormater.parse("11:10:47").getTime()),
 				new Time(timeFormater.parse("2:10:47").getTime())
-		}, array3, "Times with timezones not correctly retrieved!");
+		}, array3, "Times with timezones not correctly retrieved");
 
 		Timestamp[] array4 = new Timestamp[4];
 		qrs.getTimestampColumnByIndex(4, array4);
@@ -362,7 +362,7 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 				new Timestamp(timestampFormater.parse("1971-11-15 22:10:45").getTime()),
 				new Timestamp(timestampFormater.parse("2016-03-04 08:30:30").getTime()),
 				new Timestamp(timestampFormater.parse("1992-02-19 00:00:00").getTime())
-		}, array4, "Timestamps not correctly retrieved!");
+		}, array4, "Timestamps not correctly retrieved");
 
 		Timestamp[] array5 = new Timestamp[4];
 		qrs.getTimestampColumnByIndex(5, array5);
@@ -371,15 +371,15 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 				new Timestamp(timestampFormater.parse("1972-02-11 00:59:59").getTime()),
 				new Timestamp(timestampFormater.parse("2016-03-04 09:00:01").getTime()),
 				new Timestamp(timestampFormater.parse("1978-12-07 10:42:31").getTime())
-		}, array5, "Timestamps with timezone not correctly retrieved!");
+		}, array5, "Timestamps with timezone not correctly retrieved");
 
 		int[] array6 = new int[4];
 		qrs.getIntColumnByIndex(6, array6);
-		Assertions.assertArrayEquals(new int[]{1, -10, 1023, 0}, array6, "Month intervals not correctly retrieved!");
+		Assertions.assertArrayEquals(new int[]{1, -10, 1023, 0}, array6, "Month intervals not correctly retrieved");
 
 		long[] array7 = new long[4];
 		qrs.getLongColumnByIndex(7, array7);
-		Assertions.assertArrayEquals(new long[]{1000, -3000000, 12000, 0}, array7, "Second intervals not correctly retrieved!");
+		Assertions.assertArrayEquals(new long[]{1000, -3000000, 12000, 0}, array7, "Second intervals not correctly retrieved");
 
 		qrs.close();
 		connection.executeUpdate("DROP TABLE testdates;");
@@ -393,8 +393,8 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 
 		QueryResultSet qrs = connection.executeQuery("SELECT * FROM testDecimals;");
 		int numberOfRows = qrs.getNumberOfRows(), numberOfColumns = qrs.getNumberOfColumns();
-		Assertions.assertEquals(6, numberOfRows, "The number of rows should be 6, got " + numberOfRows + " instead!");
-		Assertions.assertEquals(1, numberOfColumns, "The number of columns should be 1, got " + numberOfColumns + " instead!");
+		Assertions.assertEquals(6, numberOfRows, "The number of rows should be 6, got " + numberOfRows + " instead");
+		Assertions.assertEquals(1, numberOfColumns, "The number of columns should be 1, got " + numberOfColumns + " instead");
 
 		//Having default precision of 3
 		BigDecimal[] array1 = new BigDecimal[6];
@@ -402,7 +402,7 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 		Assertions.assertArrayEquals(new BigDecimal[]{
 				new BigDecimal("1.600"), new BigDecimal("12.000"), new BigDecimal("-1.420"),
 				new BigDecimal("525636.777"), new BigDecimal("-41242.320"), new BigDecimal("0.000")
-		}, array1, "BigDecimals not correctly retrieved!");
+		}, array1, "BigDecimals not correctly retrieved");
 
 		qrs.close();
 		connection.executeUpdate("DROP TABLE testDecimals;");
@@ -416,14 +416,14 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 
 		QueryResultSet qrs = connection.executeQuery("SELECT * FROM testblobs;");
 		int numberOfRows = qrs.getNumberOfRows(), numberOfColumns = qrs.getNumberOfColumns();
-		Assertions.assertEquals(1, numberOfRows, "The number of rows should be 1, got " + numberOfRows + " instead!");
-		Assertions.assertEquals(1, numberOfColumns, "The number of columns should be 1, got " + numberOfColumns + " instead!");
+		Assertions.assertEquals(1, numberOfRows, "The number of rows should be 1, got " + numberOfRows + " instead");
+		Assertions.assertEquals(1, numberOfColumns, "The number of columns should be 1, got " + numberOfColumns + " instead");
 
 		byte[][] array1 = new byte[1][];
 		qrs.getBlobColumnByIndex(1, array1);
 		Assertions.assertArrayEquals(new byte[][]{
 				new byte[]{-86, -69, -52}
-		}, array1, "Blobs not correctly retrieved!");
+		}, array1, "Blobs not correctly retrieved");
 
 		qrs.close();
 		connection.executeUpdate("DROP TABLE testblobs;");
@@ -438,31 +438,31 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 		QueryResultSet qrs = connection.executeQuery("SELECT * FROM testnullsa;");
 
 		boolean first = qrs.checkBooleanIsNull(1,1);
-		Assertions.assertEquals(true, first, "Boolean nulls not working!");
+		Assertions.assertEquals(true, first, "Boolean nulls not working");
 
 		String second = qrs.getStringByColumnIndexAndRow(2,1);
-		Assertions.assertEquals(null, second, "String nulls not working!");
+		Assertions.assertEquals(null, second, "String nulls not working");
 
 		byte third = qrs.getByteByColumnIndexAndRow(3,1);
-		Assertions.assertEquals(NullMappings.getByteNullConstant(), third, "Byte nulls not working!");
+		Assertions.assertEquals(NullMappings.getByteNullConstant(), third, "Byte nulls not working");
 
 		short fourth = qrs.getShortByColumnIndexAndRow(4, 1);
-		Assertions.assertEquals(NullMappings.getShortNullConstant(), fourth, "Short nulls not working!");
+		Assertions.assertEquals(NullMappings.getShortNullConstant(), fourth, "Short nulls not working");
 
 		int fifth = qrs.getIntegerByColumnIndexAndRow(5, 1);
-		Assertions.assertEquals(NullMappings.getIntNullConstant(), fifth, "Integer nulls not working!");
+		Assertions.assertEquals(NullMappings.getIntNullConstant(), fifth, "Integer nulls not working");
 
 		long sixth = qrs.getLongByColumnIndexAndRow(6, 1);
-		Assertions.assertEquals(NullMappings.getLongNullConstant(), sixth, "Long nulls not working!");
+		Assertions.assertEquals(NullMappings.getLongNullConstant(), sixth, "Long nulls not working");
 
 		float seventh = qrs.getFloatByColumnIndexAndRow(7, 1);
-		Assertions.assertEquals(NullMappings.getFloatNullConstant(), seventh, "Float nulls not working!");
+		Assertions.assertEquals(NullMappings.getFloatNullConstant(), seventh, "Float nulls not working");
 
 		double eighth = qrs.getDoubleByColumnIndexAndRow(8, 1);
-		Assertions.assertEquals(NullMappings.getDoubleNullConstant(), eighth, "Double nulls not working!");
+		Assertions.assertEquals(NullMappings.getDoubleNullConstant(), eighth, "Double nulls not working");
 
 		String nineteenth = qrs.getOidByColumnIndexAndRow(9,1);
-		Assertions.assertEquals(null, nineteenth, "Oid nulls not working!");
+		Assertions.assertEquals(null, nineteenth, "Oid nulls not working");
 
 		qrs.close();
 		connection.executeUpdate("DROP TABLE testnullsa;");
@@ -473,25 +473,25 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 		QueryResultSet qrs2 = connection.executeQuery("SELECT * FROM testnullsb;");
 
 		Date nineth = qrs2.getDateByColumnIndexAndRow(1, 1);
-		Assertions.assertEquals(null, nineth, "Date nulls not working!");
+		Assertions.assertEquals(null, nineth, "Date nulls not working");
 
 		Time tenth = qrs2.getTimeByColumnIndexAndRow(2, 1);
-		Assertions.assertEquals(null, tenth, "Time nulls not working!");
+		Assertions.assertEquals(null, tenth, "Time nulls not working");
 
 		Time eleventh = qrs2.getTimeByColumnIndexAndRow(3, 1);
-		Assertions.assertEquals(null, eleventh, "Time nulls not working!");
+		Assertions.assertEquals(null, eleventh, "Time nulls not working");
 
 		Timestamp twelfth = qrs2.getTimestampByColumnIndexAndRow(4, 1);
-		Assertions.assertEquals(null, twelfth, "Timestamp nulls not working!");
+		Assertions.assertEquals(null, twelfth, "Timestamp nulls not working");
 
 		Timestamp thirteenth = qrs2.getTimestampByColumnIndexAndRow(5, 1);
-		Assertions.assertEquals(null, thirteenth, "Timestamp nulls not working!");
+		Assertions.assertEquals(null, thirteenth, "Timestamp nulls not working");
 
 		int fourteenth = qrs2.getIntegerByColumnIndexAndRow(6, 1);
-		Assertions.assertEquals(NullMappings.getIntNullConstant(), fourteenth, "Month interval nulls not working!");
+		Assertions.assertEquals(NullMappings.getIntNullConstant(), fourteenth, "Month interval nulls not working");
 
 		long fifteenth = qrs2.getLongByColumnIndexAndRow(7, 1);
-		Assertions.assertEquals(NullMappings.getLongNullConstant(), fifteenth, "Second interval nulls not working!");
+		Assertions.assertEquals(NullMappings.getLongNullConstant(), fifteenth, "Second interval nulls not working");
 
 		qrs2.close();
 		connection.executeUpdate("DROP TABLE testnullsb;");
@@ -502,19 +502,19 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 		QueryResultSet qrs3 = connection.executeQuery("SELECT * FROM testnullsc;");
 
 		byte[] sixteenth = qrs3.getBlobByColumnIndexAndRow(1, 1);
-		Assertions.assertEquals(null, sixteenth, "Blob nulls not working!");
+		Assertions.assertEquals(null, sixteenth, "Blob nulls not working");
 
 		BigDecimal seventeenth = qrs3.getDecimalByColumnIndexAndRow(2, 1);
-		Assertions.assertEquals(null, seventeenth, "Decimal nulls not working!");
+		Assertions.assertEquals(null, seventeenth, "Decimal nulls not working");
 
 		int numberOfRows = qrs3.getNumberOfRows();
-		Assertions.assertEquals(4, numberOfRows, "The number of rows should be 4, got " + numberOfRows + " instead!");
+		Assertions.assertEquals(4, numberOfRows, "The number of rows should be 4, got " + numberOfRows + " instead");
 
 		boolean[] eighteenth = new boolean[numberOfRows];
 		qrs3.getColumnNullMappingsByIndex(1, eighteenth);
-		Assertions.assertArrayEquals(new boolean[]{true, true, false, false}, eighteenth, "Null mapping problem!");
+		Assertions.assertArrayEquals(new boolean[]{true, true, false, false}, eighteenth, "Null mapping problem");
 		qrs3.getColumnNullMappingsByIndex(2, eighteenth);
-		Assertions.assertArrayEquals(new boolean[]{true, false, true, false}, eighteenth, "Null mapping problem!");
+		Assertions.assertArrayEquals(new boolean[]{true, false, true, false}, eighteenth, "Null mapping problem");
 
 		qrs3.close();
 		connection.executeUpdate("DROP TABLE testnullsc;");
@@ -530,30 +530,30 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 
 		QueryResultSet qrs1 = connection.executeQuery("SELECT * FROM testresultsets WHERE 1=0;");
 		ListIterator<MonetDBRow> iterator1 = qrs1.iterator();
-		Assertions.assertNotNull(iterator1, "The iterator should not be null!");
-		Assertions.assertFalse(iterator1.hasNext(), "The iterator should have no rows!");
+		Assertions.assertNotNull(iterator1, "The iterator should not be null");
+		Assertions.assertFalse(iterator1.hasNext(), "The iterator should have no rows");
 		qrs1.close();
 
 		QueryResultSet qrs2 = connection.executeQuery("SELECT * FROM testresultsets WHERE a='I';");
 		ListIterator<MonetDBRow> iterator2 = qrs2.iterator();
-		Assertions.assertNotNull(iterator2, "The iterator should not be null!");
-		Assertions.assertTrue(iterator2.hasNext(), "The iterator should have 1 row left!");
+		Assertions.assertNotNull(iterator2, "The iterator should not be null");
+		Assertions.assertTrue(iterator2.hasNext(), "The iterator should have 1 row left");
 
 		MonetDBRow row1 = iterator2.next();
-		Assertions.assertFalse(iterator2.hasNext(), "The iterator should have no rows!");
+		Assertions.assertFalse(iterator2.hasNext(), "The iterator should have no rows");
 
-		Assertions.assertEquals(row1.getColumnByIndex(1), "I", "Strings not correctly retrieved!");
-		Assertions.assertEquals(row1.getColumnByIndex(2), new Integer(12), "Integers not correctly retrieved!");
-		Assertions.assertEquals(row1.getColumnByIndex(3), new Float(234.534f), "Floats not correctly retrieved!");
+		Assertions.assertEquals(row1.getColumnByIndex(1), "I", "Strings not correctly retrieved");
+		Assertions.assertEquals(row1.getColumnByIndex(2), new Integer(12), "Integers not correctly retrieved");
+		Assertions.assertEquals(row1.getColumnByIndex(3), new Float(234.534f), "Floats not correctly retrieved");
 
 		ListIterator<Object> cols  = row1.iterator();
-		Assertions.assertTrue(cols.hasNext(), "The iterator should have 3 rows left!");
-		Assertions.assertEquals(cols.next(), "I", "Strings not correctly retrieved!");
-		Assertions.assertTrue(cols.hasNext(), "The iterator should have 2 rows left!");
-		Assertions.assertEquals(cols.next(), 12, "Integers not correctly retrieved!");
-		Assertions.assertTrue(cols.hasNext(), "The iterator should have 1 rows left!");
-		Assertions.assertEquals(cols.next(), 234.534f, "Floats not correctly retrieved!");
-		Assertions.assertFalse(cols.hasNext(), "The iterator should have no rows!");
+		Assertions.assertTrue(cols.hasNext(), "The iterator should have 3 rows left");
+		Assertions.assertEquals(cols.next(), "I", "Strings not correctly retrieved");
+		Assertions.assertTrue(cols.hasNext(), "The iterator should have 2 rows left");
+		Assertions.assertEquals(cols.next(), 12, "Integers not correctly retrieved");
+		Assertions.assertTrue(cols.hasNext(), "The iterator should have 1 rows left");
+		Assertions.assertEquals(cols.next(), 234.534f, "Floats not correctly retrieved");
+		Assertions.assertFalse(cols.hasNext(), "The iterator should have no rows");
 
 		qrs2.close();
 
@@ -577,16 +577,16 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 				Integer test2 = rowIterator.getColumnByIndex(2, Integer.class);
 				switch (rowIterator.getCurrentIterationNumber()) {
 					case 1:
-						Assertions.assertEquals("one", test1, "Table iteration not working!");
-						Assertions.assertEquals(new Integer(-40), test2, "Table iteration not working!");
+						Assertions.assertEquals("one", test1, "Table iteration not working");
+						Assertions.assertEquals(new Integer(-40), test2, "Table iteration not working");
 						break;
 					case 2:
-						Assertions.assertEquals("more", test1, "Table iteration not working!");
-						Assertions.assertEquals(new Integer(5), test2, "Table iteration not working!");
+						Assertions.assertEquals("more", test1, "Table iteration not working");
+						Assertions.assertEquals(new Integer(5), test2, "Table iteration not working");
 						break;
 					default:
-						Assertions.assertEquals("test", test1, "Table iteration not working!");
-						Assertions.assertEquals(new Integer(37), test2, "Table iteration not working!");
+						Assertions.assertEquals("test", test1, "Table iteration not working");
+						Assertions.assertEquals(new Integer(37), test2, "Table iteration not working");
 				}
 			}
 
@@ -624,46 +624,46 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 
 		QueryResultSet qrs = connection.executeQuery("SELECT * FROM test5;");
 		int numberOfRows = qrs.getNumberOfRows(), numberOfColumns = qrs.getNumberOfColumns();
-		Assertions.assertEquals(5, numberOfRows, "The number of rows should be 5, got " + numberOfRows + " instead!");
-		Assertions.assertEquals(9, numberOfColumns, "The number of columns should be 9, got " + numberOfColumns + " instead!");
+		Assertions.assertEquals(5, numberOfRows, "The number of rows should be 5, got " + numberOfRows + " instead");
+		Assertions.assertEquals(9, numberOfColumns, "The number of columns should be 9, got " + numberOfColumns + " instead");
 
 		boolean[] array1 = new boolean[4];
 		qrs.getBooleanColumnByIndex(1, array1, 0, 4);
-		Assertions.assertArrayEquals(new boolean[]{true, true, false, false}, array1, "Booleans not correctly appended!");
+		Assertions.assertArrayEquals(new boolean[]{true, true, false, false}, array1, "Booleans not correctly appended");
 		//The boolean null value cannot be tested directly because in Java side you can only see true or false values
-		Assertions.assertTrue(qrs.checkBooleanIsNull(1,5), "Booleans nulls not working!");
+		Assertions.assertTrue(qrs.checkBooleanIsNull(1,5), "Booleans nulls not working");
 
 		String[] array2 = new String[5];
 		qrs.getStringColumnByIndex(2, array2);
-		Assertions.assertArrayEquals(append2, array2, "Strings not correctly appended!");
+		Assertions.assertArrayEquals(append2, array2, "Strings not correctly appended");
 
 		byte[] array3 = new byte[5];
 		qrs.getByteColumnByIndex(3, array3);
-		Assertions.assertArrayEquals(append3, array3, "Tinyints not correctly appended!");
+		Assertions.assertArrayEquals(append3, array3, "Tinyints not correctly appended");
 
 		short[] array4 = new short[5];
 		qrs.getShortColumnByIndex(4, array4);
-		Assertions.assertArrayEquals(append4, array4, "Smallints not correctly appended!");
+		Assertions.assertArrayEquals(append4, array4, "Smallints not correctly appended");
 
 		int[] array5 = new int[5];
 		qrs.getIntColumnByIndex(5, array5);
-		Assertions.assertArrayEquals(append5, array5, "Integers not correctly appended!");
+		Assertions.assertArrayEquals(append5, array5, "Integers not correctly appended");
 
 		long[] array6 = new long[5];
 		qrs.getLongColumnByIndex(6, array6);
-		Assertions.assertArrayEquals(append6, array6, "Integers not correctly appended!");
+		Assertions.assertArrayEquals(append6, array6, "Integers not correctly appended");
 
 		float[] array7 = new float[5];
 		qrs.getFloatColumnByIndex(7, array7);
-		Assertions.assertArrayEquals(append7, array7, 0.01f, "Floats not correctly appended!");
+		Assertions.assertArrayEquals(append7, array7, 0.01f, "Floats not correctly appended");
 
 		double[] array8 = new double[5];
 		qrs.getDoubleColumnByIndex(8, array8);
-		Assertions.assertArrayEquals(append8, array8, 0.01d, "Doubles not correctly appended!");
+		Assertions.assertArrayEquals(append8, array8, 0.01d, "Doubles not correctly appended");
 
 		String[] array9 = new String[5];
 		qrs.getOidColumnByIndex(9, array9);
-		Assertions.assertArrayEquals(append9, array9, "Oids not correctly appended!");
+		Assertions.assertArrayEquals(append9, array9, "Oids not correctly appended");
 
 		qrs.close();
 		connection.executeUpdate("DROP TABLE test5;");
@@ -682,12 +682,12 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 
 		QueryResultSet qrs = connection.executeQuery("SELECT * FROM test5;");
 		int numberOfRows = qrs.getNumberOfRows(), numberOfColumns = qrs.getNumberOfColumns();
-		Assertions.assertEquals(5, numberOfRows, "The number of rows should be 5, got " + numberOfRows + " instead!");
-		Assertions.assertEquals(1, numberOfColumns, "The number of columns should be 1, got " + numberOfColumns + " instead!");
+		Assertions.assertEquals(5, numberOfRows, "The number of rows should be 5, got " + numberOfRows + " instead");
+		Assertions.assertEquals(1, numberOfColumns, "The number of columns should be 1, got " + numberOfColumns + " instead");
 
 		BigDecimal[] array1 = new BigDecimal[numberOfRows];
 		qrs.getDecimalColumnByIndex(1, array1);
-		Assertions.assertArrayEquals(append1, array1, "Decimals not correctly appended!");
+		Assertions.assertArrayEquals(append1, array1, "Decimals not correctly appended");
 
 		qrs.close();
 		connection.executeUpdate("DROP TABLE test5;");
@@ -743,36 +743,36 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 
 		QueryResultSet qrs = connection.executeQuery("SELECT * FROM test6;");
 		int numberOfRows = qrs.getNumberOfRows(), numberOfColumns = qrs.getNumberOfColumns();
-		Assertions.assertEquals(5, numberOfRows, "The number of rows should be 5, got " + numberOfRows + " instead!");
-		Assertions.assertEquals(7, numberOfColumns, "The number of columns should be 7, got " + numberOfColumns + " instead!");
+		Assertions.assertEquals(5, numberOfRows, "The number of rows should be 5, got " + numberOfRows + " instead");
+		Assertions.assertEquals(7, numberOfColumns, "The number of columns should be 7, got " + numberOfColumns + " instead");
 
 		Date[] array1 = new Date[5];
 		qrs.getDateColumnByIndex(1, array1);
-		Assertions.assertArrayEquals(append1, array1, "Dates not correctly appended!");
+		Assertions.assertArrayEquals(append1, array1, "Dates not correctly appended");
 
 		Time[] array2 = new Time[5];
 		qrs.getTimeColumnByIndex(2, array2);
-		Assertions.assertArrayEquals(append2, array2, "Times not correctly appended!");
+		Assertions.assertArrayEquals(append2, array2, "Times not correctly appended");
 
 		Time[] array3 = new Time[5];
 		qrs.getTimeColumnByIndex(3, array3);
-		Assertions.assertArrayEquals(append3, array3, "Times with timezones not correctly appended!");
+		Assertions.assertArrayEquals(append3, array3, "Times with timezones not correctly appended");
 
 		Timestamp[] array4 = new Timestamp[5];
 		qrs.getTimestampColumnByIndex(4, array4);
-		Assertions.assertArrayEquals(append4, array4, "Timestamps not correctly appended!");
+		Assertions.assertArrayEquals(append4, array4, "Timestamps not correctly appended");
 
 		Timestamp[] array5 = new Timestamp[5];
 		qrs.getTimestampColumnByIndex(5, array5);
-		Assertions.assertArrayEquals(append5, array5, "Timestamps with timezone not correctly appended!");
+		Assertions.assertArrayEquals(append5, array5, "Timestamps with timezone not correctly appended");
 
 		int[] array6 = new int[5];
 		qrs.getIntColumnByIndex(6, array6);
-		Assertions.assertArrayEquals(append6, array6, "Month intervals not correctly appended!");
+		Assertions.assertArrayEquals(append6, array6, "Month intervals not correctly appended");
 
 		long[] array7 = new long[5];
 		qrs.getLongColumnByIndex(7, array7);
-		Assertions.assertArrayEquals(append7, array7, "Second intervals not correctly appended!");
+		Assertions.assertArrayEquals(append7, array7, "Second intervals not correctly appended");
 
 		qrs.close();
 		connection.executeUpdate("DROP TABLE test6;");
@@ -791,12 +791,12 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 
 		QueryResultSet qrs = connection.executeQuery("SELECT * FROM test7;");
 		int numberOfRows = qrs.getNumberOfRows(), numberOfColumns = qrs.getNumberOfColumns();
-		Assertions.assertEquals(5, numberOfRows, "The number of rows should be 5, got " + numberOfRows + " instead!");
-		Assertions.assertEquals(1, numberOfColumns, "The number of columns should be 1, got " + numberOfColumns + " instead!");
+		Assertions.assertEquals(5, numberOfRows, "The number of rows should be 5, got " + numberOfRows + " instead");
+		Assertions.assertEquals(1, numberOfColumns, "The number of columns should be 1, got " + numberOfColumns + " instead");
 
 		byte[][] array1 = new byte[numberOfRows][];
 		qrs.getBlobColumnByIndex(1, array1);
-		Assertions.assertArrayEquals(append1, array1, "Blobs not correctly appended!");
+		Assertions.assertArrayEquals(append1, array1, "Blobs not correctly appended");
 
 		qrs.close();
 		connection.executeUpdate("DROP TABLE test7;");
@@ -806,22 +806,22 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 	@DisplayName("Test the number of rows returned by update queries")
 	void testUpdates() throws MonetDBEmbeddedException {
 		int rows1 = connection.executeUpdate("CREATE TABLE testupdates (val int);");
-		Assertions.assertEquals(-2, rows1, "The creation should have affected no rows!");
+		Assertions.assertEquals(-2, rows1, "The creation should have affected no rows");
 
 		int rows2 = connection.executeUpdate("INSERT INTO testupdates VALUES (1), (2), (3), (4), (5), (6), (7), (8), (9);");
-		Assertions.assertEquals(9, rows2, "It should have affected 9 rows!");
+		Assertions.assertEquals(9, rows2, "It should have affected 9 rows");
 
 		int rows3 = connection.executeUpdate("UPDATE testupdates SET val=2 WHERE val<3;");
-		Assertions.assertEquals(2, rows3, "It should have affected 2 rows!");
+		Assertions.assertEquals(2, rows3, "It should have affected 2 rows");
 
 		int rows4 = connection.executeUpdate("UPDATE testupdates SET val=10 WHERE val>5;");
-		Assertions.assertEquals(4, rows4, "It should have affected 4 rows!");
+		Assertions.assertEquals(4, rows4, "It should have affected 4 rows");
 
 		int rows5 = connection.executeUpdate("UPDATE testupdates SET val=2;");
-		Assertions.assertEquals(9, rows5, "It should have affected 9 rows!");
+		Assertions.assertEquals(9, rows5, "It should have affected 9 rows");
 
 		int rows6 = connection.executeUpdate("DROP TABLE testupdates;");
-		Assertions.assertEquals(-2, rows6, "The deletion should have affected no rows!");
+		Assertions.assertEquals(-2, rows6, "The deletion should have affected no rows");
 	}
 
 	@Test
@@ -832,13 +832,13 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 		MonetDBEmbeddedPreparedStatement statement1 = connection.prepareStatement("INSERT INTO testPrepared VALUES (?, ?);");
 		statement1.setInt(1, 12);
 		statement1.setString(2, "lekker");
-		Assertions.assertEquals(1, statement1.executeUpdate(), "The insertion should have affected one row!");
+		Assertions.assertEquals(1, statement1.executeUpdate(), "The insertion should have affected one row");
 
 		Assertions.assertThrows(MonetDBEmbeddedException.class, statement1::executeQuery);
 
 		statement1.setInt(1, 13);
 		statement1.setString(2, "smullen");
-		Assertions.assertFalse(statement1.execute(), "It should have returned false!");
+		Assertions.assertFalse(statement1.execute(), "It should have returned false");
 
 		statement1.setInt(1, 14);
 		statement1.setString(2, "heerlijk");
@@ -850,14 +850,14 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 		statement2.setInt(1, 13);
 
 		QueryResultSet qrs = statement2.executeQuery();
-		Assertions.assertEquals(1, qrs.getNumberOfRows(), "The result set should have returned one row!");
-		Assertions.assertEquals("smullen", qrs.getStringByColumnIndexAndRow(2, 1), "The string value is not the inserted one!");
+		Assertions.assertEquals(1, qrs.getNumberOfRows(), "The result set should have returned one row");
+		Assertions.assertEquals("smullen", qrs.getStringByColumnIndexAndRow(2, 1), "The string value is not the inserted one");
 		qrs.close();
 
 		Assertions.assertThrows(MonetDBEmbeddedException.class, statement2::executeUpdate);
 
 		statement2.setInt(1, 13);
-		Assertions.assertTrue(statement2.execute(), "It should have returned true!");
+		Assertions.assertTrue(statement2.execute(), "It should have returned true");
 
 		statement2.setInt(1, 14);
 		statement2.executeAndIgnore();
@@ -868,7 +868,7 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 		Assertions.assertThrows(MonetDBEmbeddedException.class, () -> statement3.setInt(1, 50));
 
 		QueryResultSet qrs2 = statement3.executeQuery();
-		Assertions.assertEquals(0, qrs2.getNumberOfRows(), "The result set should have no rows!");
+		Assertions.assertEquals(0, qrs2.getNumberOfRows(), "The result set should have no rows");
 		qrs2.close();
 		statement3.close();
 
@@ -880,7 +880,7 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 	void testRegexes() throws MonetDBEmbeddedException {
 		QueryResultSet qrs = connection.executeQuery("SELECT name from tables where name LIKE '%chemas'");
 		String schemas = qrs.getStringByColumnIndexAndRow(1,1);
-		Assertions.assertEquals("schemas", schemas, "The regex is not working properly?!");
+		Assertions.assertEquals("schemas", schemas, "The regex is not working properly?");
 		qrs.close();
 	}
 
@@ -892,7 +892,7 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 		environment.put(TryStartMonetDBEmbeddedDatabase.DATABASE_ENV, databaseDirectory);
 
 		int status = ForkJavaProcess.exec(TryStartMonetDBEmbeddedDatabase.class, environment);
-		Assertions.assertEquals(0, status, "The other process should have failed to lock the database!");
+		Assertions.assertEquals(0, status, "The other process should have failed to lock the database");
 	}
 
 	@Test
@@ -924,35 +924,35 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 		pw.close();
 
 		int rows1 = connection.executeUpdate("CREATE TABLE testCSV (a TEXT, b INT, c real);");
-		Assertions.assertEquals(-2, rows1, "The creation should have affected no rows!");
+		Assertions.assertEquals(-2, rows1, "The creation should have affected no rows");
 		connection.executeUpdate("COPY INTO testCSV FROM '" + csvImportFilePath + "' USING DELIMITERS ',','\n','\"';");
 
 		QueryResultSet qrs = connection.executeQuery("SELECT a, b, c FROM testCSV;");
 		int numberOfRows = qrs.getNumberOfRows(), numberOfColumns = qrs.getNumberOfColumns();
-		Assertions.assertEquals(4, numberOfRows, "The number of rows should be 4, got " + numberOfRows + " instead!");
-		Assertions.assertEquals(3, numberOfColumns, "The number of columns should be 3, got " + numberOfColumns + " instead!");
+		Assertions.assertEquals(4, numberOfRows, "The number of rows should be 4, got " + numberOfRows + " instead");
+		Assertions.assertEquals(3, numberOfColumns, "The number of columns should be 3, got " + numberOfColumns + " instead");
 
 		String[] array1 = new String[4];
 		qrs.getStringColumnByIndex(1, array1);
-		Assertions.assertArrayEquals(column1, array1, "CSV not working with Strings!");
+		Assertions.assertArrayEquals(column1, array1, "CSV not working with Strings");
 
 		int[] array2 = new int[4];
 		qrs.getIntColumnByIndex(2, array2);
-		Assertions.assertArrayEquals(column2, array2, "CSV not working with Integers!");
+		Assertions.assertArrayEquals(column2, array2, "CSV not working with Integers");
 
 		float[] array3 = new float[4];
 		qrs.getFloatColumnByIndex(3, array3);
-		Assertions.assertArrayEquals(column3, array3, 0.01f, "CSV not working with Floats!");
+		Assertions.assertArrayEquals(column3, array3, 0.01f, "CSV not working with Floats");
 		qrs.close();
 
 		connection.executeUpdate("COPY SELECT * FROM testCSV INTO '" + csvExportFilePath + "' USING DELIMITERS ',','\n';");
 
 		//Compare the two files!
 		String csvExported = new String(Files.readAllBytes(Paths.get(csvExportFilePath)), StandardCharsets.UTF_8);
-		Assertions.assertEquals(csvToImport, csvExported, "The CSVs are not equal!");
+		Assertions.assertEquals(csvToImport, csvExported, "The CSVs are not equal");
 
 		int rows2 = connection.executeUpdate("DROP TABLE testCSV;");
-		Assertions.assertEquals(-2, rows2, "The deletion should have affected no rows!");
+		Assertions.assertEquals(-2, rows2, "The deletion should have affected no rows");
 	}
 
 	@Test
@@ -977,7 +977,7 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 			file1.writeInt(aData1);
 		file1.close();
 
-		String[] data2 = {"a", "binary", "import", "test", "!"};
+		String[] data2 = {"a", "binary", "import", "test", ""};
 		PrintWriter file2 = new PrintWriter(binImport2FilePath);
 		for (String aData2 : data2)
 			file2.println(aData2);
@@ -1008,44 +1008,44 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 		file6.close();
 
 		int rows1 = connection.executeUpdate("CREATE TABLE testBinImp (aa int, bb clob, cc real, dd bigint, ee double, ff tinyint);");
-		Assertions.assertEquals(-2, rows1, "The creation should have affected no rows!");
+		Assertions.assertEquals(-2, rows1, "The creation should have affected no rows");
 		int rows2 = connection.executeUpdate("COPY BINARY INTO testBinImp FROM ('" + binImport1FilePath + "', '" +
 				binImport2FilePath + "', '" + binImport3FilePath + "', '" + binImport4FilePath + "', '" +
 				binImport5FilePath + "', '" + binImport6FilePath + "');");
-		Assertions.assertEquals(5, rows2, "The copy binary into should have affected 5 rows!");
+		Assertions.assertEquals(5, rows2, "The copy binary into should have affected 5 rows");
 
 		QueryResultSet qrs = connection.executeQuery("SELECT aa, bb, cc, dd, ee, ff FROM testBinImp;");
 		int numberOfRows = qrs.getNumberOfRows(), numberOfColumns = qrs.getNumberOfColumns();
-		Assertions.assertEquals(5, numberOfRows, "The number of rows should be 5, got " + numberOfRows + " instead!");
-		Assertions.assertEquals(6, numberOfColumns, "The number of columns should be 6, got " + numberOfColumns + " instead!");
+		Assertions.assertEquals(5, numberOfRows, "The number of rows should be 5, got " + numberOfRows + " instead");
+		Assertions.assertEquals(6, numberOfColumns, "The number of columns should be 6, got " + numberOfColumns + " instead");
 
 		int[] array1 = new int[5];
 		qrs.getIntColumnByIndex(1, array1);
-		Assertions.assertArrayEquals(data1, array1, "Binary import not working with Integers!");
+		Assertions.assertArrayEquals(data1, array1, "Binary import not working with Integers");
 
 		String[] array2 = new String[5];
 		qrs.getStringColumnByIndex(2, array2);
-		Assertions.assertArrayEquals(data2, array2, "Binary import not working with Strings!");
+		Assertions.assertArrayEquals(data2, array2, "Binary import not working with Strings");
 
 		float[] array3 = new float[5];
 		qrs.getFloatColumnByIndex(3, array3);
-		Assertions.assertArrayEquals(data3, array3, "Binary import not working with Floating-points!");
+		Assertions.assertArrayEquals(data3, array3, "Binary import not working with Floating-points");
 
 		long[] array4 = new long[5];
 		qrs.getLongColumnByIndex(4, array4);
-		Assertions.assertArrayEquals(data4, array4, "Binary import not working with Longs!");
+		Assertions.assertArrayEquals(data4, array4, "Binary import not working with Longs");
 
 		double[] array5 = new double[5];
 		qrs.getDoubleColumnByIndex(5, array5);
-		Assertions.assertArrayEquals(data5, array5, "Binary import not working with Doubles!");
+		Assertions.assertArrayEquals(data5, array5, "Binary import not working with Doubles");
 
 		byte[] array6 = new byte[5];
 		qrs.getByteColumnByIndex(6, array6);
-		Assertions.assertArrayEquals(data6, array6, "Binary import not working with Bytes!");
+		Assertions.assertArrayEquals(data6, array6, "Binary import not working with Bytes");
 
 		qrs.close();
 		int rows3 = connection.executeUpdate("DROP TABLE testBinImp;");
-		Assertions.assertEquals(-2, rows3, "The deletion should have affected no rows!");
+		Assertions.assertEquals(-2, rows3, "The deletion should have affected no rows");
 	}
 
 	@Test
@@ -1068,15 +1068,15 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 		QueryResultSet qrs = connection.executeQuery("select * from foo;");
 		numberOfRows = qrs.getNumberOfRows();
 		numberOfColumns = qrs.getNumberOfColumns();
-		Assertions.assertEquals(1, numberOfRows, "The number of rows should be 1, got " + numberOfRows + " instead!");
-		Assertions.assertEquals(2, numberOfColumns, "The number of columns should be 2, got " + numberOfColumns + " instead!");
+		Assertions.assertEquals(1, numberOfRows, "The number of rows should be 1, got " + numberOfRows + " instead");
+		Assertions.assertEquals(2, numberOfColumns, "The number of columns should be 2, got " + numberOfColumns + " instead");
 		qrs.close();
 
 		QueryResultSet qrs2 = connection.executeQuery("select * from bar.foo;");
 		numberOfRows = qrs2.getNumberOfRows();
 		numberOfColumns = qrs2.getNumberOfColumns();
-		Assertions.assertEquals(1, numberOfRows, "The number of rows should be 1, got " + numberOfRows + " instead!");
-		Assertions.assertEquals(2, numberOfColumns, "The number of columns should be 2, got " + numberOfColumns + " instead!");
+		Assertions.assertEquals(1, numberOfRows, "The number of rows should be 1, got " + numberOfRows + " instead");
+		Assertions.assertEquals(2, numberOfColumns, "The number of columns should be 2, got " + numberOfColumns + " instead");
 		qrs2.close();
 
 		connection.executeUpdate("set schema sys;");
@@ -1095,8 +1095,8 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 	static void shutDatabase() throws MonetDBEmbeddedException, IOException {
 		connection.close();
 		MonetDBJavaLiteTesting.shutdownDatabase();
-		Assertions.assertFalse(MonetDBEmbeddedDatabase::isDatabaseRunning, "The database should be closed!");
-		Assertions.assertTrue(connection::isClosed, "The connection should be closed!");
+		Assertions.assertFalse(MonetDBEmbeddedDatabase::isDatabaseRunning, "The database should be closed");
+		Assertions.assertTrue(connection::isClosed, "The connection should be closed");
 
 		//If the database is closed, then the connection will close as well
 		Assertions.assertThrows(MonetDBEmbeddedException.class, () -> connection.executeQuery("SELECT 1;"));

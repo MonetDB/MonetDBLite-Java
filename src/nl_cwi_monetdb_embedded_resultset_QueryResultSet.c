@@ -14,17 +14,24 @@
 #include "converters.h"
 #include "checknulls.h"
 #include "res_table.h"
+#include "mal_exception.h"
 
 JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_getColumnNamesInternal
 	(JNIEnv *env, jobject queryResultSet, jlong structPointer, jobjectArray result) {
 	JResultSet* thisResultSet = (JResultSet*) structPointer;
+	monetdb_connection conn = thisResultSet->conn;
 	monetdb_result* output = thisResultSet->output;
-	jint numberOfColumns = (jint) output->ncols;
-	int i;
+	size_t i, numberOfColumns = output->ncols;
+	res_col *col;
+	char *err = NULL;
 	(void) queryResultSet;
 
 	for (i = 0; i < numberOfColumns; i++) {
-		res_col* col = (res_col*) monetdb_result_fetch_rawcol(output, i);
+		if((err = monetdb_result_fetch_rawcol(conn, &col, output, i)) != MAL_SUCCEED) {
+			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), err);
+			freeException(err);
+			return;
+		}
 		jstring colname = (*env)->NewStringUTF(env, col->name);
 		(*env)->SetObjectArrayElement(env, result, i, colname);
 		(*env)->DeleteLocalRef(env, colname);
@@ -34,13 +41,19 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_get
 JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_getColumnTypesInternal
 	(JNIEnv *env, jobject queryResultSet, jlong structPointer, jobjectArray result) {
 	JResultSet* thisResultSet = (JResultSet*) structPointer;
+	monetdb_connection conn = thisResultSet->conn;
 	monetdb_result* output = thisResultSet->output;
-	jint numberOfColumns = (jint) output->ncols;
-	int i;
+	size_t i, numberOfColumns = output->ncols;
+	res_col *col;
+	char *err = NULL;
 	(void) queryResultSet;
 
 	for (i = 0; i < numberOfColumns; i++) {
-		res_col* col = (res_col*) monetdb_result_fetch_rawcol(output, i);
+		if((err = monetdb_result_fetch_rawcol(conn, &col, output, i)) != MAL_SUCCEED) {
+			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), err);
+			freeException(err);
+			return;
+		}
 		jstring coltype = (*env)->NewStringUTF(env, col->type.type->sqlname);
 		(*env)->SetObjectArrayElement(env, result, i, coltype);
 		(*env)->DeleteLocalRef(env, coltype);
@@ -50,13 +63,19 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_get
 JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_getMappingsInternal
 	(JNIEnv *env, jobject queryResultSet, jlong structPointer, jobjectArray result) {
 	JResultSet* thisResultSet = (JResultSet*) structPointer;
+	monetdb_connection conn = thisResultSet->conn;
 	monetdb_result* output = thisResultSet->output;
-	jint numberOfColumns = (jint) output->ncols;
-	int i;
+	size_t i, numberOfColumns = output->ncols;
+	res_col *col;
+	char *err = NULL;
 	(void) queryResultSet;
 
 	for (i = 0; i < numberOfColumns; i++) {
-		res_col* col = (res_col*) monetdb_result_fetch_rawcol(output, i);
+		if((err = monetdb_result_fetch_rawcol(conn, &col, output, i)) != MAL_SUCCEED) {
+			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), err);
+			freeException(err);
+			return;
+		}
 		jstring toCall = (*env)->NewStringUTF(env, col->type.type->sqlname);
 		jobject next = (*env)->CallStaticObjectMethod(env, getMappingEnumID(), getGetEnumValueID(), toCall);
 		(*env)->SetObjectArrayElement(env, result, i, next);
@@ -68,19 +87,26 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_get
 JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_getColumnDigitsInternal
 	(JNIEnv *env, jobject queryResultSet, jlong structPointer, jintArray result) {
 	JResultSet* thisResultSet = (JResultSet*) structPointer;
+	monetdb_connection conn = thisResultSet->conn;
 	monetdb_result* output = thisResultSet->output;
-	jint numberOfColumns = (jint) output->ncols;
+	size_t i, numberOfColumns = output->ncols;
 	jint* fdigits = GDKmalloc(numberOfColumns * sizeof(jint));
-	int i;
+	res_col *col;
+	char *err = NULL;
 	(void) queryResultSet;
 
 	if(fdigits == NULL) {
-		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System out of memory!");
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 		return;
 	}
 
 	for (i = 0; i < numberOfColumns; i++) {
-		res_col* col = (res_col*) monetdb_result_fetch_rawcol(output, i);
+		if((err = monetdb_result_fetch_rawcol(conn, &col, output, i)) != MAL_SUCCEED) {
+			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), err);
+			freeException(err);
+			GDKfree(fdigits);
+			return;
+		}
 		fdigits[i] = col->type.digits;
 	}
 	(*env)->SetIntArrayRegion(env, result, 0, numberOfColumns, fdigits);
@@ -90,19 +116,26 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_get
 JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_getColumnScalesInternal
 	(JNIEnv *env, jobject queryResultSet, jlong structPointer, jintArray result) {
 	JResultSet* thisResultSet = (JResultSet*) structPointer;
+	monetdb_connection conn = thisResultSet->conn;
 	monetdb_result* output = thisResultSet->output;
-	jint numberOfColumns = (jint) output->ncols;
+	size_t i, numberOfColumns = output->ncols;
 	jint* fscales = GDKmalloc(numberOfColumns * sizeof(jint));
-	int i;
+	res_col *col;
+	char *err = NULL;
 	(void) queryResultSet;
 
 	if(fscales == NULL) {
-		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "System out of memory!");
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 		return;
 	}
 
 	for (i = 0; i < numberOfColumns; i++) {
-		res_col* col = (res_col*) monetdb_result_fetch_rawcol(output, i);
+		if((err = monetdb_result_fetch_rawcol(conn, &col, output, i)) != MAL_SUCCEED) {
+			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), err);
+			freeException(err);
+			GDKfree(fscales);
+			return;
+		}
 		fscales[i] = col->type.scale;
 	}
 	(*env)->SetIntArrayRegion(env, result, 0, numberOfColumns, fscales);
@@ -365,7 +398,7 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_get
 			checkOidNulls(env, result, numberOfRows, dearBat);
 			break;
 		default:
-			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "Unknown MonetDB type!");
+			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "Unknown MonetDB type");
 	}
 }
 
@@ -421,7 +454,7 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_map
 			getOidColumn(env, result, 0, numberOfRows, dearBat);
 			break;
 		default:
-		   (*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "Unknown MonetDB type!");
+		   (*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "Unknown MonetDB type");
 	}
 }
 

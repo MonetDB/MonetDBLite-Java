@@ -105,7 +105,7 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 
 	private void checkQueryResultSetIsNotClosed() throws MonetDBEmbeddedException {
 		if(this.isQueryResultSetClosed()) {
-			throw new MonetDBEmbeddedException("This QueryResultSet is already closed!");
+			throw new MonetDBEmbeddedException("This QueryResultSet is already closed");
 		}
 	}
 
@@ -115,15 +115,16 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 	@Override
 	public int getNumberOfColumns() { return this.numberOfColumns; }
 
-	private native void getColumnNamesInternal(long tablePointer, String[] input);
+	private native void getColumnNamesInternal(long tablePointer, String[] input) throws MonetDBEmbeddedException;
 
-	private native void getColumnTypesInternal(long tablePointer, String[] input);
+	private native void getColumnTypesInternal(long tablePointer, String[] input) throws MonetDBEmbeddedException;
 
-	private native void getMappingsInternal(long tablePointer,  MonetDBToJavaMapping[] input);
+	private native void getMappingsInternal(long tablePointer,  MonetDBToJavaMapping[] input)
+			throws MonetDBEmbeddedException;
 
-	private native void getColumnDigitsInternal(long tablePointer, int[] input);
+	private native void getColumnDigitsInternal(long tablePointer, int[] input) throws MonetDBEmbeddedException;
 
-	private native void getColumnScalesInternal(long tablePointer, int[] input);
+	private native void getColumnScalesInternal(long tablePointer, int[] input) throws MonetDBEmbeddedException;
 
 	@Override
 	public void getColumnNames(String[] input) throws MonetDBEmbeddedException {
@@ -165,8 +166,9 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 	 *
 	 * @param columnName AbstractQueryResultSetColumn name
 	 * @return The index number
+	 * @throws MonetDBEmbeddedException If an error in the database occurred.
 	 */
-	public int getColumnIndexByName(String columnName) {
+	public int getColumnIndexByName(String columnName) throws MonetDBEmbeddedException {
 		if(this.columnNames == null) { //instantiate if it not exists yet
 			this.columnNames = new String[this.numberOfColumns];
 			this.getColumnNamesInternal(this.structPointer, this.columnNames);
@@ -178,34 +180,48 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 			}
 			index++;
 		}
-		throw new ArrayIndexOutOfBoundsException("The column with the name " + columnName + " is not present in the result set!");
+		throw new ArrayIndexOutOfBoundsException("The column with the name " + columnName +
+												 " is not present in the result set");
 	}
 
-	private native byte getByteByColumnAndRowInternal(long structPointer, int column, int row);
+	private native byte getByteByColumnAndRowInternal(long structPointer, int column, int row)
+			throws MonetDBEmbeddedException;
 
-	private native short getShortByColumnAndRowInternal(long structPointer, int column, int row);
+	private native short getShortByColumnAndRowInternal(long structPointer, int column, int row)
+			throws MonetDBEmbeddedException;
 
-	private native int getIntegerByColumnAndRowInternal(long structPointer, int column, int row);
+	private native int getIntegerByColumnAndRowInternal(long structPointer, int column, int row)
+			throws MonetDBEmbeddedException;
 
-	private native long getLongByColumnAndRowInternal(long structPointer, int column, int row);
+	private native long getLongByColumnAndRowInternal(long structPointer, int column, int row)
+			throws MonetDBEmbeddedException;
 
-	private native float getFloatByColumnAndRowInternal(long structPointer, int column, int row);
+	private native float getFloatByColumnAndRowInternal(long structPointer, int column, int row)
+			throws MonetDBEmbeddedException;
 
-	private native double getDoubleByColumnAndRowInternal(long structPointer, int column, int row);
+	private native double getDoubleByColumnAndRowInternal(long structPointer, int column, int row)
+			throws MonetDBEmbeddedException;
 
-	private native String getStringByColumnAndRowInternal(long structPointer, int column, int row);
+	private native String getStringByColumnAndRowInternal(long structPointer, int column, int row)
+			throws MonetDBEmbeddedException;
 
-	private native Date getDateByColumnAndRowInternal(long structPointer, int column, int row);
+	private native Date getDateByColumnAndRowInternal(long structPointer, int column, int row)
+			throws MonetDBEmbeddedException;
 
-	private native Timestamp getTimestampByColumnAndRowInternal(long structPointer, int column, int row);
+	private native Timestamp getTimestampByColumnAndRowInternal(long structPointer, int column, int row)
+			throws MonetDBEmbeddedException;
 
-	private native Time getTimeByColumnAndRowInternal(long structPointer, int column, int row);
+	private native Time getTimeByColumnAndRowInternal(long structPointer, int column, int row)
+			throws MonetDBEmbeddedException;
 
-	private native BigDecimal getDecimalByColumnAndRowInternal(long structPointer, int column, int row);
+	private native BigDecimal getDecimalByColumnAndRowInternal(long structPointer, int column, int row)
+			throws MonetDBEmbeddedException;
 
-	private native byte[] getBlobByColumnAndRowInternal(long structPointer, int column, int row);
+	private native byte[] getBlobByColumnAndRowInternal(long structPointer, int column, int row)
+			throws MonetDBEmbeddedException;
 
-	private native String getOidByColumnAndRowInternal(long structPointer, int column, int row);
+	private native String getOidByColumnAndRowInternal(long structPointer, int column, int row)
+			throws MonetDBEmbeddedException;
 
 	private void checkRangesScalars(int column, int row) throws MonetDBEmbeddedException {
 		this.checkQueryResultSetIsNotClosed();
@@ -255,7 +271,7 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 				BigDecimal aux7 = this.getDecimalByColumnAndRowInternal(this.structPointer, column, row);
 				return (aux7 != null) && !aux7.equals(BigDecimal.ZERO);
 			default:
-				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to boolean!");
+				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to boolean");
 		}
 	}
 
@@ -297,7 +313,7 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 				BigDecimal aux7 = this.getDecimalByColumnAndRowInternal(this.structPointer, column, row);
 				return aux7 == null ? NullMappings.getByteNullConstant() : aux7.byteValue();
 			default:
-				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to byte!");
+				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to byte");
 		}
 	}
 
@@ -339,7 +355,7 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 				BigDecimal aux7 = this.getDecimalByColumnAndRowInternal(this.structPointer, column, row);
 				return aux7 == null ? NullMappings.getShortNullConstant() : aux7.shortValue();
 			default:
-				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to short!");
+				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to short");
 		}
 	}
 
@@ -381,7 +397,7 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 				BigDecimal aux7 = this.getDecimalByColumnAndRowInternal(this.structPointer, column, row);
 				return aux7 == null ? NullMappings.getIntNullConstant() : aux7.intValue();
 			default:
-				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to int!");
+				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to int");
 		}
 	}
 
@@ -423,7 +439,7 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 				BigDecimal aux7 = this.getDecimalByColumnAndRowInternal(this.structPointer, column, row);
 				return aux7 == null ? NullMappings.getLongNullConstant() : aux7.longValue();
 			default:
-				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to long!");
+				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to long");
 		}
 	}
 
@@ -465,7 +481,7 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 				BigDecimal aux7 = this.getDecimalByColumnAndRowInternal(this.structPointer, column, row);
 				return aux7 == null ? NullMappings.getFloatNullConstant() : aux7.floatValue();
 			default:
-				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to float!");
+				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to float");
 		}
 	}
 
@@ -507,7 +523,7 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 				BigDecimal aux7 = this.getDecimalByColumnAndRowInternal(this.structPointer, column, row);
 				return aux7 == null ? NullMappings.getDoubleNullConstant() : aux7.doubleValue();
 			default:
-				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to double!");
+				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to double");
 		}
 	}
 
@@ -564,7 +580,7 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 			case 14:
 				return this.getOidByColumnAndRowInternal(this.structPointer, column, row);
 			default:
-				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to string!");
+				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to string");
 		}
 		return aux == null ? null : aux.toString();
 	}
@@ -591,7 +607,7 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 				Time aux2 = this.getTimeByColumnAndRowInternal(this.structPointer, column, row);
 				return aux2 == null ? null : new Date(aux2.getTime());
 			default:
-				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to date!");
+				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to date");
 		}
 	}
 
@@ -617,7 +633,7 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 				Time aux2 = this.getTimeByColumnAndRowInternal(this.structPointer, column, row);
 				return aux2 == null ? null : new Timestamp(aux2.getTime());
 			default:
-				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to timestamp!");
+				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to timestamp");
 		}
 	}
 
@@ -643,7 +659,7 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 			case 11:
 				return this.getTimeByColumnAndRowInternal(this.structPointer, column, row);
 			default:
-				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to time!");
+				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to time");
 		}
 	}
 
@@ -666,7 +682,7 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 			case 12:
 				return this.getBlobByColumnAndRowInternal(this.structPointer, column, row);
 			default:
-				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to blob!");
+				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to blob");
 		}
 	}
 
@@ -702,7 +718,7 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 			case 13:
 				return this.getDecimalByColumnAndRowInternal(this.structPointer, column, row);
 			default:
-				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to decimal!");
+				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to decimal");
 		}
 	}
 
@@ -722,7 +738,7 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 			case 14:
 				return this.getOidByColumnAndRowInternal(this.structPointer, column, row);
 			default:
-				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to oid!");
+				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to oid");
 		}
 	}
 
@@ -908,33 +924,47 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 		return this.getOidByColumnIndexAndRow(index, row);
 	}
 
-	private native void getBooleanColumnByIndexInternal(long structPointer, int column, boolean[] input, int offset, int length);
+	private native void getBooleanColumnByIndexInternal(long structPointer, int column, boolean[] input, int offset,
+														int length) throws MonetDBEmbeddedException;
 
-	private native void getByteColumnByIndexInternal(long structPointer, int column, byte[] input, int offset, int length);
+	private native void getByteColumnByIndexInternal(long structPointer, int column, byte[] input, int offset,
+													 int length) throws MonetDBEmbeddedException;
 
-	private native void getShortColumnByIndexInternal(long structPointer, int column, short[] input, int offset, int length);
+	private native void getShortColumnByIndexInternal(long structPointer, int column, short[] input, int offset,
+													  int length) throws MonetDBEmbeddedException;
 
-	private native void getIntColumnByIndexInternal(long structPointer, int column, int[] input, int offset, int length);
+	private native void getIntColumnByIndexInternal(long structPointer, int column, int[] input, int offset,
+													int length) throws MonetDBEmbeddedException;
 
-	private native void getLongColumnByIndexInternal(long structPointer, int column, long[] input, int offset, int length);
+	private native void getLongColumnByIndexInternal(long structPointer, int column, long[] input, int offset,
+													 int length) throws MonetDBEmbeddedException;
 
-	private native void getFloatColumnByIndexInternal(long structPointer, int column, float[] input, int offset, int length);
+	private native void getFloatColumnByIndexInternal(long structPointer, int column, float[] input, int offset,
+													  int length) throws MonetDBEmbeddedException;
 
-	private native void getDoubleColumnByIndexInternal(long structPointer, int column, double[] input, int offset, int length);
+	private native void getDoubleColumnByIndexInternal(long structPointer, int column, double[] input, int offset,
+													   int length) throws MonetDBEmbeddedException;
 
-	private native void getStringColumnByIndexInternal(long structPointer, int column, String[] input, int offset, int length);
+	private native void getStringColumnByIndexInternal(long structPointer, int column, String[] input, int offset,
+													   int length) throws MonetDBEmbeddedException;
 
-	private native void getDateColumnByIndexInternal(long structPointer, int column, Date[] input, int offset, int length);
+	private native void getDateColumnByIndexInternal(long structPointer, int column, Date[] input, int offset,
+													 int length) throws MonetDBEmbeddedException;
 
-	private native void getTimestampColumnByIndexInternal(long structPointer, int column, Timestamp[] input, int offset, int length);
+	private native void getTimestampColumnByIndexInternal(long structPointer, int column, Timestamp[] input, int offset,
+														  int length) throws MonetDBEmbeddedException;
 
-	private native void getTimeColumnByIndexInternal(long structPointer, int column, Time[] input, int offset, int length);
+	private native void getTimeColumnByIndexInternal(long structPointer, int column, Time[] input, int offset,
+													 int length) throws MonetDBEmbeddedException;
 
-	private native void getBlobColumnByIndexInternal(long structPointer, int column, byte[][] input, int offset, int length);
+	private native void getBlobColumnByIndexInternal(long structPointer, int column, byte[][] input, int offset,
+													 int length) throws MonetDBEmbeddedException;
 
-	private native void getDecimalColumnByIndexInternal(long structPointer, int column, BigDecimal[] input, int offset, int length);
+	private native void getDecimalColumnByIndexInternal(long structPointer, int column, BigDecimal[] input, int offset,
+														int length) throws MonetDBEmbeddedException;
 
-	private native void getOidColumnByIndexInternal(long structPointer, int column, String[] input, int offset, int length);
+	private native void getOidColumnByIndexInternal(long structPointer, int column, String[] input, int offset,
+													int length) throws MonetDBEmbeddedException;
 
 	private void checkRangesArrays(int column, Object input, int offset, int length) throws MonetDBEmbeddedException {
 		this.checkQueryResultSetIsNotClosed();
@@ -1024,7 +1054,7 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 				}
 				break;
 			default:
-				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to boolean[]!");
+				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to boolean[]");
 		}
 	}
 
@@ -1095,7 +1125,7 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 				}
 				break;
 			default:
-				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to byte[]!");
+				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to byte[]");
 		}
 	}
 
@@ -1166,7 +1196,7 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 				}
 				break;
 			default:
-				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to short[]!");
+				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to short[]");
 		}
 	}
 
@@ -1237,7 +1267,7 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 				}
 				break;
 			default:
-				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to int[]!");
+				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to int[]");
 		}
 	}
 
@@ -1308,7 +1338,7 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 				}
 				break;
 			default:
-				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to long[]!");
+				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to long[]");
 		}
 	}
 
@@ -1379,7 +1409,7 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 				}
 				break;
 			default:
-				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to float[]!");
+				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to float[]");
 		}
 	}
 
@@ -1450,7 +1480,7 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 				}
 				break;
 			default:
-				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to double[]!");
+				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to double[]");
 		}
 	}
 
@@ -1552,7 +1582,7 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 				this.getOidColumnByIndexInternal(this.structPointer, column, input, offset, length);
 				break;
 			default:
-				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to String[]!");
+				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to String[]");
 		}
 	}
 
@@ -1587,7 +1617,7 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 				}
 				break;
 			default:
-				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to Date[]!");
+				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to Date[]");
 		}
 	}
 
@@ -1622,7 +1652,7 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 				}
 				break;
 			default:
-				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to Timestamp[]!");
+				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to Timestamp[]");
 		}
 	}
 
@@ -1657,7 +1687,7 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 				this.getTimeColumnByIndexInternal(this.structPointer, column, input, offset, length);
 				break;
 			default:
-				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to Time[]!");
+				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to Time[]");
 		}
 	}
 
@@ -1685,7 +1715,7 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 				this.getBlobColumnByIndexInternal(this.structPointer, column, input, offset, length);
 				break;
 			default:
-				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to byte[][]!");
+				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to byte[][]");
 		}
 	}
 
@@ -1749,7 +1779,7 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 				this.getDecimalColumnByIndexInternal(this.structPointer, column, input, offset, length);
 				break;
 			default:
-				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to BigDecimal[]!");
+				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to BigDecimal[]");
 		}
 	}
 
@@ -1770,7 +1800,7 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 				this.getOidColumnByIndexInternal(this.structPointer, column, input, offset, length);
 				break;
 			default:
-				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to String[]!");
+				throw new ClassCastException("Cannot convert " + TypeIDToString(this.typesIDs[column]) + " to String[]");
 		}
 	}
 
@@ -2305,14 +2335,14 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 		if (row < 1) {
 			throw new ArrayIndexOutOfBoundsException("A row smaller than 1?");
 		} else if (row > this.numberOfRows) {
-			throw new ArrayIndexOutOfBoundsException("The row is larger than the number of rows!");
+			throw new ArrayIndexOutOfBoundsException("The row is larger than the number of rows");
 		} else if(column < 1) {
 			throw new ArrayIndexOutOfBoundsException("The column index is smaller than 1?");
 		} else if(column > this.numberOfColumns) {
 			throw new ArrayIndexOutOfBoundsException("The column index is larger than the number of columns? "
 					+ column + " > " + this.numberOfColumns);
 		} else if(this.typesIDs[column - 1] != 1) {
-			throw new ClassCastException("The column is not a boolean!");
+			throw new ClassCastException("The column is not a boolean");
 		}
 		return this.getByteByColumnAndRowInternal(this.structPointer, column - 1, row - 1)
 				== NullMappings.getByteNullConstant();
@@ -2332,7 +2362,8 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 		}
 	}
 
-	private native void getColumnNullMappingsByIndexInternal(long structPointer, int column, int typeID, boolean[] input);
+	private native void getColumnNullMappingsByIndexInternal(long structPointer, int column, int typeID,
+															 boolean[] input) throws MonetDBEmbeddedException;
 
 	/**
 	 * Gets the null mapping of a column by index.
@@ -2429,9 +2460,9 @@ public strictfp class QueryResultSet extends AbstractConnectionResult implements
 			startIndex ^= endIndex;
 		}
 		if (startIndex < 1) {
-			throw new ArrayIndexOutOfBoundsException("The start index must be larger than 1!");
+			throw new ArrayIndexOutOfBoundsException("The start index must be larger than 1");
 		} else if (endIndex > this.numberOfRows) {
-			throw new ArrayIndexOutOfBoundsException("The index must be smaller than the number of elements in the columns!");
+			throw new ArrayIndexOutOfBoundsException("The index must be smaller than the number of elements in the columns");
 		} else if(startIndex == endIndex) {
 			throw new ArrayIndexOutOfBoundsException("Retrieving 0 rows?");
 		}

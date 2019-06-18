@@ -6,7 +6,7 @@
  * Copyright 1997 - July 2008 CWI, August 2008 - 2018 MonetDB B.V.
  */
 
-package nl.cwi.monetdb.embedded.utils;
+package nl.cwi.monetdb.tests.helpers;
 
 import java.io.File;
 import java.io.IOException;

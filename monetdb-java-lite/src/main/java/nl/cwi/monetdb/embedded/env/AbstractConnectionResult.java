@@ -43,8 +43,9 @@ public abstract class AbstractConnectionResult implements Closeable {
 	 * Returns the number of columns in the result set.
 	 *
 	 * @return Number of columns
+	 * @throws MonetDBEmbeddedException If an error in the database occurred.
 	 */
-	public abstract int getNumberOfColumns();
+	public abstract int getNumberOfColumns() throws MonetDBEmbeddedException;
 
 	/**
 	 * Returns the number of rows in the result set.
@@ -64,8 +65,9 @@ public abstract class AbstractConnectionResult implements Closeable {
 	 * Checks the length of an input array for metadata retrieval
 	 *
 	 * @param input - An array to check its bounds
+	 * @throws MonetDBEmbeddedException If an error in the database occurred.
 	 */
-	protected void checkMetadataArrayLength(Object input) {
+	protected void checkMetadataArrayLength(Object input) throws MonetDBEmbeddedException {
 		int arrayLength = Array.getLength(input);
 		if (arrayLength != this.getNumberOfColumns()) {
 			throw new ArrayIndexOutOfBoundsException("The array length is different from the number of columns! "

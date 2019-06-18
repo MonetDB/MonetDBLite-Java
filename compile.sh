@@ -7,8 +7,8 @@ function echo_and_exit {
 	exit 1
 }
 
-if [[ "$#" != 3 ]]; then
-    echo_and_exit "Exactly 3 parameters must be given, OS, architecture and build type"
+if [[ "$#" != 5 ]]; then
+    echo_and_exit "Exactly 3 parameters must be given, OS, architecture, build type, MonetDBLite source dir and MonetDBLite output dir"
 fi
 
 if [[ ! "$1" =~ ^(windows|macosx|linux)$ ]]; then
@@ -34,20 +34,24 @@ fi
 case "$1" in
     windows)
         BUILDSYS=windows
-        BUILDINPUTLIBRARY="$3"/monetdb5.dll
-        BUILDOUTPUTLIBRARY=monetdb5.dll
+        BUILDINPUTLIBRARY="$3"/libmonetdblitejava.dll
+        BUILDOUTPUTLIBRARY=monetdblitejava.dll
         ;;
 
     macosx)
         BUILDSYS=macosx
-        BUILDINPUTLIBRARY=libmonetdb5.so
-        BUILDOUTPUTLIBRARY=libmonetdb5.dylib
+        BUILDINPUTLIBRARY=libmonetdblitejava.so
+        BUILDOUTPUTLIBRARY=libmonetdblitejava.so
+        ;;
+
+    linux)
+        BUILDSYS=linux
+        BUILDINPUTLIBRARY=libmonetdblitejava.so
+        BUILDOUTPUTLIBRARY=libmonetdblitejava.so
         ;;
 
     *)
-        BUILDSYS=linux
-        BUILDINPUTLIBRARY=libmonetdb5.so
-        BUILDOUTPUTLIBRARY=libmonetdb5.so
+        echo_and_exit "Unknown OS"
 esac
 
 # A bash 4.0 way of converting a string to lowercase...
@@ -67,15 +71,15 @@ cd build/"$BUILDTYPE"/"$BUILDSYS"/"$ARCH_DIR"
 
 # Time to compile
 if [[ "$1" == "windows" ]] ; then
-    cmake -G "Visual Studio 15 2017 Win64" ../../../..
+    cmake -G "Visual Studio 15 2017 Win64" -DCMAKE_BUILD_TYPE="$3" ../../../..
     cmake --build . --target ALL_BUILD --config "$3"
 else
-    cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE="$3" ../../../..
+    cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE="$3" -DMONETDBLITE_SOURCE_DIR="$4" -DMONETDBLITE_OUTPUT_DIR="$5" ../../../..
     # For MacOS builds, change -Wl,-soname linker option
     if [[ "$1" == "macosx" ]] ; then
         sed -i "s/-Wl,-soname,${BUILDINPUTLIBRARY}/-Wl,-install_name,${BUILDINPUTLIBRARY}/g" CMakeFiles/monetdb5.dir/link.txt
     fi
-    make clean && make -j
+    make clean && make -j$(getconf _NPROCESSORS_ONLN)
 fi
 
 # Move the compiled library to the Gradle directory

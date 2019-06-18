@@ -32,7 +32,7 @@ public final class MonetDBEmbeddedPreparedStatement extends AbstractConnectionRe
 	/**
 	 * The prepared statement ID
 	 */
-	private long id;
+	private int id;
 	/**
 	 * The number of rows (which means the number of ?)
 	 */
@@ -126,7 +126,7 @@ public final class MonetDBEmbeddedPreparedStatement extends AbstractConnectionRe
 		if(this.rscolcnt != 3) {
 			System.arraycopy(this.column, 0, input, 0, Math.min(this.column.length, input.length));
 		} else {
-			throw new MonetDBEmbeddedException("The column names information is not available in Prepared Statement!");
+			throw new MonetDBEmbeddedException("The column names information is not available in Prepared Statement");
 		}
 	}
 
@@ -1574,7 +1574,7 @@ public final class MonetDBEmbeddedPreparedStatement extends AbstractConnectionRe
 	/**
 	 * Release the prepared statement in the server!!!
 	 */
-	private native void freePreparedStatement(long connectionPointer, long preparedResultSetID)
+	private native void freePreparedStatement(long connectionPointer, int preparedResultSetID)
 			throws MonetDBEmbeddedException;
 
 	@Override

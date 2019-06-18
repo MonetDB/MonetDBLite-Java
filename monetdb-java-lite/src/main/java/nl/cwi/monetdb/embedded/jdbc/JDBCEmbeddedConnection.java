@@ -70,7 +70,9 @@ public final class JDBCEmbeddedConnection extends MonetDBEmbeddedConnection {
 	public void close() {
 		if(!this.isClosed()) {
 			this.closeConnectionImplementation();
-			MonetDBEmbeddedDatabase.removeConnection(this, true);
+			try {
+				MonetDBEmbeddedDatabase.removeConnection(this, true);
+			} catch (MonetDBEmbeddedException e) { }
 		}
 	}
 
@@ -119,8 +121,10 @@ public final class JDBCEmbeddedConnection extends MonetDBEmbeddedConnection {
 	 * @param tableNames The columns schemas and names in format schema.table
 	 * @return Always TableResultHeaders.ALL
 	 */
-	int fillTableHeaders(String[] columnNames, int[] columnLengths, String[] types, String[] tableNames) {
-		this.getNextTableHeaderInternal(this.lastResultSetPointer, columnNames, columnLengths, types, tableNames);
+	int fillTableHeaders(String[] columnNames, int[] columnLengths, String[] types, String[] tableNames)
+			throws MonetDBEmbeddedException {
+		this.getNextTableHeaderInternal(this.connectionPointer, this.lastResultSetPointer, columnNames, columnLengths,
+										types, tableNames);
 		return TableResultHeaders.ALL;
 	}
 
@@ -147,7 +151,7 @@ public final class JDBCEmbeddedConnection extends MonetDBEmbeddedConnection {
 	 *
 	 * @param query The user query to submit to the server
 	 */
-	void processNextQuery(String query) {
+	void processNextQuery(String query) throws MonetDBEmbeddedException {
 		if (!query.endsWith(";")) {
 			query += ";";
 		}
@@ -160,7 +164,7 @@ public final class JDBCEmbeddedConnection extends MonetDBEmbeddedConnection {
 	 *
 	 * @param flag If 0 turn the autocommit mode off, on otherwise
 	 */
-	void sendAutocommitCommand(int flag) { //1 or 0
+	void sendAutocommitCommand(int flag) throws MonetDBEmbeddedException { //1 or 0
 		this.sendAutocommitCommandInternal(this.connectionPointer, flag);
 	}
 
@@ -186,8 +190,9 @@ public final class JDBCEmbeddedConnection extends MonetDBEmbeddedConnection {
 	/**
 	 * Native implementation of table headers retrieval.
 	 */
-	private native void getNextTableHeaderInternal(long resultSetPointer, String[] columnNames, int[] columnLengths,
-												   String[] types, String[] tableNames);
+	private native void getNextTableHeaderInternal(long connectionPointer, long resultSetPointer, String[] columnNames,
+												   int[] columnLengths, String[] types, String[] tableNames)
+			throws MonetDBEmbeddedException;
 
 	/**
 	 * Native implementation of the result set construction.
@@ -199,12 +204,13 @@ public final class JDBCEmbeddedConnection extends MonetDBEmbeddedConnection {
 	/**
 	 * Native implementation of query execution.
 	 */
-	private native void sendQueryInternal(long connectionPointer, String query, boolean execute);
+	private native void sendQueryInternal(long connectionPointer, String query, boolean execute)
+			throws MonetDBEmbeddedException;
 
 	/**
 	 * Native implementation of the autocommit command.
 	 */
-	private native void sendAutocommitCommandInternal(long connectionPointer, int flag);
+	private native void sendAutocommitCommandInternal(long connectionPointer, int flag) throws MonetDBEmbeddedException;
 
 	/**
 	 * Native implementation of the release command.
