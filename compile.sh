@@ -35,7 +35,7 @@ case "$1" in
     windows)
         BUILDSYS=windows
         BUILDINPUTLIBRARY="$3"/libmonetdblitejava.dll
-        BUILDOUTPUTLIBRARY=monetdblitejava.dll
+        BUILDOUTPUTLIBRARY=libmonetdblitejava.dll
         ;;
 
     macosx)

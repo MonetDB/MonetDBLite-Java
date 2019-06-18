@@ -50,7 +50,7 @@ public final class MonetDBJavaLiteLoader {
 	private static String getLibraryFileName(SupportedOS os) throws MonetDBEmbeddedException {
 		switch(os) {
 			case WindowsNT:
-				return "monetdblitejava.dll";
+				return "libmonetdblitejava.dll";
 			case MacOSX:
 			case Linux:
 				return "libmonetdblitejava.so";

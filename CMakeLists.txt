@@ -15,7 +15,7 @@ else()
 	if(CMAKE_VERSION VERSION_LESS 3.1)
 		set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99")
 	endif()
-	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS} -W -Wall -Wextra -Werror")
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -W -Wall -Wextra -Werror")
 endif()
 
 set_system_libraries()
