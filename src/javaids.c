@@ -165,8 +165,8 @@ int initializeIDS(JNIEnv *env) {
 		return 0;
 	}
 
-	//public PreparedQueryResultSet(MonetDBEmbeddedConnection connection, long structPointer, int numberOfColumns, int numberOfRows, int[] typesIDs, long preparedID)
-	preparedQueryResultSetClassConstructorID = (*env)->GetMethodID(env, preparedQueryResultSetClassID, "<init>", "(Lnl/cwi/monetdb/embedded/env/MonetDBEmbeddedConnection;JII[IJ)V");
+	//public PreparedQueryResultSet(MonetDBEmbeddedConnection connection, long structPointer, int numberOfColumns, int numberOfRows, int[] typesIDs, int preparedID)
+	preparedQueryResultSetClassConstructorID = (*env)->GetMethodID(env, preparedQueryResultSetClassID, "<init>", "(Lnl/cwi/monetdb/embedded/env/MonetDBEmbeddedConnection;JII[II)V");
 
 	tempLocalRef = (jobject) (*env)->FindClass(env, "nl/cwi/monetdb/embedded/resultset/ExecResultSet");
 	execResultSetClassID = (jclass) (*env)->NewGlobalRef(env, tempLocalRef);

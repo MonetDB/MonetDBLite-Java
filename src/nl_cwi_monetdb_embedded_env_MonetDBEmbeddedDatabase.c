@@ -47,21 +47,24 @@ JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedDataba
 		//because of the dlopen stuff, this step has to be done before the monetdb_startup call
 		loaderCls = (*env)->FindClass(env, "nl/cwi/monetdb/embedded/env/MonetDBJavaLiteLoader");
 		pathID = (*env)->GetStaticFieldID(env, loaderCls, "loadedLibraryFullPath", "Ljava/lang/String;");
-		loadPath = (jstring) (*env)->GetStaticObjectField(env, loaderCls, pathID);
-		if(!loadPath) {
+		if(!(loadPath = (jstring) (*env)->GetStaticObjectField(env, loaderCls, pathID))) {
 			exceptionCls = (*env)->FindClass(env, "nl/cwi/monetdb/embedded/env/MonetDBEmbeddedException");
 			(*env)->ThrowNew(env, exceptionCls, MAL_MALLOC_FAIL);
 			goto endofinit;
 		}
-		loadPath_tmp = (*env)->GetStringUTFChars(env, loadPath, NULL);
-		if(!loadPath_tmp) {
+		if(!(loadPath_tmp = (*env)->GetStringUTFChars(env, loadPath, NULL))) {
 			exceptionCls = (*env)->FindClass(env, "nl/cwi/monetdb/embedded/env/MonetDBEmbeddedException");
 			(*env)->ThrowNew(env, exceptionCls, MAL_MALLOC_FAIL);
 			goto endofinit;
 		}
 		if((err = initLinker(loadPath_tmp)) != MAL_SUCCEED) {
 			exceptionCls = (*env)->FindClass(env, "nl/cwi/monetdb/embedded/env/MonetDBEmbeddedException");
-			(*env)->ThrowNew(env, exceptionCls, err);
+			while(err[i] && !foundExc) {
+				if(err[i] == '!')
+					foundExc = 1;
+				i++;
+			}
+			(*env)->ThrowNew(env, exceptionCls, err + (foundExc ? i : 0));
 			freeException(err);
 			goto endofinit;
 		}
