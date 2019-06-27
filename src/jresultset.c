@@ -48,7 +48,7 @@ createResultSet(monetdb_connection conn, JResultSet** res, monetdb_result* outpu
 		quickerScales = thisResultSet->scales;
 		for (i = 0; i < numberOfColumns; i++) {
 			res_col* col = NULL;
-			if((msg = monetdb_result_fetch_rawcol(conn, &col, output, i)) == NULL)
+			if((msg = monetdb_result_fetch_rawcol(conn, &col, output, i)) != MAL_SUCCEED)
 				goto cleanup;
 			if(!(dearBats[i] = BATdescriptor(col->b))) {
 				msg = createException(MAL, "embedded", RUNTIME_OBJECT_MISSING);

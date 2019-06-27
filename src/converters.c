@@ -553,7 +553,7 @@ CONVERSION_LEVEL_TWO(Timestamp, timestamp, timestamp_nil, JTIMESTAMP_TO_BAT, EAS
 
 void storeOidColumn(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint localtype) {
 	BAT *aux = COLnew(0, localtype, cnt, TRANSIENT);
-	size_t i;
+	size_t i, slen = sizeof(oid);
 	oid *p;
 	if (!aux) {
 		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory");
@@ -574,7 +574,6 @@ void storeOidColumn(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint lo
 			aux->tnonil = 0;
 			*p = oid_nil;
 		} else {
-			size_t slen;
 			ssize_t parsed;
 			const char *nvalue = (*env)->GetStringUTFChars(env, jvalue, 0);
 			if(nvalue == NULL) {
@@ -582,7 +581,6 @@ void storeOidColumn(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint lo
 				*b = NULL;
 				return;
 			}
-			slen = (size_t) (*env)->GetStringUTFLength(env, jvalue);
 			parsed = OIDfromStr(nvalue, &slen, &p, true);
 			(*env)->ReleaseStringUTFChars(env, jvalue, nvalue);
 			(*env)->DeleteLocalRef(env, jvalue);

@@ -170,7 +170,7 @@ public class MonetDBEmbeddedConnection implements Closeable {
 	}
 
 	/**
-	 * Removes the given Savepoint object from the current transaction. Any reference to the savepoint after it have
+	 * Removes the given Savepoint object from the current transaction. Any reference to the savepoint after it has
 	 * been removed will cause an MonetDBEmbeddedException to be thrown.
 	 *
 	 * @param savepoint the Savepoint object to be removed
