@@ -68,6 +68,7 @@ JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedDataba
 			freeException(err);
 			goto endofinit;
 		}
+		GDK_set_bin_import_swap(true);
 		if ((err = monetdb_startup((char*) dbdir_string_tmp, (bool) silentFlag, (bool) sequentialFlag)) != MAL_SUCCEED) {
 			exceptionCls = (*env)->FindClass(env, "nl/cwi/monetdb/embedded/env/MonetDBEmbeddedException");
 			while(err[i] && !foundExc) {
