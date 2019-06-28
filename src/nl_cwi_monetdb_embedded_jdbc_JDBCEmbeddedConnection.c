@@ -125,7 +125,7 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection_
 	if (err) { //if there are errors, set the error string and exit
 		char* other;
 		setErrorResponse(env, jdbccon, err);
-		if((other = monetdb_cleanup_result(conn, output)) != MAL_SUCCEED)
+		if(output && (other = monetdb_cleanup_result(conn, output)) != MAL_SUCCEED)
 			freeException(other);
 		return;
 	}
@@ -196,7 +196,7 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection_
 
 	if(query_type != Q_TABLE && query_type != Q_PREPARE && output) { //if the result is not a table or a prepare, delete it right away
 		char* other;
-		if((other = monetdb_cleanup_result(conn, output)) != MAL_SUCCEED)
+		if(output && (other = monetdb_cleanup_result(conn, output)) != MAL_SUCCEED)
 			freeException(other);
 	}
 }

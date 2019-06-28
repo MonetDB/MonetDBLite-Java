@@ -102,10 +102,7 @@ static jobject generateQueryResultSet(JNIEnv *env, jobject jconnection, jlong co
 	if (output && (query_type == Q_TABLE || query_type == Q_PREPARE || query_type == Q_BLOCK) && output->ncols > 0) {
 		numberOfColumns = output->ncols;
 	} else {
-		char* other;
 		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "There query returned no results?");
-		if((other = monetdb_cleanup_result((monetdb_connection) connectionPointer, output)) != MAL_SUCCEED)
-			freeException(other);
 		return result;
 	}
 
@@ -191,12 +188,9 @@ JNIEXPORT jint JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnectio
 	lng rowCount;
 	jint returnValue = -1;
 	int query_type = Q_UPDATE, res;
-	char* other;
 
 	(void) jconnection;
 	res = executeQuery(env, connectionPointer, query, execute, &output, &query_type, NULL, &rowCount, NULL);
-	if((other = monetdb_cleanup_result((monetdb_connection) connectionPointer, output)) != MAL_SUCCEED)
-		freeException(other);
 	if(res) {
 		return returnValue;
 	} else if(query_type == Q_UPDATE) {
@@ -218,7 +212,7 @@ JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnec
 	} else if(query_type != Q_TABLE && query_type != Q_BLOCK) {
 		char* other;
 		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The query did not produce a result set");
-		if((other = monetdb_cleanup_result((monetdb_connection) connectionPointer, output)) != MAL_SUCCEED)
+		if(output && (other = monetdb_cleanup_result((monetdb_connection) connectionPointer, output)) != MAL_SUCCEED)
 			freeException(other);
 		return NULL;
 	} else {
@@ -237,7 +231,7 @@ JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnec
 	} else if(query_type != Q_PREPARE) {
 		char* other;
 		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The query did not produce a prepared statement");
-		if((other = monetdb_cleanup_result((monetdb_connection) connectionPointer, output)) != MAL_SUCCEED)
+		if(output && (other = monetdb_cleanup_result((monetdb_connection) connectionPointer, output)) != MAL_SUCCEED)
 			freeException(other);
 		return NULL;
 	} else {
@@ -267,7 +261,7 @@ JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnec
 		} else if(query_type == Q_SCHEMA) {
 			returnValue = -2;
 		}
-		if((other = monetdb_cleanup_result((monetdb_connection) connectionPointer, output)) != MAL_SUCCEED)
+		if(output && (other = monetdb_cleanup_result((monetdb_connection) connectionPointer, output)) != MAL_SUCCEED)
 			freeException(other);
 	}
 	//public ExecResultSet(boolean status, QueryResultSet resultSet, int numberOfRows)
@@ -284,7 +278,7 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnectio
 	(void) jconnection;
 
 	(void) executeQuery(env, connectionPointer, query, execute, &output, NULL, NULL, NULL, NULL);
-	if((other = monetdb_cleanup_result((monetdb_connection) connectionPointer, output)) != MAL_SUCCEED)
+	if(output && (other = monetdb_cleanup_result((monetdb_connection) connectionPointer, output)) != MAL_SUCCEED)
 		freeException(other);
 }
 

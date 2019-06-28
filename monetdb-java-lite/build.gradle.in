@@ -43,12 +43,12 @@ dependencies {
     runtime("${group}:monetdb-jdbc-new:@NEW_JDBC_NEXT_MAJOR_VERSION@.@NEW_JDBC_NEXT_MINOR_VERSION@@NEW_JDBC_NEXT_SNAPSHOT@")
 
     //JUnit Jupiter API and TestEngine implementation
-    testCompile('org.junit.jupiter:junit-jupiter-api:+')
-    testCompile('org.junit.jupiter:junit-jupiter-engine:+')
+    testCompile('org.junit.jupiter:junit-jupiter-api:5.5.0-M1')
+    testCompile('org.junit.jupiter:junit-jupiter-engine:5.5.0-M1')
 
     //Log using log4j
-    testCompile('org.apache.logging.log4j:log4j-core:+')
-    testCompile('org.apache.logging.log4j:log4j-jul:+')
+    testCompile('org.apache.logging.log4j:log4j-core:2.11.2')
+    testCompile('org.apache.logging.log4j:log4j-jul:2.11.2')
 }
 
 junitPlatform { //configurations for JUnit5 tests
