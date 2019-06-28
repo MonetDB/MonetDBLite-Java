@@ -188,9 +188,12 @@ JNIEXPORT jint JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnectio
 	lng rowCount;
 	jint returnValue = -1;
 	int query_type = Q_UPDATE, res;
+	char* other;
 
 	(void) jconnection;
 	res = executeQuery(env, connectionPointer, query, execute, &output, &query_type, NULL, &rowCount, NULL);
+	if((other = monetdb_cleanup_result((monetdb_connection) connectionPointer, output)) != MAL_SUCCEED)
+		freeException(other);
 	if(res) {
 		return returnValue;
 	} else if(query_type == Q_UPDATE) {
