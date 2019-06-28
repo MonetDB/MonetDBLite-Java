@@ -23,7 +23,7 @@ if [[ ! "$3" =~ ^(Release|Debug)$ ]]; then
     echo_and_exit "The third parameter must either be 'Release' or 'Debug'"
 fi
 
-if [[ "$2" =~ ^(amd64|x86_64)$ ]]; then
+if [[ "$2" =~ ^(amd64|x86_64|x8664|x64)$ ]]; then
     ARCH_DIR="x86x64"
 elif [[ "$2" =~ ^(arm64|aarch64)$ ]]; then
     ARCH_DIR="arm64"
