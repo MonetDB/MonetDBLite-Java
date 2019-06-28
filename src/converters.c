@@ -103,33 +103,31 @@ FETCHING_LEVEL_ONE(Double, jdouble)
 
 /* For dates we have to create Java objects :( */
 
-//number of days since jan first (year 0) to number of milliseconds since 1 jan 1970
-#define GET_NEXT_JDATE           value = ((jlong) nvalue - 719528L) * 86400000L;
+/* Convert monetdb dates to milliseconds since 1 jan 1970. We store year/month/day in the date representation */
+#define GET_NEXT_JDATE           value = (jlong) ((date_dayofyear(nvalue) - 1) * 86400000L + (date_year(nvalue) - 1970) * 31557600000L);
 
-#define CHECK_NULL_BDATE         nvalue != date_nil
-#define CREATE_JDATE             (*env)->NewObject(env, getDateClassID(),  getDateConstructorID(), value)
+#define CREATE_JDATE             (*env)->NewObject(env, getDateClassID(), getDateConstructorID(), value)
 
-//convert number of milliseconds since start of the day to to number of milliseconds since 1 jan 1970
-#define GET_NEXT_JTIME           value = (jlong) nvalue - 3600000L;
+/* Convert number of microseconds since start of the day to the number of milliseconds since 1 jan 1970 */
+#define GET_NEXT_JTIME           value = (jlong) nvalue / 1000L - 3600000L;
 
-#define CHECK_NULL_BTIME         nvalue != daytime_nil
 #define CREATE_JTIME             (*env)->NewObject(env, getTimeClassID(),  getTimeConstructorID(), value)
 
-#define GET_NEXT_JTIMESTAMP      value = ((jlong) timestamp_date(nvalue) - 719528L) * 86400000L + (jlong) timestamp_daytime(nvalue);
+#define GET_NEXT_JTIMESTAMP      date aux1 = timestamp_date(nvalue); \
+								 value = (jlong) ((date_dayofyear(aux1) - 1) * 86400000L + (date_year(aux1) - 1970) * 31557600000L + timestamp_daytime(nvalue) / 1000L - 3600000L);
 
-#define CHECK_NULL_BTIMESTAMP    nvalue != timestamp_nil
 #define CREATE_JTIMESTAMP        (*env)->NewObject(env, getTimestampClassID(), getTimestampConstructorID(), value)
 
 #define CREATE_JGREGORIAN        (*env)->NewObject(env, getGregorianCalendarClassID(), getGregorianCalendarConstructorID())
 #define GREGORIAN_EXTRA          (*env)->CallVoidMethod(env, result, getGregorianCalendarSetterID(), value);
 
-#define FETCHING_LEVEL_TWO(NAME, BAT_CAST, GET_ATOM, NOT_NULL_CMP, CONVERT_ATOM, EXTRA_STEP) \
+#define FETCHING_LEVEL_TWO(NAME, BAT_CAST, GET_ATOM, ATOM, CONVERT_ATOM, EXTRA_STEP) \
 	jobject get##NAME##Single(JNIEnv* env, jint position, BAT* b) { \
 		const BAT_CAST *array = (BAT_CAST *) Tloc(b, 0); \
 		BAT_CAST nvalue = array[position]; \
 		jobject result; \
 		jlong value; \
-		if(NOT_NULL_CMP) { \
+		if(nvalue != ATOM##_nil) { \
 			GET_ATOM \
 			result = CONVERT_ATOM; \
 			EXTRA_STEP \
@@ -139,13 +137,13 @@ FETCHING_LEVEL_ONE(Double, jdouble)
 		return result; \
 	}
 
-FETCHING_LEVEL_TWO(Date, jint, GET_NEXT_JDATE, CHECK_NULL_BDATE, CREATE_JDATE, DO_NOTHING)
-FETCHING_LEVEL_TWO(Time, jlong, GET_NEXT_JTIME, CHECK_NULL_BTIME, CREATE_JTIME, DO_NOTHING)
-FETCHING_LEVEL_TWO(Timestamp, timestamp, GET_NEXT_JTIMESTAMP, CHECK_NULL_BTIMESTAMP, CREATE_JTIMESTAMP, DO_NOTHING)
+FETCHING_LEVEL_TWO(Date, jint, GET_NEXT_JDATE, date, CREATE_JDATE, DO_NOTHING)
+FETCHING_LEVEL_TWO(Time, jlong, GET_NEXT_JTIME, daytime, CREATE_JTIME, DO_NOTHING)
+FETCHING_LEVEL_TWO(Timestamp, timestamp, GET_NEXT_JTIMESTAMP, timestamp, CREATE_JTIMESTAMP, DO_NOTHING)
 
-FETCHING_LEVEL_TWO(GregorianCalendarDate, jint, GET_NEXT_JDATE, CHECK_NULL_BDATE, CREATE_JGREGORIAN, GREGORIAN_EXTRA)
-FETCHING_LEVEL_TWO(GregorianCalendarTime, jlong, GET_NEXT_JTIME, CHECK_NULL_BTIME, CREATE_JGREGORIAN, GREGORIAN_EXTRA)
-FETCHING_LEVEL_TWO(GregorianCalendarTimestamp, timestamp, GET_NEXT_JTIMESTAMP, CHECK_NULL_BTIMESTAMP, CREATE_JGREGORIAN, GREGORIAN_EXTRA)
+FETCHING_LEVEL_TWO(GregorianCalendarDate, jint, GET_NEXT_JDATE, date, CREATE_JGREGORIAN, GREGORIAN_EXTRA)
+FETCHING_LEVEL_TWO(GregorianCalendarTime, jlong, GET_NEXT_JTIME, daytime, CREATE_JGREGORIAN, GREGORIAN_EXTRA)
+FETCHING_LEVEL_TWO(GregorianCalendarTimestamp, timestamp, GET_NEXT_JTIMESTAMP, timestamp, CREATE_JGREGORIAN, GREGORIAN_EXTRA)
 
 jobject getOidSingle(JNIEnv* env, jint position, BAT* b) {
 	const oid *array = (oid *) Tloc(b, 0);
@@ -288,7 +286,7 @@ BATCH_LEVEL_ONE_OBJECT(Real, jfloat, flt, CREATE_NEW_FLOAT)
 BATCH_LEVEL_ONE_OBJECT(Double, jdouble, dbl, CREATE_NEW_DOUBLE)
 
 //If we use 03 optimization, we don't need to switch for the nulls, because the compiler will create this code I think...
-#define BATCH_LEVEL_TWO(NAME, BAT_CAST, GET_ATOM, NOT_NULL_CMP, CONVERT_ATOM) \
+#define BATCH_LEVEL_TWO(NAME, BAT_CAST, GET_ATOM, CONVERT_ATOM) \
 	void get##NAME##Column(JNIEnv* env, jobjectArray input, jint first, jint size, BAT* b) { \
 		BAT_CAST *array = (BAT_CAST *) Tloc(b, 0); \
 		BAT_CAST nvalue; \
@@ -307,7 +305,7 @@ BATCH_LEVEL_ONE_OBJECT(Double, jdouble, dbl, CREATE_NEW_DOUBLE)
 		} else { \
 			for (i = 0; i < size; i++) { \
 				nvalue = array[i]; \
-				if(NOT_NULL_CMP) { \
+				if(nvalue != BAT_CAST##_nil) { \
 					GET_ATOM \
 					next = CONVERT_ATOM; \
 					(*env)->SetObjectArrayElement(env, input, i, next); \
@@ -319,9 +317,9 @@ BATCH_LEVEL_ONE_OBJECT(Double, jdouble, dbl, CREATE_NEW_DOUBLE)
 		} \
 	}
 
-BATCH_LEVEL_TWO(Date, jint, GET_NEXT_JDATE, CHECK_NULL_BDATE, CREATE_JDATE)
-BATCH_LEVEL_TWO(Time, jlong, GET_NEXT_JTIME, CHECK_NULL_BTIME, CREATE_JTIME)
-BATCH_LEVEL_TWO(Timestamp, timestamp, GET_NEXT_JTIMESTAMP, CHECK_NULL_BTIMESTAMP, CREATE_JTIMESTAMP)
+BATCH_LEVEL_TWO(Date, date, GET_NEXT_JDATE, CREATE_JDATE)
+BATCH_LEVEL_TWO(Time, daytime, GET_NEXT_JTIME, CREATE_JTIME)
+BATCH_LEVEL_TWO(Timestamp, timestamp, GET_NEXT_JTIMESTAMP, CREATE_JTIMESTAMP)
 
 void getOidColumn(JNIEnv* env, jobjectArray input, jint first, jint size, BAT* b) {
 	oid *array = (oid *) Tloc(b, 0);
@@ -488,27 +486,25 @@ CONVERSION_LEVEL_ONE(Double, dbl, jdouble, Double)
 #define DIVMOD_HELPER_SEC lldiv(nvalue, 86400000L);
 #endif
 
-#define EASY_CMP                 *p - prev
-
 #define JDATE_TO_BAT             nvalue = (*env)->CallLongMethod(env, value, getDateToLongID()); \
-								 *p = (date) (nvalue / 86400000L + 719529L);                     \
+								 *p = date_create(nvalue / 31557600000L, nvalue / 2629746000L, nvalue / 86400000L); \
 								 (void) aux1;
 
 #define JTIME_TO_BAT             nvalue = (*env)->CallLongMethod(env, value, getTimeToLongID()); \
-								 *p = (daytime) (nvalue + 3600000L);                             \
+								 *p = (daytime) ((nvalue + 3600000L) * 1000L);                             \
 								 (void) aux1;
 
 #define JTIMESTAMP_TO_BAT        nvalue = (*env)->CallLongMethod(env, value, getTimestampToLongID());       \
 								 aux1 = DIVMOD_HELPER_SEC                                                   \
-								 *p = timestamp_create((date) (aux1.quot + 719529L), (daytime) (aux1.rem));
+								 *p = timestamp_create(date_create(aux1.quot / 31557600000L, aux1.quot / 2629746000L, aux1.quot / 86400000L), (daytime) ((aux1.rem + 3600000L) * 1000L));
 
-#define CONVERSION_LEVEL_TWO(NAME, BAT_CAST, NULL_CONST, CONVERT_TO_BAT, ORDER_CMP) \
+#define CONVERSION_LEVEL_TWO(NAME, BAT_CAST, CONVERT_TO_BAT) \
 	void store##NAME##Column(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint localtype) { \
 		BAT *aux = COLnew(0, localtype, cnt, TRANSIENT); \
 		size_t i; \
 		jlong nvalue; \
 		BAT_CAST *p; \
-		BAT_CAST prev = NULL_CONST; \
+		BAT_CAST prev = BAT_CAST##_nil; \
 		jobject value; \
 		DIVMOD_HELPER_FIR \
 		if (!aux) { \
@@ -527,15 +523,15 @@ CONVERSION_LEVEL_ONE(Double, dbl, jdouble, Double)
 			if (value == NULL) { \
 				aux->tnil = 1; \
 				aux->tnonil = 0; \
-				*p = NULL_CONST; \
+				*p = BAT_CAST##_nil; \
 			} else { \
 				CONVERT_TO_BAT \
 				(*env)->DeleteLocalRef(env, value); \
 			} \
 			if (i > 0) { \
-				if ((ORDER_CMP > 0) && aux->trevsorted) { \
+				if (*p > prev && aux->trevsorted) { \
 					aux->trevsorted = 0; \
-				} else if ((ORDER_CMP < 0) && aux->tsorted) { \
+				} else if (*p < prev && aux->tsorted) { \
 					aux->tsorted = 0; \
 				} \
 			} \
@@ -547,9 +543,9 @@ CONVERSION_LEVEL_ONE(Double, dbl, jdouble, Double)
 		*b = aux; \
 	}
 
-CONVERSION_LEVEL_TWO(Date, date, date_nil, JDATE_TO_BAT, EASY_CMP)
-CONVERSION_LEVEL_TWO(Time, daytime, daytime_nil, JTIME_TO_BAT, EASY_CMP)
-CONVERSION_LEVEL_TWO(Timestamp, timestamp, timestamp_nil, JTIMESTAMP_TO_BAT, EASY_CMP)
+CONVERSION_LEVEL_TWO(Date, date, JDATE_TO_BAT)
+CONVERSION_LEVEL_TWO(Time, daytime, JTIME_TO_BAT)
+CONVERSION_LEVEL_TWO(Timestamp, timestamp, JTIMESTAMP_TO_BAT)
 
 void storeOidColumn(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint localtype) {
 	BAT *aux = COLnew(0, localtype, cnt, TRANSIENT);
