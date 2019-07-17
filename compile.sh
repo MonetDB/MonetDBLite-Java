@@ -8,7 +8,7 @@ function echo_and_exit {
 }
 
 if [[ "$#" != 5 ]]; then
-    echo_and_exit "Exactly 3 parameters must be given, OS, architecture, build type, MonetDBLite source dir and MonetDBLite output dir"
+    echo_and_exit "Exactly 5 parameters must be given, OS, architecture, build type, MonetDBLite source dir and MonetDBLite output dir"
 fi
 
 if [[ ! "$1" =~ ^(windows|macosx|linux)$ ]]; then
