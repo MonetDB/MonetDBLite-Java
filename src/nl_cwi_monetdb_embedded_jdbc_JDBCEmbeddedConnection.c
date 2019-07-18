@@ -3,7 +3,7 @@
  * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2008-2017 MonetDB B.V.
+ * Copyright 2008-2019 MonetDB B.V.
  */
 
 #include "nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection.h"
@@ -69,14 +69,14 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection_
 			colname = (*env)->NewStringUTF(env, col->name);
 			sqlname = (*env)->NewStringUTF(env, col->type.type->sqlname);
 			tablename = (*env)->NewStringUTF(env, col->tn);
-			(*env)->SetObjectArrayElement(env, columnNames, i, colname);
-			(*env)->SetObjectArrayElement(env, types, i, sqlname);
-			(*env)->SetObjectArrayElement(env, tableNames, i, tablename);
+			(*env)->SetObjectArrayElement(env, columnNames, (jsize) i, colname);
+			(*env)->SetObjectArrayElement(env, types, (jsize) i, sqlname);
+			(*env)->SetObjectArrayElement(env, tableNames, (jsize) i, tablename);
 			(*env)->DeleteLocalRef(env, colname);
 			(*env)->DeleteLocalRef(env, sqlname);
 			(*env)->DeleteLocalRef(env, tablename);
 		}
-		(*env)->SetIntArrayRegion(env, columnLengths, 0, numberOfColumns, columnLengthsFound);
+		(*env)->SetIntArrayRegion(env, columnLengths, 0, (jsize) numberOfColumns, columnLengthsFound);
 		GDKfree(columnLengthsFound);
 	}
 	//Important! Don't free the result table yet!

@@ -11,8 +11,8 @@ if [[ "$#" != 5 ]]; then
     echo_and_exit "Exactly 5 parameters must be given, OS, architecture, build type, MonetDBLite source dir and MonetDBLite output dir"
 fi
 
-if [[ ! "$1" =~ ^(windows|macosx|linux)$ ]]; then
-    echo_and_exit "The first parameter must either be 'windows', 'macosx' or 'linux'"
+if [[ ! "$1" =~ ^(macosx|linux)$ ]]; then
+    echo_and_exit "The first parameter must either be 'macosx' or 'linux'"
 fi
 
 if [[ ! "$2" =~ ^(amd64|x86_64|arm64|aarch64)$ ]]; then
@@ -32,12 +32,6 @@ else
 fi
 
 case "$1" in
-    windows)
-        BUILDSYS=windows
-        BUILDINPUTLIBRARY="$3"/libmonetdblitejava.dll
-        BUILDOUTPUTLIBRARY=libmonetdblitejava.dll
-        ;;
-
     macosx)
         BUILDSYS=macosx
         BUILDINPUTLIBRARY=libmonetdblitejava.so
@@ -70,28 +64,18 @@ mkdir -p build/"$BUILDTYPE"/"$BUILDSYS"/"$ARCH_DIR"
 cd build/"$BUILDTYPE"/"$BUILDSYS"/"$ARCH_DIR"
 
 # Time to compile
-if [[ "$1" == "windows" ]] ; then
-    cmake -G "Visual Studio 15 2017 Win64" -DCMAKE_BUILD_TYPE="$3" ../../../..
-    cmake --build . --target ALL_BUILD --config "$3"
-else
-    cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE="$3" -DMONETDBLITE_SOURCE_DIR="$4" -DMONETDBLITE_OUTPUT_DIR="$5" ../../../..
-    # For MacOS builds, change -Wl,-soname linker option
-    if [[ "$1" == "macosx" ]] ; then
-        sed -i "s/-Wl,-soname,${BUILDINPUTLIBRARY}/-Wl,-install_name,${BUILDINPUTLIBRARY}/g" CMakeFiles/monetdb5.dir/link.txt
-    fi
-    make clean && make -j$(getconf _NPROCESSORS_ONLN)
+cmake -DCMAKE_BUILD_TYPE="$3" -DMONETDBLITE_SOURCE_DIR="$4" -DMONETDBLITE_OUTPUT_DIR="$5" ../../../..
+# For MacOS builds, change -Wl,-soname linker option
+if [[ "$1" == "macosx" ]] ; then
+    sed -i "s/-Wl,-soname,${BUILDINPUTLIBRARY}/-Wl,-install_name,${BUILDINPUTLIBRARY}/g" CMakeFiles/monetdb5.dir/link.txt
 fi
+make clean && make -j$(getconf _NPROCESSORS_ONLN)
 
 # Move the compiled library to the Gradle directory
 cd "$BASEDIR"
 mkdir -p monetdb-java-lite/src/main/resources/libs/"$BUILDSYS"/"$ARCH_DIR"
 
 mv build/"$BUILDTYPE"/"$BUILDSYS"/"$ARCH_DIR"/"$BUILDINPUTLIBRARY" monetdb-java-lite/src/main/resources/libs/"$BUILDSYS"/"$ARCH_DIR"/"$BUILDOUTPUTLIBRARY"
-
-# On Windows copy the runtime library
-if [[ "$1" == "windows" ]] ; then
-    cp -rf src/embeddedjava/windows/vcruntime140.dll monetdb-java-lite/src/main/resources/libs/"$BUILDSYS"/"$ARCH_DIR"/vcruntime140.dll
-fi
 
 # Sometimes is to desirable to compile the native library only
 if [[ -z "$NATIVE_LIBRARY_ONLY" ]] ; then

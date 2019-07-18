@@ -3,7 +3,7 @@
  * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2008-2017 MonetDB B.V.
+ * Copyright 2008-2019 MonetDB B.V.
  */
 
 #include "nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnection.h"
@@ -111,7 +111,7 @@ static jobject generateQueryResultSet(JNIEnv *env, jobject jconnection, jlong co
 		freeException(err);
 	}
 	copy = GDKmalloc(sizeof(jint) * numberOfColumns);
-	typesIDs = (*env)->NewIntArray(env, numberOfColumns);
+	typesIDs = (*env)->NewIntArray(env, (jsize) numberOfColumns);
 	if(copy == NULL || typesIDs == NULL) {
 		if(copy)
 			GDKfree(copy);
@@ -165,7 +165,7 @@ static jobject generateQueryResultSet(JNIEnv *env, jobject jconnection, jlong co
 	if((*env)->ExceptionCheck(env) == JNI_TRUE) {
 		freeResultSet(thisResultSet);
 	} else {
-		(*env)->SetIntArrayRegion(env, typesIDs, 0, numberOfColumns, copy);
+		(*env)->SetIntArrayRegion(env, typesIDs, 0, (jsize) numberOfColumns, copy);
 		if(prepareID) {
 			//public PreparedQueryResultSet(MonetDBEmbeddedConnection connection, long structPointer, int numberOfColumns, int numberOfRows, int[] typesIDs, int preparedID)
 			result = (*env)->NewObject(env, getPreparedQueryResultSetClassID(), getPreparedQueryResultSetClassConstructorID(), jconnection,

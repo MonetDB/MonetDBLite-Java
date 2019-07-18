@@ -3,7 +3,7 @@
  * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2008-2017 MonetDB B.V.
+ * Copyright 2008-2019 MonetDB B.V.
  */
 
 #include "nl_cwi_monetdb_embedded_resultset_QueryResultSet.h"
@@ -33,7 +33,7 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_get
 			return;
 		}
 		jstring colname = (*env)->NewStringUTF(env, col->name);
-		(*env)->SetObjectArrayElement(env, result, i, colname);
+		(*env)->SetObjectArrayElement(env, result, (jsize) i, colname);
 		(*env)->DeleteLocalRef(env, colname);
 	}
 }
@@ -55,7 +55,7 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_get
 			return;
 		}
 		jstring coltype = (*env)->NewStringUTF(env, col->type.type->sqlname);
-		(*env)->SetObjectArrayElement(env, result, i, coltype);
+		(*env)->SetObjectArrayElement(env, result, (jsize) i, coltype);
 		(*env)->DeleteLocalRef(env, coltype);
 	}
 }
@@ -78,7 +78,7 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_get
 		}
 		jstring toCall = (*env)->NewStringUTF(env, col->type.type->sqlname);
 		jobject next = (*env)->CallStaticObjectMethod(env, getMappingEnumID(), getGetEnumValueID(), toCall);
-		(*env)->SetObjectArrayElement(env, result, i, next);
+		(*env)->SetObjectArrayElement(env, result, (jsize) i, next);
 		(*env)->DeleteLocalRef(env, toCall);
 		(*env)->DeleteLocalRef(env, next);
 	}
@@ -109,7 +109,7 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_get
 		}
 		fdigits[i] = col->type.digits;
 	}
-	(*env)->SetIntArrayRegion(env, result, 0, numberOfColumns, fdigits);
+	(*env)->SetIntArrayRegion(env, result, 0, (jsize) numberOfColumns, fdigits);
 	GDKfree(fdigits);
 }
 
@@ -138,7 +138,7 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_get
 		}
 		fscales[i] = col->type.scale;
 	}
-	(*env)->SetIntArrayRegion(env, result, 0, numberOfColumns, fscales);
+	(*env)->SetIntArrayRegion(env, result, 0, (jsize) numberOfColumns, fscales);
 	GDKfree(fscales);
 }
 

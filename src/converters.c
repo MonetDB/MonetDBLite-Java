@@ -3,7 +3,7 @@
  * License, v. 2.0.  If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
- * Copyright 2008-2017 MonetDB B.V.
+ * Copyright 2008-2019 MonetDB B.V.
  */
 
 #include "converters.h"
@@ -20,15 +20,17 @@
 #define BIG_INTEGERS_ARRAY_SIZE           64
 #define min(a, b)                         (((a) < (b)) ? (a) : (b))
 
-static str str_nil_cast = (str) str_nil;
-
-static blob* my_blob_null(void) {
+static inline blob*
+my_blob_null(void)
+{
 	static blob mynullval;
 	mynullval.nitems = ~(size_t) 0;
 	return (&mynullval);
 }
 
-static void decimal_to_str_java(char* value, lng v, jint scale) {
+static inline void
+decimal_to_str_java(char* value, lng v, jint scale)
+{
 	char buf[BIG_INTEGERS_ARRAY_SIZE];
 	jint cur = 63, neg = (v<0), i, done = 0;
 
@@ -55,7 +57,9 @@ static void decimal_to_str_java(char* value, lng v, jint scale) {
 	strcpy(value, buf+cur+1);
 }
 
-static lng decimal_from_str_java(const char *dec) {
+static inline lng
+decimal_from_str_java(const char *dec)
+{
 	lng res = 0;
 	const lng max0 = GDK_lng_max / 10, max1 = GDK_lng_max % 10;
 	jint neg = 0;
@@ -127,7 +131,7 @@ FETCHING_LEVEL_ONE(Double, jdouble)
 		BAT_CAST nvalue = array[position]; \
 		jobject result; \
 		jlong value; \
-		if(nvalue != ATOM##_nil) { \
+		if (nvalue != ATOM##_nil) { \
 			GET_ATOM \
 			result = CONVERT_ATOM; \
 			EXTRA_STEP \
@@ -149,7 +153,7 @@ jobject getOidSingle(JNIEnv* env, jint position, BAT* b) {
 	const oid *array = (oid *) Tloc(b, 0);
 	oid nvalue = array[position];
 	jobject result;
-	if(!is_oid_nil(nvalue)) {
+	if (!is_oid_nil(nvalue)) {
 		char store[BIG_INTEGERS_ARRAY_SIZE];
 		snprintf(store, BIG_INTEGERS_ARRAY_SIZE, OIDFMT "@0", nvalue);
 		result = (*env)->NewStringUTF(env, store);
@@ -168,7 +172,7 @@ jobject getOidSingle(JNIEnv* env, jint position, BAT* b) {
 		BAT_CAST nvalue = array[position]; \
 		jobject result; \
 		jstring aux; \
-		if(nvalue != BAT_CAST##_nil) { \
+		if (nvalue != BAT_CAST##_nil) { \
 			decimal_to_str_java(value, nvalue, scale); \
 			aux = (*env)->NewStringUTF(env, value); \
 			result = (*env)->NewObject(env, getBigDecimalClassID(), getBigDecimalConstructorID(), aux); \
@@ -187,7 +191,7 @@ FETCHING_LEVEL_THREE(lng, lng)
 /* Strings and BLOBs have to be retrieved from the BAT's heap */
 
 #define GET_BAT_STRING      nvalue = BUNtail(li, p);
-#define CHECK_NULL_STRING   strcmp(str_nil_cast, nvalue) != 0
+#define CHECK_NULL_STRING   strcmp(str_nil, nvalue) != 0
 #define BAT_TO_STRING       value = (*env)->NewStringUTF(env, nvalue);
 
 #define GET_BAT_BLOB        nvalue = (blob*) BUNtail(li, p);
@@ -219,7 +223,7 @@ FETCHING_LEVEL_FOUR(Blob, jbyteArray, GET_BAT_BLOB, CHECK_NULL_BLOB, BAT_TO_JBLO
 		jboolean isCopy; \
 		const JAVA_CAST* array = (const JAVA_CAST*) Tloc(b, 0); \
 		JAVA_CAST* inputConverted = (JAVA_CAST*) (*env)->GetPrimitiveArrayCritical(env, input, &isCopy); \
-		if(inputConverted == NULL) { \
+		if (inputConverted == NULL) { \
 			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
 		} else { \
 			if(isCopy == JNI_FALSE) { \
@@ -266,7 +270,7 @@ BATCH_LEVEL_ONE(Double, jdouble, Double, sizeof(dbl))
 		} else { \
 			for (i = 0; i < size; i++) { \
 				nvalue = array[i]; \
-				if(nvalue != NULL_ATOM##_nil) { \
+				if (nvalue != NULL_ATOM##_nil) { \
 					next = CONVERT_ATOM; \
 					(*env)->SetObjectArrayElement(env, input, i, next); \
 					(*env)->DeleteLocalRef(env, next); \
@@ -285,7 +289,6 @@ BATCH_LEVEL_ONE_OBJECT(Bigint, jlong, lng, CREATE_NEW_LONG)
 BATCH_LEVEL_ONE_OBJECT(Real, jfloat, flt, CREATE_NEW_FLOAT)
 BATCH_LEVEL_ONE_OBJECT(Double, jdouble, dbl, CREATE_NEW_DOUBLE)
 
-//If we use 03 optimization, we don't need to switch for the nulls, because the compiler will create this code I think...
 #define BATCH_LEVEL_TWO(NAME, BAT_CAST, GET_ATOM, CONVERT_ATOM) \
 	void get##NAME##Column(JNIEnv* env, jobjectArray input, jint first, jint size, BAT* b) { \
 		BAT_CAST *array = (BAT_CAST *) Tloc(b, 0); \
@@ -338,7 +341,7 @@ void getOidColumn(JNIEnv* env, jobjectArray input, jint first, jint size, BAT* b
 	} else {
 		for (i = 0; i < size; i++) {
 			nvalue = array[i];
-			if(!is_oid_nil(nvalue)) {
+			if (!is_oid_nil(nvalue)) {
 				char store[BIG_INTEGERS_ARRAY_SIZE];
 				snprintf(store, BIG_INTEGERS_ARRAY_SIZE, OIDFMT "@0", array[i]);
 				next = (*env)->NewStringUTF(env, store);
@@ -373,7 +376,7 @@ void getOidColumn(JNIEnv* env, jobjectArray input, jint first, jint size, BAT* b
 		} else { \
 			for (i = 0; i < size; i++) { \
 				BAT_CAST nvalue = array[i]; \
-				if(nvalue != BAT_CAST##_nil) { \
+				if (nvalue != BAT_CAST##_nil) { \
 					decimal_to_str_java(value, (CONVERSION_CAST) nvalue, scale); \
 					aux = (*env)->NewStringUTF(env, value); \
 					next = (*env)->NewObject(env, lbigDecimalClassID, lbigDecimalConstructorID, aux); \
@@ -478,25 +481,25 @@ CONVERSION_LEVEL_ONE(Double, dbl, jdouble, Double)
 
 /* These types have constant sizes, so the conversion is still easy :P */
 
-#ifndef WIN32
-#define DIVMOD_HELPER_FIR ldiv_t aux1;
-#define DIVMOD_HELPER_SEC ldiv(nvalue, 86400000L);
-#else
+#ifdef WIN32
 #define DIVMOD_HELPER_FIR lldiv_t aux1;
 #define DIVMOD_HELPER_SEC lldiv(nvalue, 86400000L);
+#else
+#define DIVMOD_HELPER_FIR ldiv_t aux1;
+#define DIVMOD_HELPER_SEC ldiv(nvalue, 86400000L);
 #endif
 
 #define JDATE_TO_BAT             nvalue = (*env)->CallLongMethod(env, value, getDateToLongID()); \
-								 *p = date_create(nvalue / 31557600000L, nvalue / 2629746000L, nvalue / 86400000L); \
+								 *p = date_create((int)(nvalue / 31557600000L), (int)(nvalue / 2629746000L), (int)(nvalue / 86400000L)); \
 								 (void) aux1;
 
 #define JTIME_TO_BAT             nvalue = (*env)->CallLongMethod(env, value, getTimeToLongID()); \
-								 *p = (daytime) ((nvalue + 3600000L) * 1000L);                             \
+								 *p = (daytime) ((nvalue + 3600000L) * 1000L); \
 								 (void) aux1;
 
-#define JTIMESTAMP_TO_BAT        nvalue = (*env)->CallLongMethod(env, value, getTimestampToLongID());       \
-								 aux1 = DIVMOD_HELPER_SEC                                                   \
-								 *p = timestamp_create(date_create(aux1.quot / 31557600000L, aux1.quot / 2629746000L, aux1.quot / 86400000L), (daytime) ((aux1.rem + 3600000L) * 1000L));
+#define JTIMESTAMP_TO_BAT        nvalue = (*env)->CallLongMethod(env, value, getTimestampToLongID()); \
+								 aux1 = DIVMOD_HELPER_SEC \
+								 *p = timestamp_create(date_create((int)(aux1.quot / 31557600000L), (int)(aux1.quot / 2629746000L), (int)(aux1.quot / 86400000L)), (daytime) ((aux1.rem + 3600000L) * 1000L));
 
 #define CONVERSION_LEVEL_TWO(NAME, BAT_CAST, CONVERT_TO_BAT) \
 	void store##NAME##Column(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint localtype) { \
@@ -675,9 +678,8 @@ CONVERSION_LEVEL_THREE(lng)
 								p = NULL;                                                                                          \
 							} else {                                                                                               \
 								p = GDKstrdup(nvalue);                                                                             \
-								if(p == NULL) {                                                                                    \
+								if (p == NULL)                                                                                     \
 									(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
-								}                                                                                                  \
 								(*env)->ReleaseStringUTFChars(env, value, nvalue);                                                 \
 							}
 
@@ -685,7 +687,7 @@ CONVERSION_LEVEL_THREE(lng)
 
 #define PUT_STR_IN_HEAP     if (BUNappend(aux, p, FALSE) != GDK_SUCCEED) { \
 								BBPreclaim(aux);                           \
-								p = str_nil_cast;                          \
+								p = (str) str_nil; \
 							}
 
 #define STR_CMP             strcmp(p, prev)
@@ -693,7 +695,7 @@ CONVERSION_LEVEL_THREE(lng)
 #define JBLOB_TO_BAT        nvalue = (jbyteArray) value;                                                                       \
 							len = (*env)->GetArrayLength(env, nvalue);                                                         \
 							p = GDKmalloc(blobsize(len));                                                                      \
-							if(p == NULL) {                                                                                    \
+							if (p == NULL) {                                                                                   \
 								(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
 							} else {                                                                                           \
 								p->nitems = len;                                                                               \
@@ -741,9 +743,8 @@ extern var_t BLOBput(Heap *h, var_t *bun, const blob *val);
 				p = NULL_CONST; \
 			} else { \
 				CONVERT_TO_BAT \
-				if(p == NULL) { \
-				   p = NULL_CONST; \
-				} \
+				if (p == NULL) \
+					p = NULL_CONST; \
 				(*env)->DeleteLocalRef(env, value); \
 			} \
 			PUT_IN_HEAP \
@@ -753,21 +754,19 @@ extern var_t BLOBput(Heap *h, var_t *bun, const blob *val);
 				} else if ((ORDER_CMP < 0) && aux->tsorted) { \
 					aux->tsorted = 0; \
 				} \
-				if(previousToFree) { \
+				if (previousToFree) \
 					GDKfree(prev); \
-				} \
 			} \
 			prev = p; \
 			previousToFree = (value == NULL) ? 0 : 1; \
 		} \
-		if(previousToFree) { \
+		if (previousToFree) \
 			GDKfree(p); \
-		} \
 		BATsetcount(aux, cnt); \
 		BATsettrivprop(aux); \
 		BBPkeepref(aux->batCacheid); \
 		*b = aux; \
 	}
 
-CONVERSION_LEVEL_FOUR(String, str, str_nil_cast, STRING_START, JSTRING_TO_BAT, STR_CMP, PUT_STR_IN_HEAP)
+CONVERSION_LEVEL_FOUR(String, str, (str) str_nil, STRING_START, JSTRING_TO_BAT, STR_CMP, PUT_STR_IN_HEAP)
 CONVERSION_LEVEL_FOUR(Blob, blob*, my_blob_null(), BLOB_START, JBLOB_TO_BAT, BLOB_CMP, PUT_BLOB_IN_HEAP)

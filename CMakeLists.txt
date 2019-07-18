@@ -3,10 +3,15 @@
 #
 cmake_minimum_required (VERSION 3.0)
 
+project(MonetDBLite-Java VERSION "1.0.0" LANGUAGES C)
 set(C_STANDARD_REQUIRED ON)
 set(CMAKE_C_STANDARD 99)
 
 set(CMAKE_MODULE_PATH "${MONETDBLITE_SOURCE_DIR}/cmake" CACHE INTERNAL "Location of custom CMake modules")
+if(NOT CMAKE_BUILD_TYPE) # Set default build options
+	message(STATUS "Setting build type to Debug as none was selected")
+	set(CMAKE_BUILD_TYPE Debug CACHE STRING "The type of build" FORCE)
+endif()
 include(BuildMacros REQUIRED)
 
 if (MSVC)
