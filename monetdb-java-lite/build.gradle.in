@@ -4,7 +4,6 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.4'
         classpath 'org.junit.platform:junit-platform-gradle-plugin:1.0.0'
         classpath 'io.codearte.gradle.nexus:gradle-nexus-staging-plugin:0.9.0'
     }
@@ -21,7 +20,6 @@ apply plugin: 'java'
 apply plugin: 'maven'
 apply plugin: 'signing'
 apply plugin: 'io.codearte.nexus-staging'
-apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'org.junit.platform.gradle.plugin'
 
 allprojects {
@@ -63,15 +61,8 @@ jar {
     }
 }
 
-shadowJar { //Build instruction to the shadowJar (a jar which includes both the JDBC and MonetDBJavaLite jars)
-    manifest {
-        inheritFrom project.jar.manifest
-    }
-    destinationDir = file('./build/shadowJar')
-}
-
-task wrapper(type: Wrapper) { //Set the gradle wrapper, so users don't have to install Gradle
-    gradleVersion = '4.8'
+wrapper { //Set the gradle wrapper, so users don't have to install Gradle
+    gradleVersion = '5.5'
 }
 
 task javadocJar(type: Jar) { //Generate the javadocs jar

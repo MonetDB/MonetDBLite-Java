@@ -17,7 +17,7 @@ if "%result%" == "false" (
 )
 
 cd /D "%~dp0" & :: Move into script directory
-call versions.bat
+rem use versions.sh from the shell
 
 if not exist "build/%~1/windows/x86x64" (
 	md "build/%~1/windows/x86x64"
@@ -33,9 +33,9 @@ if not exist "monetdb-java-lite/src/main/resources/libs/windows/x86x64" (
 	md "monetdb-java-lite/src/main/resources/libs/windows/x86x64"
 )
 
-move "build/%~1/windows/x86x64/%~1/monetdblitejava.dll" "monetdb-java-lite/src/main/resources/libs/windows/x86x64/libmonetdblitejava.dll"
-copy "src/windows/vcruntime140.dll" "monetdb-java-lite/src/main/resources/libs/windows/x86x64/vcruntime140.dll"
+move "build\%~1\windows\x86x64\%~1\monetdblitejava.dll" "monetdb-java-lite\src\main\resources\libs\windows\x86x64\libmonetdblitejava.dll"
+copy "src\windows\vcruntime140.dll" "monetdb-java-lite\src\main\resources\libs\windows\x86x64\vcruntime140.dll"
 
 cd monetdb-java-lite
-call gradle.bat build
+call gradlew.bat build
 cd ..
