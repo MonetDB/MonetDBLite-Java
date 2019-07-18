@@ -14,6 +14,17 @@ if(NOT CMAKE_BUILD_TYPE) # Set default build options
 endif()
 include(BuildMacros REQUIRED)
 
+if(WIN32)
+	set(OBJECT_EXTENSION "obj")
+	set(COMPILER_OPTION "/")
+else()
+	set(OBJECT_EXTENSION "o")
+	set(COMPILER_OPTION "-")
+endif()
+
+add_definitions(${COMPILER_OPTION}DLIBGDK ${COMPILER_OPTION}DLIBMONETDB5 ${COMPILER_OPTION}DLIBSQL
+				${COMPILER_OPTION}DLIBEMBEDDED ${COMPILER_OPTION}DHAVE_EMBEDDED)
+
 if (MSVC)
 	add_definitions(/D_CRT_SECURE_NO_WARNINGS)
 else()
@@ -24,8 +35,7 @@ else()
 endif()
 
 set_system_libraries()
-FILE(GLOB_RECURSE MONETDBLITE_OBJECTS "${MONETDBLITE_OUTPUT_DIR}/var/monetdblite/*.o"
-									  "${MONETDBLITE_OUTPUT_DIR}/var/monetdblite/*.tab.c.o")
+FILE(GLOB_RECURSE MONETDBLITE_OBJECTS "${MONETDBLITE_OUTPUT_DIR}/var/monetdblite/*.${OBJECT_EXTENSION}")
 
 include_directories("${CMAKE_SOURCE_DIR}/src" "${MONETDBLITE_OUTPUT_DIR}/include/monetdb")
 
