@@ -41,7 +41,7 @@ FETCHING_LEVEL_ONE(Double, jdouble)
 /* For dates we have to create Java objects :( */
 
 /* Convert monetdb dates to milliseconds since 1 jan 1970. We store year/month/day in the date representation */
-#define GET_NEXT_JDATE           value = (jlong) ((date_dayofyear(nvalue) - 1) * 86400000L + (date_year(nvalue) - 1970) * 31557600000L);
+#define GET_NEXT_JDATE           value = ((jlong) date_dayofyear(nvalue) - 1) * 86400000L + ((jlong) date_year(nvalue) - 1970) * 31557600000L;
 
 #define CREATE_JDATE             (*env)->NewObject(env, getDateClassID(), getDateConstructorID(), value)
 
