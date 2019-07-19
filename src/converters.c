@@ -15,18 +15,13 @@
 #include "blob.h"
 #include "mtime.h"
 #include "sql.h"
+#include "sql_decimal.h"
 
 #define DO_NOTHING                        ;
 #define BIG_INTEGERS_ARRAY_SIZE           64
 #define min(a, b)                         (((a) < (b)) ? (a) : (b))
 
-static inline blob*
-my_blob_null(void)
-{
-	static blob mynullval;
-	mynullval.nitems = ~(size_t) 0;
-	return (&mynullval);
-}
+extern const blob* BLOBnull(void);
 
 static inline void
 decimal_to_str_java(char* value, lng v, jint scale)
@@ -55,37 +50,6 @@ decimal_to_str_java(char* value, lng v, jint scale)
 		buf[cur--] = '-';
 	assert(cur >= -1);
 	strcpy(value, buf+cur+1);
-}
-
-static inline lng
-decimal_from_str_java(const char *dec)
-{
-	lng res = 0;
-	const lng max0 = GDK_lng_max / 10, max1 = GDK_lng_max % 10;
-	jint neg = 0;
-
-	while(isspace(*dec))
-		dec++;
-	if (*dec == '-') {
-		neg = 1;
-		dec++;
-	} else if (*dec == '+') {
-		dec++;
-	}
-	for (; *dec && ((*dec >= '0' && *dec <= '9') || *dec == '.'); dec++) {
-		if (*dec != '.') {
-			if (res > max0 || (res == max0 && *dec - '0' > max1))
-				break;
-			res *= 10;
-			res += *dec - '0';
-		}
-	}
-	while(isspace(*dec))
-		dec++;
-	if (neg)
-		return -res;
-	else
-		return res;
 }
 
 /* -- Get just a single value -- */
@@ -420,7 +384,7 @@ BATCH_LEVEL_THREE(lng, lng)
 				} else { \
 					(*env)->SetObjectArrayElement(env, input, i, NULL); \
 				} \
-			   i++; \
+				i++; \
 			} \
 		} \
 	}
@@ -643,7 +607,7 @@ void storeOidColumn(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint lo
 					(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
 					*p = BAT_CAST##_nil; \
 				} else { \
-					*p = (BAT_CAST) decimal_from_str_java(representation); \
+					*p = (BAT_CAST) decimal_from_str((char*) representation, NULL); \
 					(*env)->ReleaseStringUTFChars(env, nvalue, representation); \
 					(*env)->DeleteLocalRef(env, nvalue); \
 					(*env)->DeleteLocalRef(env, bigDecimal); \
@@ -711,7 +675,7 @@ extern var_t BLOBput(Heap *h, var_t *bun, const blob *val);
 #define PUT_BLOB_IN_HEAP    BLOBput(aux->tvheap, &bun_offset, p);          \
 							if (BUNappend(aux, p, FALSE) != GDK_SUCCEED) { \
 								BBPreclaim(aux);                           \
-								p = my_blob_null();                        \
+								p = (blob*) BLOBnull(); \
 							}
 
 #define BLOB_CMP            memcmp(p->data, prev->data, min(p->nitems, prev->nitems))
@@ -769,4 +733,4 @@ extern var_t BLOBput(Heap *h, var_t *bun, const blob *val);
 	}
 
 CONVERSION_LEVEL_FOUR(String, str, (str) str_nil, STRING_START, JSTRING_TO_BAT, STR_CMP, PUT_STR_IN_HEAP)
-CONVERSION_LEVEL_FOUR(Blob, blob*, my_blob_null(), BLOB_START, JBLOB_TO_BAT, BLOB_CMP, PUT_BLOB_IN_HEAP)
+CONVERSION_LEVEL_FOUR(Blob, blob*, (blob*) BLOBnull(), BLOB_START, JBLOB_TO_BAT, BLOB_CMP, PUT_BLOB_IN_HEAP)
