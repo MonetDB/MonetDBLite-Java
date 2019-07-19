@@ -901,10 +901,12 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 		//For the import we are are going to create a temporary file
 		final File csvImportFile = Files.createTempFile("testingmonetdbjavaliteimport",".csv").toFile();
 		final String csvImportFilePath = csvImportFile.getAbsolutePath();
+		final String csvImportFilePathTrimmed = csvImportFilePath.replace('\\', '/');
 		//For the export the file must be inexistent, so we have to delete it first
 		final String csvExportFilePath =
 				Paths.get(System.getProperty("java.io.tmpdir"), "testingmonetdbjavaliteexport.csv")
 						.toAbsolutePath().toString();
+		final String csvExportFilePathTrimmed = csvExportFilePath.replace('\\', '/');
 		Files.deleteIfExists(Paths.get(csvExportFilePath));
 
 		String[] column1 = new String[]{"testingCSVParser", null, "Great test", "Have a nice day! :)"};
@@ -925,7 +927,7 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 
 		int rows1 = connection.executeUpdate("CREATE TABLE testCSV (a TEXT, b INT, c real);");
 		Assertions.assertEquals(-2, rows1, "The creation should have affected no rows");
-		connection.executeUpdate("COPY INTO testCSV FROM '" + csvImportFilePath + "' USING DELIMITERS ',','\n','\"';");
+		connection.executeUpdate("COPY INTO testCSV FROM '" + csvImportFilePathTrimmed + "' USING DELIMITERS ',','\n','\"';");
 
 		QueryResultSet qrs = connection.executeQuery("SELECT a, b, c FROM testCSV;");
 		int numberOfRows = qrs.getNumberOfRows(), numberOfColumns = qrs.getNumberOfColumns();
@@ -945,7 +947,7 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 		Assertions.assertArrayEquals(column3, array3, 0.01f, "CSV not working with Floats");
 		qrs.close();
 
-		connection.executeUpdate("COPY SELECT * FROM testCSV INTO '" + csvExportFilePath + "' USING DELIMITERS ',','\n';");
+		connection.executeUpdate("COPY SELECT * FROM testCSV INTO '" + csvExportFilePathTrimmed + "' USING DELIMITERS ',','\n';");
 
 		//Compare the two files!
 		String csvExported = new String(Files.readAllBytes(Paths.get(csvExportFilePath)), StandardCharsets.UTF_8);
@@ -960,16 +962,22 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 	void testBinaryImport() throws IOException, MonetDBEmbeddedException {
 		final File binImport1 = Files.createTempFile("binimportint",".bin").toFile();
 		final String binImport1FilePath = binImport1.getAbsolutePath();
+		final String binImport1FilePathTrimmed = binImport1FilePath.replace('\\', '/');
 		final File binImport2 = Files.createTempFile("binimporstring",".bin").toFile();
 		final String binImport2FilePath = binImport2.getAbsolutePath();
+		final String binImport2FilePathTrimmed = binImport2FilePath.replace('\\', '/');
 		final File binImport3 = Files.createTempFile("binimportfloat",".bin").toFile();
 		final String binImport3FilePath = binImport3.getAbsolutePath();
+		final String binImport3FilePathTrimmed = binImport3FilePath.replace('\\', '/');
 		final File binImport4 = Files.createTempFile("binimportlong",".bin").toFile();
 		final String binImport4FilePath = binImport4.getAbsolutePath();
+		final String binImport4FilePathTrimmed = binImport4FilePath.replace('\\', '/');
 		final File binImport5 = Files.createTempFile("binimportdouble",".bin").toFile();
 		final String binImport5FilePath = binImport5.getAbsolutePath();
+		final String binImport5FilePathTrimmed = binImport5FilePath.replace('\\', '/');
 		final File binImport6 = Files.createTempFile("binimportbyte",".bin").toFile();
 		final String binImport6FilePath = binImport6.getAbsolutePath();
+		final String binImport6FilePathTrimmed = binImport6FilePath.replace('\\', '/');
 
 		int[] data1 = {137, -89, 82, 0, -54};
 		DataOutputStream file1 = new DataOutputStream(new FileOutputStream(binImport1FilePath));
@@ -1009,9 +1017,9 @@ public class RegularAPITests extends MonetDBJavaLiteTesting {
 
 		int rows1 = connection.executeUpdate("CREATE TABLE testBinImp (aa int, bb clob, cc real, dd bigint, ee double, ff tinyint);");
 		Assertions.assertEquals(-2, rows1, "The creation should have affected no rows");
-		int rows2 = connection.executeUpdate("COPY BINARY INTO testBinImp FROM ('" + binImport1FilePath + "', '" +
-				binImport2FilePath + "', '" + binImport3FilePath + "', '" + binImport4FilePath + "', '" +
-				binImport5FilePath + "', '" + binImport6FilePath + "');");
+		int rows2 = connection.executeUpdate("COPY BINARY INTO testBinImp FROM ('" + binImport1FilePathTrimmed + "', '" +
+				binImport2FilePathTrimmed + "', '" + binImport3FilePathTrimmed + "', '" + binImport4FilePathTrimmed + "', '" +
+				binImport5FilePathTrimmed + "', '" + binImport6FilePathTrimmed + "');");
 		Assertions.assertEquals(5, rows2, "The copy binary into should have affected 5 rows");
 
 		QueryResultSet qrs = connection.executeQuery("SELECT aa, bb, cc, dd, ee, ff FROM testBinImp;");
