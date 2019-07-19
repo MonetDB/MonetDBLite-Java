@@ -21,37 +21,6 @@
 #define BIG_INTEGERS_ARRAY_SIZE           64
 #define min(a, b)                         (((a) < (b)) ? (a) : (b))
 
-extern const blob* BLOBnull(void);
-
-static inline void
-decimal_to_str_java(char* value, lng v, jint scale)
-{
-	char buf[BIG_INTEGERS_ARRAY_SIZE];
-	jint cur = 63, neg = (v<0), i, done = 0;
-
-	if (v<0) v = -v;
-
-	buf[cur--] = 0;
-	if (scale){
-		for (i=0; i<scale; i++) {
-			buf[cur--] = (char) (v%10 + '0');
-			v /= 10;
-		}
-		buf[cur--] = '.';
-	}
-	while (v) {
-		buf[cur--] = (char ) (v%10 + '0');
-		v /= 10;
-		done = 1;
-	}
-	if (!done)
-		buf[cur--] = '0';
-	if (neg)
-		buf[cur--] = '-';
-	assert(cur >= -1);
-	strcpy(value, buf+cur+1);
-}
-
 /* -- Get just a single value -- */
 
 /* For primitive types the mapping is direct <3 */
@@ -131,14 +100,23 @@ jobject getOidSingle(JNIEnv* env, jint position, BAT* b) {
 
 #define FETCHING_LEVEL_THREE(BAT_CAST, CONVERSION_CAST) \
 	jobject getDecimal##BAT_CAST##Single(JNIEnv* env, jint position, BAT* b, jint scale) { \
-		char value[BIG_INTEGERS_ARRAY_SIZE]; \
+		char *value; \
 		const BAT_CAST *array = (const BAT_CAST *) Tloc(b, 0); \
 		BAT_CAST nvalue = array[position]; \
 		jobject result; \
 		jstring aux; \
+		sql_subtype t; \
+		if (!sql_find_subtype(&t, "decimal", 0, scale)) {\
+			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "Unable to find decimal type"); \
+			return NULL; \
+		} \
 		if (nvalue != BAT_CAST##_nil) { \
-			decimal_to_str_java(value, nvalue, scale); \
+			if (!(value = decimal_to_str(nvalue, &t))) { \
+				(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
+				return NULL; \
+			} \
 			aux = (*env)->NewStringUTF(env, value); \
+			_DELETE(value); \
 			result = (*env)->NewObject(env, getBigDecimalClassID(), getBigDecimalConstructorID(), aux); \
 			(*env)->DeleteLocalRef(env, aux); \
 		} else { \
@@ -320,18 +298,27 @@ void getOidColumn(JNIEnv* env, jobjectArray input, jint first, jint size, BAT* b
 
 #define BATCH_LEVEL_THREE(BAT_CAST, CONVERSION_CAST) \
 	void getDecimal##BAT_CAST##Column(JNIEnv* env, jobjectArray input, jint first, jint size, BAT* b, jint scale) { \
-		char value[BIG_INTEGERS_ARRAY_SIZE]; \
+		char *value; \
 		const BAT_CAST *array = (const BAT_CAST *) Tloc(b, 0); \
 		jclass lbigDecimalClassID = getBigDecimalClassID(); \
 		jmethodID lbigDecimalConstructorID = getBigDecimalConstructorID(); \
 		jstring aux; \
 		jint i; \
 		jobject next; \
+		sql_subtype t; \
+		if (!sql_find_subtype(&t, "decimal", 0, scale)) {\
+			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "Unable to find decimal type"); \
+			return; \
+		} \
 		array += first; \
 		if (b->tnonil && !b->tnil) { \
 			for (i = 0; i < size; i++) { \
-				decimal_to_str_java(value, (CONVERSION_CAST) array[i], scale); \
+				if (!(value = decimal_to_str((CONVERSION_CAST) array[i], &t))) { \
+					(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
+					return; \
+				} \
 				aux = (*env)->NewStringUTF(env, value); \
+				_DELETE(value); \
 				next = (*env)->NewObject(env, lbigDecimalClassID, lbigDecimalConstructorID, aux); \
 				(*env)->SetObjectArrayElement(env, input, i, next); \
 				(*env)->DeleteLocalRef(env, aux); \
@@ -341,8 +328,12 @@ void getOidColumn(JNIEnv* env, jobjectArray input, jint first, jint size, BAT* b
 			for (i = 0; i < size; i++) { \
 				BAT_CAST nvalue = array[i]; \
 				if (nvalue != BAT_CAST##_nil) { \
-					decimal_to_str_java(value, (CONVERSION_CAST) nvalue, scale); \
+					if (!(value = decimal_to_str((CONVERSION_CAST) array[i], &t))) { \
+						(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
+						return; \
+					} \
 					aux = (*env)->NewStringUTF(env, value); \
+					_DELETE(value); \
 					next = (*env)->NewObject(env, lbigDecimalClassID, lbigDecimalConstructorID, aux); \
 					(*env)->SetObjectArrayElement(env, input, i, next); \
 					(*env)->DeleteLocalRef(env, aux); \
@@ -670,6 +661,7 @@ CONVERSION_LEVEL_THREE(lng)
 							jsize len;            \
 							jbyteArray nvalue;
 
+extern const blob* BLOBnull(void);
 extern var_t BLOBput(Heap *h, var_t *bun, const blob *val);
 
 #define PUT_BLOB_IN_HEAP    BLOBput(aux->tvheap, &bun_offset, p);          \
