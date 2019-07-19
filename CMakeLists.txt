@@ -35,7 +35,9 @@ else()
 endif()
 
 set_system_libraries()
-FILE(GLOB_RECURSE MONETDBLITE_OBJECTS "${MONETDBLITE_OUTPUT_DIR}/var/monetdblite/*.${OBJECT_EXTENSION}")
+# Replace backslashes on Windows
+string(REPLACE "\\" "/" MONETDBLITE_OUTPUT_DIR_TRIMMED "${MONETDBLITE_OUTPUT_DIR}")
+FILE(GLOB_RECURSE MONETDBLITE_OBJECTS "${MONETDBLITE_OUTPUT_DIR_TRIMMED}/*.${OBJECT_EXTENSION}")
 
 include_directories("${CMAKE_SOURCE_DIR}/src" "${MONETDBLITE_OUTPUT_DIR}/include/monetdb")
 
