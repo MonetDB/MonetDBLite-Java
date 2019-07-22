@@ -56,4 +56,4 @@ add_library(monetdblitejava MODULE
 			"${CMAKE_SOURCE_DIR}/src/nl_cwi_monetdb_embedded_resultset_QueryResultSet.c"
 			"${CMAKE_SOURCE_DIR}/src/nl_cwi_monetdb_embedded_tables_MonetDBTable.c")
 
-target_link_libraries(monetdblitejava PRIVATE ${MATH_LIBRARIES} ${THREAD_LIBRARIES} ${DL_LIBRARIES})
+target_link_libraries(monetdblitejava PRIVATE ${MATH_LIBRARIES} ${THREAD_LIBRARIES} ${DL_LIBRARIES} ${SOCKET_LIBRARIES})
