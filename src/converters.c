@@ -197,9 +197,8 @@ BATCH_LEVEL_ONE(Double, jdouble, Double, sizeof(dbl))
 
 #define BATCH_LEVEL_ONE_OBJECT(NAME, BAT_CAST, NULL_ATOM, CONVERT_ATOM) \
 	void get##NAME##ColumnAsObject(JNIEnv* env, jobjectArray input, jint first, jint size, BAT* b) { \
-		BAT_CAST *array = (BAT_CAST *) Tloc(b, 0); \
+		BAT_CAST *array = (BAT_CAST *) Tloc(b, 0), nvalue; \
 		jobject next; \
-		BAT_CAST nvalue; \
 		array += first; \
 		if (b->tnonil && !b->tnil) { \
 			for (jint i = 0; i < size; i++) { \
@@ -232,8 +231,7 @@ BATCH_LEVEL_ONE_OBJECT(Double, jdouble, dbl, CREATE_NEW_DOUBLE)
 
 #define BATCH_LEVEL_TWO(NAME, BAT_CAST, GET_ATOM, CONVERT_ATOM) \
 	void get##NAME##Column(JNIEnv* env, jobjectArray input, jint first, jint size, BAT* b) { \
-		BAT_CAST *array = (BAT_CAST *) Tloc(b, 0); \
-		BAT_CAST nvalue; \
+		BAT_CAST *array = (BAT_CAST *) Tloc(b, 0), nvalue; \
 		jobject next; \
 		jlong value; \
 		array += first; \
@@ -386,8 +384,7 @@ BATCH_LEVEL_FOUR(Blob, GET_BAT_BLOB, CHECK_NULL_BLOB, BAT_TO_JBLOB, blob*, jbyte
 #define CONVERSION_LEVEL_ONE(NAME, BAT_CAST, JAVA_CAST, COPY_METHOD) \
 	void store##NAME##Column(JNIEnv *env, BAT** b, JAVA_CAST##Array data, size_t cnt, jint localtype) { \
 		BAT *aux = COLnew(0, localtype, cnt, TRANSIENT); \
-		BAT_CAST *p; \
-		BAT_CAST value, prev = BAT_CAST##_nil; \
+		BAT_CAST *p, value, prev = BAT_CAST##_nil; \
 		if (!aux) { \
 			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
 			*b = NULL; \
@@ -454,8 +451,7 @@ CONVERSION_LEVEL_ONE(Double, dbl, jdouble, Double)
 	void store##NAME##Column(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint localtype) { \
 		BAT *aux = COLnew(0, localtype, cnt, TRANSIENT); \
 		jlong nvalue; \
-		BAT_CAST *p; \
-		BAT_CAST prev = BAT_CAST##_nil; \
+		BAT_CAST *p, prev = BAT_CAST##_nil; \
 		jobject value; \
 		DIVMOD_HELPER_FIR \
 		if (!aux) { \
@@ -559,10 +555,8 @@ void storeOidColumn(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint lo
 #define CONVERSION_LEVEL_THREE(BAT_CAST) \
 	void storeDecimal##BAT_CAST##Column(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint localtype, jint scale, jint roundingMode) { \
 		BAT *aux = COLnew(0, localtype, cnt, TRANSIENT); \
-		BAT_CAST *p; \
-		BAT_CAST prev = BAT_CAST##_nil; \
-		jmethodID lbigDecimalToStringID = getBigDecimalToStringID(); \
-		jmethodID lsetBigDecimalScaleID = getSetBigDecimalScaleID(); \
+		BAT_CAST *p, prev = BAT_CAST##_nil; \
+		jmethodID lbigDecimalToStringID = getBigDecimalToStringID(), lsetBigDecimalScaleID = getSetBigDecimalScaleID(); \
 		jobject value, bigDecimal; \
 		jstring nvalue; \
 		const char *representation; \
