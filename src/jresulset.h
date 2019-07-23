@@ -24,8 +24,7 @@ typedef struct {
 	monetdb_connection conn;
 	monetdb_result *output;
 	BAT** bats;
-	int* digits;
-	int* scales;
+	res_col** cols;
 } JResultSet;
 
 java_export char* createResultSet(monetdb_connection conn, JResultSet** res, monetdb_result* output);

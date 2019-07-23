@@ -224,8 +224,8 @@ JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_
 	(JNIEnv *env, jobject queryResultSet, jlong structPointer, jint column, jint row) {
 	JResultSet* thisResultSet = (JResultSet*) structPointer;
 	BAT* dearBat = thisResultSet->bats[column];
-	int digits = thisResultSet->digits[column];
-	int scale = thisResultSet->scales[column];
+	int digits = (int) thisResultSet->cols[column]->type.digits;
+	int scale = (int) thisResultSet->cols[column]->type.scale;
 	(void) queryResultSet; //Decimals!
 
 	if(digits <= 2) {
@@ -312,8 +312,8 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_get
 }
 
 static void getDecimalColumn(JNIEnv *env, JResultSet* thisResultSet, jint column, jobjectArray result, jint offset, jint length, BAT* dearBat) {
-	int digits = thisResultSet->digits[column];
-	int scale = thisResultSet->scales[column];
+	int digits = (int) thisResultSet->cols[column]->type.digits;
+	int scale = (int) thisResultSet->cols[column]->type.scale;
 	if(digits <= 2) {
 		getDecimalbteColumn(env, result, offset, length, dearBat, scale);
 	} else if(digits > 2 && digits <= 4) {
@@ -342,7 +342,7 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_resultset_QueryResultSet_get
 	(JNIEnv *env, jobject queryResultSet, jlong structPointer, jint column, jint typeID, jbooleanArray result) {
 	JResultSet* thisResultSet = (JResultSet*) structPointer;
 	BAT* dearBat = thisResultSet->bats[column];
-	jint numberOfRows = (jint) BATcount(dearBat), digits = thisResultSet->digits[column];
+	jint numberOfRows = (jint) BATcount(dearBat), digits = (jint) thisResultSet->cols[column]->type.digits;
 	(void) queryResultSet;
 
 	//I could use function pointers, but there is too much variety

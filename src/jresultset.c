@@ -18,13 +18,12 @@
 char*
 createResultSet(monetdb_connection conn, JResultSet** res, monetdb_result* output)
 {
-	int *quickerDigits, *quickerScales;
 	size_t numberOfColumns, i, j;
 	BAT** dearBats = NULL;
-	char *msg = NULL;
+	char *msg = MAL_SUCCEED;
 	JResultSet *thisResultSet;
 
-	*res = (JResultSet*) GDKmalloc(sizeof(JResultSet));
+	*res = (JResultSet*) GDKzalloc(sizeof(JResultSet));
 	thisResultSet = *res;
 	if(!thisResultSet) {
 		msg = createException(MAL, "embedded", MAL_MALLOC_FAIL);
@@ -33,34 +32,26 @@ createResultSet(monetdb_connection conn, JResultSet** res, monetdb_result* outpu
 
 	thisResultSet->conn = conn;
 	thisResultSet->output = output;
-	if(output && output->ncols > 0) {
+	if (output && output->ncols > 0) {
 		numberOfColumns = output->ncols;
 		thisResultSet->bats = (BAT**) GDKmalloc(sizeof(BAT*) * numberOfColumns);
-		thisResultSet->digits = (int*) GDKmalloc(sizeof(int) * numberOfColumns);
-		thisResultSet->scales = (int*) GDKmalloc(sizeof(int) * numberOfColumns);
-		if(thisResultSet->bats == NULL || thisResultSet->digits == NULL || thisResultSet->scales == NULL) {
+		thisResultSet->cols = (res_col**) GDKmalloc(sizeof(res_col*) * numberOfColumns);
+		if (!thisResultSet->bats || !thisResultSet->cols) {
 			msg = createException(MAL, "embedded", MAL_MALLOC_FAIL);
 			goto cleanup;
 		}
 
 		dearBats = thisResultSet->bats;
-		quickerDigits = thisResultSet->digits;
-		quickerScales = thisResultSet->scales;
 		for (i = 0; i < numberOfColumns; i++) {
 			res_col* col = NULL;
 			if((msg = monetdb_result_fetch_rawcol(conn, &col, output, i)) != MAL_SUCCEED)
 				goto cleanup;
+			thisResultSet->cols[i] = col;
 			if(!(dearBats[i] = BATdescriptor(col->b))) {
 				msg = createException(MAL, "embedded", RUNTIME_OBJECT_MISSING);
 				goto cleanup;
 			}
-			quickerDigits[i] = (int) col->type.digits;
-			quickerScales[i] = (int) col->type.scale;
 		}
-	} else {
-		thisResultSet->bats = NULL;
-		thisResultSet->digits = NULL;
-		thisResultSet->scales = NULL;
 	}
 
 	return MAL_SUCCEED;
@@ -74,16 +65,15 @@ cleanup:
 			freeException(other);
 		if(thisResultSet->bats)
 			GDKfree(thisResultSet->bats);
-		if(thisResultSet->digits)
-			GDKfree(thisResultSet->digits);
-		if(thisResultSet->scales)
-			GDKfree(thisResultSet->scales);
+		if(thisResultSet->cols)
+			GDKfree(thisResultSet->cols);
 		GDKfree(thisResultSet);
 	}
 	return msg;
 }
 
-void freeResultSet(JResultSet* thisResultSet)
+void
+freeResultSet(JResultSet* thisResultSet)
 {
 	size_t numberOfColumns, i;
 	BAT **dearBats;
@@ -99,13 +89,9 @@ void freeResultSet(JResultSet* thisResultSet)
 			GDKfree(dearBats);
 			thisResultSet->bats = NULL;
 		}
-		if(thisResultSet->digits) {
-			GDKfree(thisResultSet->digits);
-			thisResultSet->digits = NULL;
-		}
-		if(thisResultSet->scales) {
-			GDKfree(thisResultSet->scales);
-			thisResultSet->scales = NULL;
+		if(thisResultSet->cols) {
+			GDKfree(thisResultSet->cols);
+			thisResultSet->cols = NULL;
 		}
 		if(thisResultSet->output) {
 			char* other;

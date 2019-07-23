@@ -112,8 +112,8 @@ JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_jdbc_EmbeddedDataBlockRes
 	(JNIEnv* env, jobject datablock, jlong structPointer, jint column, jint row) {
 	JResultSet* thisResultSet = (JResultSet*) structPointer;
 	BAT* dearBat = thisResultSet->bats[column];
-	int digits = thisResultSet->digits[column];
-	int scale = thisResultSet->scales[column];
+	int digits = (int) thisResultSet->cols[column]->type.digits;
+	int scale = (int) thisResultSet->cols[column]->type.scale;
 	(void) datablock; //Decimals!
 
 	if(digits <= 2) {
