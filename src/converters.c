@@ -200,17 +200,16 @@ BATCH_LEVEL_ONE(Double, jdouble, Double, sizeof(dbl))
 		BAT_CAST *array = (BAT_CAST *) Tloc(b, 0); \
 		jobject next; \
 		BAT_CAST nvalue; \
-		jint i; \
 		array += first; \
 		if (b->tnonil && !b->tnil) { \
-			for (i = 0; i < size; i++) { \
+			for (jint i = 0; i < size; i++) { \
 				nvalue = array[i]; \
 				next = CONVERT_ATOM; \
 				(*env)->SetObjectArrayElement(env, input, i, next); \
 				(*env)->DeleteLocalRef(env, next); \
 			} \
 		} else { \
-			for (i = 0; i < size; i++) { \
+			for (jint i = 0; i < size; i++) { \
 				nvalue = array[i]; \
 				if (nvalue != NULL_ATOM##_nil) { \
 					next = CONVERT_ATOM; \
@@ -237,10 +236,9 @@ BATCH_LEVEL_ONE_OBJECT(Double, jdouble, dbl, CREATE_NEW_DOUBLE)
 		BAT_CAST nvalue; \
 		jobject next; \
 		jlong value; \
-		jint i; \
 		array += first; \
 		if (b->tnonil && !b->tnil) { \
-			for (i = 0; i < size; i++) { \
+			for (jint i = 0; i < size; i++) { \
 				nvalue = array[i]; \
 				GET_ATOM \
 				next = CONVERT_ATOM; \
@@ -248,7 +246,7 @@ BATCH_LEVEL_ONE_OBJECT(Double, jdouble, dbl, CREATE_NEW_DOUBLE)
 				(*env)->DeleteLocalRef(env, next); \
 			} \
 		} else { \
-			for (i = 0; i < size; i++) { \
+			for (jint i = 0; i < size; i++) { \
 				nvalue = array[i]; \
 				if(nvalue != BAT_CAST##_nil) { \
 					GET_ATOM \
@@ -270,10 +268,9 @@ void getOidColumn(JNIEnv* env, jobjectArray input, jint first, jint size, BAT* b
 	oid *array = (oid *) Tloc(b, 0);
 	oid nvalue;
 	jobject next;
-	jint i;
 	array += first;
 	if (b->tnonil && !b->tnil) {
-		for (i = 0; i < size; i++) {
+		for (jint i = 0; i < size; i++) {
 			char store[OID_STRING_BUFFER_SIZE];
 			snprintf(store, OID_STRING_BUFFER_SIZE, OIDFMT "@0", array[i]);
 			next = (*env)->NewStringUTF(env, store);
@@ -281,7 +278,7 @@ void getOidColumn(JNIEnv* env, jobjectArray input, jint first, jint size, BAT* b
 			(*env)->DeleteLocalRef(env, next);
 		}
 	} else {
-		for (i = 0; i < size; i++) {
+		for (jint i = 0; i < size; i++) {
 			nvalue = array[i];
 			if (!is_oid_nil(nvalue)) {
 				char store[OID_STRING_BUFFER_SIZE];
@@ -303,7 +300,6 @@ void getOidColumn(JNIEnv* env, jobjectArray input, jint first, jint size, BAT* b
 		jclass lbigDecimalClassID = getBigDecimalClassID(); \
 		jmethodID lbigDecimalConstructorID = getBigDecimalConstructorID(); \
 		jstring aux; \
-		jint i; \
 		jobject next; \
 		sql_subtype t; \
 		if (!sql_find_subtype(&t, "decimal", 0, scale)) {\
@@ -312,7 +308,7 @@ void getOidColumn(JNIEnv* env, jobjectArray input, jint first, jint size, BAT* b
 		} \
 		array += first; \
 		if (b->tnonil && !b->tnil) { \
-			for (i = 0; i < size; i++) { \
+			for (jint i = 0; i < size; i++) { \
 				if (!(value = decimal_to_str((CONVERSION_CAST) array[i], &t))) { \
 					(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
 					return; \
@@ -325,7 +321,7 @@ void getOidColumn(JNIEnv* env, jobjectArray input, jint first, jint size, BAT* b
 				(*env)->DeleteLocalRef(env, next); \
 			} \
 		} else { \
-			for (i = 0; i < size; i++) { \
+			for (jint i = 0; i < size; i++) { \
 				BAT_CAST nvalue = array[i]; \
 				if (nvalue != BAT_CAST##_nil) { \
 					if (!(value = decimal_to_str((CONVERSION_CAST) array[i], &t))) { \
@@ -390,7 +386,6 @@ BATCH_LEVEL_FOUR(Blob, GET_BAT_BLOB, CHECK_NULL_BLOB, BAT_TO_JBLOB, blob*, jbyte
 #define CONVERSION_LEVEL_ONE(NAME, BAT_CAST, JAVA_CAST, COPY_METHOD) \
 	void store##NAME##Column(JNIEnv *env, BAT** b, JAVA_CAST##Array data, size_t cnt, jint localtype) { \
 		BAT *aux = COLnew(0, localtype, cnt, TRANSIENT); \
-		size_t i; \
 		BAT_CAST *p; \
 		BAT_CAST value, prev = BAT_CAST##_nil; \
 		if (!aux) { \
@@ -405,9 +400,8 @@ BATCH_LEVEL_FOUR(Blob, GET_BAT_BLOB, CHECK_NULL_BLOB, BAT_TO_JBLOB, blob*, jbyte
 		aux->trevsorted = 1; \
 		p = (BAT_CAST *) Tloc(aux, 0); \
 		(*env)->Get##COPY_METHOD##ArrayRegion(env, data, 0, (jsize) cnt, (JAVA_CAST *) p); \
-		for(i = 0; i < cnt; i++, p++) { \
-			value = p[i]; \
-			if (value == BAT_CAST##_nil) { \
+		for(size_t i = 0; i < cnt; i++, p++) { \
+			if ((value = p[i]) == BAT_CAST##_nil) { \
 				aux->tnil = 1; \
 				aux->tnonil = 0; \
 			} \
@@ -459,7 +453,6 @@ CONVERSION_LEVEL_ONE(Double, dbl, jdouble, Double)
 #define CONVERSION_LEVEL_TWO(NAME, BAT_CAST, CONVERT_TO_BAT) \
 	void store##NAME##Column(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint localtype) { \
 		BAT *aux = COLnew(0, localtype, cnt, TRANSIENT); \
-		size_t i; \
 		jlong nvalue; \
 		BAT_CAST *p; \
 		BAT_CAST prev = BAT_CAST##_nil; \
@@ -476,9 +469,8 @@ CONVERSION_LEVEL_ONE(Double, dbl, jdouble, Double)
 		aux->tsorted = 1; \
 		aux->trevsorted = 1; \
 		p = (BAT_CAST *) Tloc(aux, 0); \
-		for(i = 0; i < cnt; i++, p++) { \
-			value = (*env)->GetObjectArrayElement(env, data, (jsize) i); \
-			if (value == NULL) { \
+		for(size_t i = 0; i < cnt; i++, p++) { \
+			if ((value = (*env)->GetObjectArrayElement(env, data, (jsize) i)) == NULL) { \
 				aux->tnil = 1; \
 				aux->tnonil = 0; \
 				*p = BAT_CAST##_nil; \
@@ -507,7 +499,7 @@ CONVERSION_LEVEL_TWO(Timestamp, timestamp, JTIMESTAMP_TO_BAT)
 
 void storeOidColumn(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint localtype) {
 	BAT *aux = COLnew(0, localtype, cnt, TRANSIENT);
-	size_t i, slen = sizeof(oid);
+	size_t slen = sizeof(oid);
 	oid *p;
 	if (!aux) {
 		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory");
@@ -520,7 +512,7 @@ void storeOidColumn(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint lo
 	aux->tsorted = 1;
 	aux->trevsorted = 1;
 	p = (oid *) Tloc(aux, 0);
-	for(i = 0; i < cnt; i++) {
+	for(size_t i = 0; i < cnt; i++) {
 		oid prev = oid_nil;
 		jstring jvalue = (*env)->GetObjectArrayElement(env, data, (jsize) i);
 		if (jvalue == NULL) {
@@ -567,7 +559,6 @@ void storeOidColumn(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint lo
 #define CONVERSION_LEVEL_THREE(BAT_CAST) \
 	void storeDecimal##BAT_CAST##Column(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint localtype, jint scale, jint roundingMode) { \
 		BAT *aux = COLnew(0, localtype, cnt, TRANSIENT); \
-		size_t i; \
 		BAT_CAST *p; \
 		BAT_CAST prev = BAT_CAST##_nil; \
 		jmethodID lbigDecimalToStringID = getBigDecimalToStringID(); \
@@ -586,9 +577,8 @@ void storeOidColumn(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint lo
 		aux->tsorted = 1; \
 		aux->trevsorted = 1; \
 		p = (BAT_CAST *) Tloc(aux, 0); \
-		for(i = 0; i < cnt; i++, p++) { \
-			value = (*env)->GetObjectArrayElement(env, data, (jsize) i); \
-			if (value == NULL) { \
+		for(size_t i = 0; i < cnt; i++, p++) { \
+			if ((value = (*env)->GetObjectArrayElement(env, data, (jsize) i)) == NULL) { \
 				aux->tnil = 1; \
 				aux->tnonil = 0; \
 				*p = BAT_CAST##_nil; \
@@ -699,8 +689,7 @@ extern var_t BLOBput(Heap *h, var_t *bun, const blob *val);
 #define CONVERSION_LEVEL_FOUR(NAME, BAT_CAST, NULL_CONST, START_STEP, CONVERT_TO_BAT, ORDER_CMP, PUT_IN_HEAP) \
 	void store##NAME##Column(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint localtype) { \
 		BAT *aux = COLnew(0, localtype, cnt, TRANSIENT); \
-		size_t i; \
-		jint previousToFree = 0; \
+		bool previousToFree = false; \
 		BAT_CAST p; \
 		BAT_CAST prev = NULL_CONST; \
 		jobject value; \
@@ -715,9 +704,8 @@ extern var_t BLOBput(Heap *h, var_t *bun, const blob *val);
 		aux->tkey = 0; \
 		aux->tsorted = 1; \
 		aux->trevsorted = 1; \
-		for(i = 0; i < cnt; i++) { \
-			value = (*env)->GetObjectArrayElement(env, data, (jsize) i); \
-			if (value == NULL) { \
+		for(size_t i = 0; i < cnt; i++) { \
+			if ((value = (*env)->GetObjectArrayElement(env, data, (jsize) i)) == NULL) { \
 				aux->tnil = 1; \
 				aux->tnonil = 0; \
 				p = NULL_CONST; \
@@ -736,7 +724,7 @@ extern var_t BLOBput(Heap *h, var_t *bun, const blob *val);
 					GDKfree(prev); \
 			} \
 			prev = p; \
-			previousToFree = (value == NULL) ? 0 : 1; \
+			previousToFree = (value != NULL); \
 		} \
 		if (previousToFree) \
 			GDKfree(p); \
