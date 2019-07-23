@@ -18,7 +18,7 @@
 #include "sql_decimal.h"
 
 #define DO_NOTHING                        ;
-#define BIG_INTEGERS_ARRAY_SIZE           64
+#define OID_STRING_BUFFER_SIZE            32
 #define min(a, b)                         (((a) < (b)) ? (a) : (b))
 
 /* -- Get just a single value -- */
@@ -87,8 +87,8 @@ jobject getOidSingle(JNIEnv* env, jint position, BAT* b) {
 	oid nvalue = array[position];
 	jobject result;
 	if (!is_oid_nil(nvalue)) {
-		char store[BIG_INTEGERS_ARRAY_SIZE];
-		snprintf(store, BIG_INTEGERS_ARRAY_SIZE, OIDFMT "@0", nvalue);
+		char store[OID_STRING_BUFFER_SIZE];
+		snprintf(store, OID_STRING_BUFFER_SIZE, OIDFMT "@0", nvalue);
 		result = (*env)->NewStringUTF(env, store);
 	} else {
 		result = NULL;
@@ -274,8 +274,8 @@ void getOidColumn(JNIEnv* env, jobjectArray input, jint first, jint size, BAT* b
 	array += first;
 	if (b->tnonil && !b->tnil) {
 		for (i = 0; i < size; i++) {
-			char store[BIG_INTEGERS_ARRAY_SIZE];
-			snprintf(store, BIG_INTEGERS_ARRAY_SIZE, OIDFMT "@0", array[i]);
+			char store[OID_STRING_BUFFER_SIZE];
+			snprintf(store, OID_STRING_BUFFER_SIZE, OIDFMT "@0", array[i]);
 			next = (*env)->NewStringUTF(env, store);
 			(*env)->SetObjectArrayElement(env, input, i, next);
 			(*env)->DeleteLocalRef(env, next);
@@ -284,8 +284,8 @@ void getOidColumn(JNIEnv* env, jobjectArray input, jint first, jint size, BAT* b
 		for (i = 0; i < size; i++) {
 			nvalue = array[i];
 			if (!is_oid_nil(nvalue)) {
-				char store[BIG_INTEGERS_ARRAY_SIZE];
-				snprintf(store, BIG_INTEGERS_ARRAY_SIZE, OIDFMT "@0", array[i]);
+				char store[OID_STRING_BUFFER_SIZE];
+				snprintf(store, OID_STRING_BUFFER_SIZE, OIDFMT "@0", array[i]);
 				next = (*env)->NewStringUTF(env, store);
 				(*env)->SetObjectArrayElement(env, input, i, next);
 				(*env)->DeleteLocalRef(env, next);
@@ -530,16 +530,18 @@ void storeOidColumn(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint lo
 		} else {
 			ssize_t parsed;
 			const char *nvalue = (*env)->GetStringUTFChars(env, jvalue, 0);
-			if(nvalue == NULL) {
+			if (nvalue == NULL) {
 				(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory");
+				BBPreclaim(aux);
 				*b = NULL;
 				return;
 			}
 			parsed = OIDfromStr(nvalue, &slen, &p, true);
 			(*env)->ReleaseStringUTFChars(env, jvalue, nvalue);
 			(*env)->DeleteLocalRef(env, jvalue);
-			if(parsed < 1) {
+			if (parsed < 1) {
 				(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "Wrong OID format");
+				BBPreclaim(aux);
 				*b = NULL;
 				return;
 			}
@@ -560,7 +562,7 @@ void storeOidColumn(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint lo
 	*b = aux;
 }
 
-/* Decimals are harder :P */
+/* Decimals are harder */
 
 #define CONVERSION_LEVEL_THREE(BAT_CAST) \
 	void storeDecimal##BAT_CAST##Column(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint localtype, jint scale, jint roundingMode) { \
@@ -593,10 +595,11 @@ void storeOidColumn(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint lo
 			} else { \
 				bigDecimal = (*env)->CallObjectMethod(env, value, lsetBigDecimalScaleID, scale, roundingMode); \
 				nvalue = (*env)->CallObjectMethod(env, bigDecimal, lbigDecimalToStringID); \
-				representation = (*env)->GetStringUTFChars(env, nvalue, NULL); \
-				if(representation == NULL) { \
+				if ((representation = (*env)->GetStringUTFChars(env, nvalue, NULL)) == NULL) { \
 					(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
-					*p = BAT_CAST##_nil; \
+					BBPreclaim(aux); \
+					*b = NULL; \
+					return; \
 				} else { \
 					*p = (BAT_CAST) decimal_from_str((char*) representation, NULL); \
 					(*env)->ReleaseStringUTFChars(env, nvalue, representation); \
@@ -625,49 +628,70 @@ CONVERSION_LEVEL_THREE(sht)
 CONVERSION_LEVEL_THREE(int)
 CONVERSION_LEVEL_THREE(lng)
 
-/* Put in the BAT's heap :S */
+/* Put in the BAT's heap */
 
-#define JSTRING_TO_BAT      nvalue = (*env)->GetStringUTFChars(env, value, 0);                                                     \
-							if(nvalue == NULL) {                                                                                   \
-								(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory");     \
-								p = NULL;                                                                                          \
-							} else {                                                                                               \
-								p = GDKstrdup(nvalue);                                                                             \
-								if (p == NULL)                                                                                     \
+#define JSTRING_TO_BAT      if ((nvalue = (*env)->GetStringUTFChars(env, value, 0)) == NULL) { \
+								(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
+								(*env)->DeleteLocalRef(env, value); \
+								BBPreclaim(aux); \
+								*b = NULL; \
+								return; \
+							} else { \
+								p = GDKstrdup(nvalue); \
+								(*env)->ReleaseStringUTFChars(env, value, nvalue); \
+								if (p == NULL) { \
 									(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
-								(*env)->ReleaseStringUTFChars(env, value, nvalue);                                                 \
+									(*env)->DeleteLocalRef(env, value); \
+									BBPreclaim(aux); \
+									*b = NULL; \
+									return; \
+								} \
 							}
 
 #define STRING_START        const char* nvalue;
 
 #define PUT_STR_IN_HEAP     if (BUNappend(aux, p, FALSE) != GDK_SUCCEED) { \
-								BBPreclaim(aux);                           \
-								p = (str) str_nil; \
+								(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
+								BBPreclaim(aux); \
+								GDKfree(p); \
+								*b = NULL; \
+								return; \
 							}
 
 #define STR_CMP             strcmp(p, prev)
 
-#define JBLOB_TO_BAT        nvalue = (jbyteArray) value;                                                                       \
-							len = (*env)->GetArrayLength(env, nvalue);                                                         \
-							p = GDKmalloc(blobsize(len));                                                                      \
-							if (p == NULL) {                                                                                   \
+#define JBLOB_TO_BAT        nvalue = (jbyteArray) value; \
+							len = (*env)->GetArrayLength(env, nvalue); \
+							if ((p = GDKmalloc(blobsize(len))) == NULL) { \
 								(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
-							} else {                                                                                           \
-								p->nitems = len;                                                                               \
-								(*env)->GetByteArrayRegion(env, nvalue, 0, len, (jbyte*) p->data);                             \
+								(*env)->DeleteLocalRef(env, value); \
+								BBPreclaim(aux); \
+								*b = NULL; \
+								return; \
+							} else { \
+								p->nitems = len; \
+								(*env)->GetByteArrayRegion(env, nvalue, 0, len, (jbyte*) p->data); \
 							}
 
 #define BLOB_START          var_t bun_offset = 0; \
-							jsize len;            \
+							jsize len; \
 							jbyteArray nvalue;
 
 extern const blob* BLOBnull(void);
 extern var_t BLOBput(Heap *h, var_t *bun, const blob *val);
 
-#define PUT_BLOB_IN_HEAP    BLOBput(aux->tvheap, &bun_offset, p);          \
-							if (BUNappend(aux, p, FALSE) != GDK_SUCCEED) { \
-								BBPreclaim(aux);                           \
-								p = (blob*) BLOBnull(); \
+#define PUT_BLOB_IN_HEAP    if (BLOBput(aux->tvheap, &bun_offset, p) == 0) { \
+								(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
+								GDKfree(p); \
+								BBPreclaim(aux); \
+								*b = NULL; \
+								return; \
+							} else if (BUNappend(aux, p, FALSE) != GDK_SUCCEED) { \
+								(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
+								GDKfree(p); \
+								BBPreclaim(aux); \
+								*b = NULL; \
+								return; \
 							}
 
 #define BLOB_CMP            memcmp(p->data, prev->data, min(p->nitems, prev->nitems))
@@ -699,8 +723,6 @@ extern var_t BLOBput(Heap *h, var_t *bun, const blob *val);
 				p = NULL_CONST; \
 			} else { \
 				CONVERT_TO_BAT \
-				if (p == NULL) \
-					p = NULL_CONST; \
 				(*env)->DeleteLocalRef(env, value); \
 			} \
 			PUT_IN_HEAP \
