@@ -22,20 +22,25 @@ static void setErrorResponse(JNIEnv *env, jobject jdbccon, char* errorMessage) {
 	jint response[2] = {1,4}; //ERROR AND PROMPT
 	int foundExc = 0, i = 0;
 
-	if(lineResponse == NULL) {
+	if (lineResponse == NULL) {
 		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 		freeException(errorMessage);
 		return;
 	}
 	(*env)->SetIntArrayRegion(env, lineResponse, 0, 2, response);
 
-	if(errorMessage) {
+	if (errorMessage) {
+		jstring error_trimmed;
 		while(errorMessage[i] && !foundExc) {
 			if(errorMessage[i] == '!')
 				foundExc = 1;
 			i++;
 		}
-		(*env)->SetObjectField(env, jdbccon, getLastErrorID(), (*env)->NewStringUTF(env, errorMessage + (foundExc ? i : 0)));
+		if (!(error_trimmed = (*env)->NewStringUTF(env, errorMessage + (foundExc ? i : 0)))) {
+			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
+		} else {
+			(*env)->SetObjectField(env, jdbccon, getLastErrorID(), error_trimmed);
+		}
 		freeException(errorMessage);
 	}
 }
@@ -52,8 +57,7 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection_
 	(void) jdbccon;
 
 	if(numberOfColumns > 0) {
-		columnLengthsFound = GDKmalloc(numberOfColumns * sizeof(jint));
-		if(columnLengthsFound == NULL) {
+		if(!(columnLengthsFound = GDKmalloc(numberOfColumns * sizeof(jint)))) {
 			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 			return;
 		}
@@ -69,6 +73,17 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_jdbc_JDBCEmbeddedConnection_
 			colname = (*env)->NewStringUTF(env, col->name);
 			sqlname = (*env)->NewStringUTF(env, col->type.type->sqlname);
 			tablename = (*env)->NewStringUTF(env, col->tn);
+			if (!colname || !sqlname || !tablename) {
+				if (colname)
+					(*env)->DeleteLocalRef(env, colname);
+				if (sqlname)
+					(*env)->DeleteLocalRef(env, sqlname);
+				if (tablename)
+					(*env)->DeleteLocalRef(env, tablename);
+				(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
+				GDKfree(columnLengthsFound);
+				return;
+			}
 			(*env)->SetObjectArrayElement(env, columnNames, (jsize) i, colname);
 			(*env)->SetObjectArrayElement(env, types, (jsize) i, sqlname);
 			(*env)->SetObjectArrayElement(env, tableNames, (jsize) i, tablename);

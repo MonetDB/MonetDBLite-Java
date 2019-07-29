@@ -10,6 +10,8 @@
 
 #include "monetdb_config.h"
 #include "jni.h"
+
+#include <limits.h>
 #include "javaids.h"
 #include "gdk.h"
 #include "blob.h"
@@ -66,7 +68,10 @@ FETCHING_LEVEL_ONE(Double, jdouble)
 		jlong value; \
 		if (nvalue != ATOM##_nil) { \
 			GET_ATOM \
-			result = CONVERT_ATOM; \
+			if (!(result = CONVERT_ATOM)) { \
+				(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL); \
+				return NULL; \
+			} \
 			EXTRA_STEP \
 		} else { \
 			result = NULL; \
@@ -89,7 +94,8 @@ jobject getOidSingle(JNIEnv* env, jint position, BAT* b) {
 	if (!is_oid_nil(nvalue)) {
 		char store[OID_STRING_BUFFER_SIZE];
 		snprintf(store, OID_STRING_BUFFER_SIZE, OIDFMT "@0", nvalue);
-		result = (*env)->NewStringUTF(env, store);
+		if (!(result = (*env)->NewStringUTF(env, store)))
+			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 	} else {
 		result = NULL;
 	}
@@ -112,13 +118,19 @@ jobject getOidSingle(JNIEnv* env, jint position, BAT* b) {
 		} \
 		if (nvalue != BAT_CAST##_nil) { \
 			if (!(value = decimal_to_str(nvalue, &t))) { \
-				(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
+				(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL); \
 				return NULL; \
 			} \
 			aux = (*env)->NewStringUTF(env, value); \
 			_DELETE(value); \
+			if (!aux) { \
+				(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL); \
+				return NULL; \
+			} \
 			result = (*env)->NewObject(env, getBigDecimalClassID(), getBigDecimalConstructorID(), aux); \
 			(*env)->DeleteLocalRef(env, aux); \
+			if (!result) \
+				(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL); \
 		} else { \
 			result = NULL; \
 		} \
@@ -134,11 +146,23 @@ FETCHING_LEVEL_THREE(lng, lng)
 
 #define GET_BAT_STRING      nvalue = BUNtail(li, p);
 #define CHECK_NULL_STRING   strcmp(str_nil, nvalue) != 0
-#define BAT_TO_STRING       value = (*env)->NewStringUTF(env, nvalue);
+#define BAT_TO_STRING       if (!(value = (*env)->NewStringUTF(env, nvalue))) { \
+								(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL); \
+								goto end; \
+							}
 
 #define GET_BAT_BLOB        nvalue = (blob*) BUNtail(li, p);
-#define BAT_TO_JBLOB        value = (*env)->NewByteArray(env, (jsize) nvalue->nitems); \
-							(*env)->SetByteArrayRegion(env, value, 0, (jsize) nvalue->nitems, (jbyte*) nvalue->data);
+#define BAT_TO_JBLOB        if (nvalue->nitems > INT_MAX) { \
+								(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "Internal BLOB is too large (larger than JVM max array size)"); \
+								goto end; \
+							} else { \
+								if (!(value = (*env)->NewByteArray(env, (jsize) nvalue->nitems))) { \
+									(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL); \
+									goto end; \
+								} else { \
+									(*env)->SetByteArrayRegion(env, value, 0, (jsize) nvalue->nitems, (jbyte*) nvalue->data); \
+								} \
+							}
 #define CHECK_NULL_BLOB     nvalue->nitems != ~(size_t) 0
 
 #define FETCHING_LEVEL_FOUR(NAME, RETURN_TYPE, GET_ATOM, CHECK_NOT_NULL, CONVERT_ATOM, ONE_CAST, TWO_CAST) \
@@ -150,9 +174,9 @@ FETCHING_LEVEL_THREE(lng, lng)
 		if (CHECK_NOT_NULL) { \
 			CONVERT_ATOM \
 			return value; \
-		} else { \
-			return NULL; \
 		} \
+end: \
+		return NULL; \
 	}
 
 FETCHING_LEVEL_FOUR(String, jstring, GET_BAT_STRING, CHECK_NULL_STRING, BAT_TO_STRING, str, jstring)
@@ -166,7 +190,7 @@ FETCHING_LEVEL_FOUR(Blob, jbyteArray, GET_BAT_BLOB, CHECK_NULL_BLOB, BAT_TO_JBLO
 		const JAVA_CAST* array = (const JAVA_CAST*) Tloc(b, 0); \
 		JAVA_CAST* inputConverted = (JAVA_CAST*) (*env)->GetPrimitiveArrayCritical(env, input, &isCopy); \
 		if (inputConverted == NULL) { \
-			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
+			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL); \
 		} else { \
 			if(isCopy == JNI_FALSE) { \
 				memcpy(inputConverted, array + first, size * INTERNAL_SIZE); \
@@ -203,7 +227,10 @@ BATCH_LEVEL_ONE(Double, jdouble, Double, sizeof(dbl))
 		if (b->tnonil && !b->tnil) { \
 			for (jint i = 0; i < size; i++) { \
 				nvalue = array[i]; \
-				next = CONVERT_ATOM; \
+				if (!(next = CONVERT_ATOM)) { \
+					(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL); \
+					return; \
+				} \
 				(*env)->SetObjectArrayElement(env, input, i, next); \
 				(*env)->DeleteLocalRef(env, next); \
 			} \
@@ -211,7 +238,10 @@ BATCH_LEVEL_ONE(Double, jdouble, Double, sizeof(dbl))
 			for (jint i = 0; i < size; i++) { \
 				nvalue = array[i]; \
 				if (nvalue != NULL_ATOM##_nil) { \
-					next = CONVERT_ATOM; \
+					if (!(next = CONVERT_ATOM)) { \
+						(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL); \
+						return; \
+					} \
 					(*env)->SetObjectArrayElement(env, input, i, next); \
 					(*env)->DeleteLocalRef(env, next); \
 				} else { \
@@ -239,7 +269,10 @@ BATCH_LEVEL_ONE_OBJECT(Double, jdouble, dbl, CREATE_NEW_DOUBLE)
 			for (jint i = 0; i < size; i++) { \
 				nvalue = array[i]; \
 				GET_ATOM \
-				next = CONVERT_ATOM; \
+				if (!(next = CONVERT_ATOM)) { \
+					(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL); \
+					return; \
+				} \
 				(*env)->SetObjectArrayElement(env, input, i, next); \
 				(*env)->DeleteLocalRef(env, next); \
 			} \
@@ -248,7 +281,10 @@ BATCH_LEVEL_ONE_OBJECT(Double, jdouble, dbl, CREATE_NEW_DOUBLE)
 				nvalue = array[i]; \
 				if(nvalue != BAT_CAST##_nil) { \
 					GET_ATOM \
-					next = CONVERT_ATOM; \
+					if (!(next = CONVERT_ATOM)) { \
+						(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL); \
+						return; \
+					} \
 					(*env)->SetObjectArrayElement(env, input, i, next); \
 					(*env)->DeleteLocalRef(env, next); \
 				} else { \
@@ -271,7 +307,10 @@ void getOidColumn(JNIEnv* env, jobjectArray input, jint first, jint size, BAT* b
 		for (jint i = 0; i < size; i++) {
 			char store[OID_STRING_BUFFER_SIZE];
 			snprintf(store, OID_STRING_BUFFER_SIZE, OIDFMT "@0", array[i]);
-			next = (*env)->NewStringUTF(env, store);
+			if (!(next = (*env)->NewStringUTF(env, store))) {
+				(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
+				return;
+			}
 			(*env)->SetObjectArrayElement(env, input, i, next);
 			(*env)->DeleteLocalRef(env, next);
 		}
@@ -281,7 +320,10 @@ void getOidColumn(JNIEnv* env, jobjectArray input, jint first, jint size, BAT* b
 			if (!is_oid_nil(nvalue)) {
 				char store[OID_STRING_BUFFER_SIZE];
 				snprintf(store, OID_STRING_BUFFER_SIZE, OIDFMT "@0", array[i]);
-				next = (*env)->NewStringUTF(env, store);
+				if (!(next = (*env)->NewStringUTF(env, store))) {
+					(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
+					return;
+				}
 				(*env)->SetObjectArrayElement(env, input, i, next);
 				(*env)->DeleteLocalRef(env, next);
 			} else {
@@ -308,14 +350,22 @@ void getOidColumn(JNIEnv* env, jobjectArray input, jint first, jint size, BAT* b
 		if (b->tnonil && !b->tnil) { \
 			for (jint i = 0; i < size; i++) { \
 				if (!(value = decimal_to_str((CONVERSION_CAST) array[i], &t))) { \
-					(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
+					(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL); \
 					return; \
 				} \
 				aux = (*env)->NewStringUTF(env, value); \
 				_DELETE(value); \
+				if (!aux) { \
+					(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL); \
+					return; \
+				} \
 				next = (*env)->NewObject(env, lbigDecimalClassID, lbigDecimalConstructorID, aux); \
-				(*env)->SetObjectArrayElement(env, input, i, next); \
 				(*env)->DeleteLocalRef(env, aux); \
+				if (!next) { \
+					(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL); \
+					return; \
+				} \
+				(*env)->SetObjectArrayElement(env, input, i, next); \
 				(*env)->DeleteLocalRef(env, next); \
 			} \
 		} else { \
@@ -323,14 +373,22 @@ void getOidColumn(JNIEnv* env, jobjectArray input, jint first, jint size, BAT* b
 				BAT_CAST nvalue = array[i]; \
 				if (nvalue != BAT_CAST##_nil) { \
 					if (!(value = decimal_to_str((CONVERSION_CAST) array[i], &t))) { \
-						(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
+						(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL); \
 						return; \
 					} \
 					aux = (*env)->NewStringUTF(env, value); \
 					_DELETE(value); \
+					if (!aux) { \
+						(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL); \
+						return; \
+					} \
 					next = (*env)->NewObject(env, lbigDecimalClassID, lbigDecimalConstructorID, aux); \
-					(*env)->SetObjectArrayElement(env, input, i, next); \
 					(*env)->DeleteLocalRef(env, aux); \
+					if (!next) { \
+						(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL); \
+						return; \
+					} \
+					(*env)->SetObjectArrayElement(env, input, i, next); \
 					(*env)->DeleteLocalRef(env, next); \
 				} else { \
 					(*env)->SetObjectArrayElement(env, input, i, NULL); \
@@ -372,6 +430,8 @@ BATCH_LEVEL_THREE(lng, lng)
 				i++; \
 			} \
 		} \
+end: \
+		return; \
 	}
 
 BATCH_LEVEL_FOUR(String, GET_BAT_STRING, CHECK_NULL_STRING, BAT_TO_STRING, str, jstring)
@@ -386,7 +446,7 @@ BATCH_LEVEL_FOUR(Blob, GET_BAT_BLOB, CHECK_NULL_BLOB, BAT_TO_JBLOB, blob*, jbyte
 		BAT *aux = COLnew(0, localtype, cnt, TRANSIENT); \
 		BAT_CAST *p, value, prev = BAT_CAST##_nil; \
 		if (!aux) { \
-			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
+			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL); \
 			*b = NULL; \
 			return; \
 		} \
@@ -455,7 +515,7 @@ CONVERSION_LEVEL_ONE(Double, dbl, jdouble, Double)
 		jobject value; \
 		DIVMOD_HELPER_FIR \
 		if (!aux) { \
-			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
+			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL); \
 			*b = NULL; \
 			return; \
 		} \
@@ -498,7 +558,7 @@ void storeOidColumn(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint lo
 	size_t slen = sizeof(oid);
 	oid *p;
 	if (!aux) {
-		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory");
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 		*b = NULL;
 		return;
 	}
@@ -519,7 +579,8 @@ void storeOidColumn(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint lo
 			ssize_t parsed;
 			const char *nvalue = (*env)->GetStringUTFChars(env, jvalue, 0);
 			if (nvalue == NULL) {
-				(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory");
+				(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
+				(*env)->DeleteLocalRef(env, jvalue);
 				BBPreclaim(aux);
 				*b = NULL;
 				return;
@@ -561,7 +622,7 @@ void storeOidColumn(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint lo
 		jstring nvalue; \
 		const char *representation; \
 		if (!aux) { \
-			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
+			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL); \
 			*b = NULL; \
 			return; \
 		} \
@@ -580,7 +641,9 @@ void storeOidColumn(JNIEnv *env, BAT** b, jobjectArray data, size_t cnt, jint lo
 				bigDecimal = (*env)->CallObjectMethod(env, value, lsetBigDecimalScaleID, scale, roundingMode); \
 				nvalue = (*env)->CallObjectMethod(env, bigDecimal, lbigDecimalToStringID); \
 				if ((representation = (*env)->GetStringUTFChars(env, nvalue, NULL)) == NULL) { \
-					(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
+					(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL); \
+					(*env)->DeleteLocalRef(env, nvalue); \
+					(*env)->DeleteLocalRef(env, bigDecimal); \
 					BBPreclaim(aux); \
 					*b = NULL; \
 					return; \
@@ -615,7 +678,7 @@ CONVERSION_LEVEL_THREE(lng)
 /* Put in the BAT's heap */
 
 #define JSTRING_TO_BAT      if ((nvalue = (*env)->GetStringUTFChars(env, value, 0)) == NULL) { \
-								(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
+								(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL); \
 								(*env)->DeleteLocalRef(env, value); \
 								BBPreclaim(aux); \
 								*b = NULL; \
@@ -624,7 +687,7 @@ CONVERSION_LEVEL_THREE(lng)
 								p = GDKstrdup(nvalue); \
 								(*env)->ReleaseStringUTFChars(env, value, nvalue); \
 								if (p == NULL) { \
-									(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
+									(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL); \
 									(*env)->DeleteLocalRef(env, value); \
 									BBPreclaim(aux); \
 									*b = NULL; \
@@ -635,7 +698,7 @@ CONVERSION_LEVEL_THREE(lng)
 #define STRING_START        const char* nvalue;
 
 #define PUT_STR_IN_HEAP     if (BUNappend(aux, p, FALSE) != GDK_SUCCEED) { \
-								(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
+								(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL); \
 								BBPreclaim(aux); \
 								GDKfree(p); \
 								*b = NULL; \
@@ -647,7 +710,7 @@ CONVERSION_LEVEL_THREE(lng)
 #define JBLOB_TO_BAT        nvalue = (jbyteArray) value; \
 							len = (*env)->GetArrayLength(env, nvalue); \
 							if ((p = GDKmalloc(blobsize(len))) == NULL) { \
-								(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
+								(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL); \
 								(*env)->DeleteLocalRef(env, value); \
 								BBPreclaim(aux); \
 								*b = NULL; \
@@ -665,13 +728,13 @@ extern const blob* BLOBnull(void);
 extern var_t BLOBput(Heap *h, var_t *bun, const blob *val);
 
 #define PUT_BLOB_IN_HEAP    if (BLOBput(aux->tvheap, &bun_offset, p) == 0) { \
-								(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
+								(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL); \
 								GDKfree(p); \
 								BBPreclaim(aux); \
 								*b = NULL; \
 								return; \
 							} else if (BUNappend(aux, p, FALSE) != GDK_SUCCEED) { \
-								(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
+								(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL); \
 								GDKfree(p); \
 								BBPreclaim(aux); \
 								*b = NULL; \
@@ -689,7 +752,7 @@ extern var_t BLOBput(Heap *h, var_t *bun, const blob *val);
 		jobject value; \
 		START_STEP \
 		if (!aux) { \
-			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
+			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL); \
 			*b = NULL; \
 			return; \
 		} \

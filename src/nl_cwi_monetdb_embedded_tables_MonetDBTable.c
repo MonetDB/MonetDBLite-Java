@@ -24,8 +24,7 @@ static char* loadTable(JNIEnv *env, jobject monetDBTable, sql_table** table, int
 	const char *name = (*env)->GetStringUTFChars(env, tableName, NULL);
 
 	*connectionPointer = (*env)->GetLongField(env, connection, getGetConnectionLongID());
-	err = monetdb_get_table((monetdb_connection) (*connectionPointer), table, schema, name);
-	if (!err)
+	if (!(err = monetdb_get_table((monetdb_connection) (*connectionPointer), table, schema, name)))
 		*ncols = (*table)->columns.set->cnt;
 	(*env)->ReleaseStringUTFChars(env, schemaName, schema);
 	(*env)->ReleaseStringUTFChars(env, tableName, name);
@@ -71,6 +70,10 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_tables_MonetDBTable_getColum
 	for (n = tableData->columns.set->h; n; n = n->next) {
 		sql_column *col = n->data;
 		jstring colname = (*env)->NewStringUTF(env, col->base.name);
+		if (!colname) {
+			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
+			return;
+		}
 		(*env)->SetObjectArrayElement(env, result, col->colnr, colname);
 		(*env)->DeleteLocalRef(env, colname);
 	}
@@ -84,6 +87,10 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_tables_MonetDBTable_getColum
 	for (n = tableData->columns.set->h; n; n = n->next) {
 		sql_column *col = n->data;
 		jstring coltype = (*env)->NewStringUTF(env, col->type.type->sqlname);
+		if (!coltype) {
+			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
+			return;
+		}
 		(*env)->SetObjectArrayElement(env, result, col->colnr, coltype);
 		(*env)->DeleteLocalRef(env, coltype);
 	}
@@ -96,7 +103,12 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_tables_MonetDBTable_getMappi
 
 	for (n = tableData->columns.set->h; n; n = n->next) {
 		sql_column *col = n->data;
-		jobject next = (*env)->CallStaticObjectMethod(env, getMappingEnumID(), getGetEnumValueID(), (*env)->NewStringUTF(env, col->type.type->sqlname));
+		jstring colsqlname = (*env)->NewStringUTF(env, col->type.type->sqlname);
+		if (!colsqlname) {
+			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
+			return;
+		}
+		jobject next = (*env)->CallStaticObjectMethod(env, getMappingEnumID(), getGetEnumValueID(), colsqlname);
 		(*env)->SetObjectArrayElement(env, result, col->colnr, next);
 		(*env)->DeleteLocalRef(env, next);
 	}
@@ -107,9 +119,8 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_tables_MonetDBTable_getColum
 	LOADTABLEDATA
 	jint* fdigits;
 	AFTERLOAD
-	fdigits = GDKmalloc(ncols * sizeof(jint));
 
-	if(fdigits == NULL) {
+	if (!(fdigits = GDKmalloc(ncols * sizeof(jint)))) {
 		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 		return;
 	}
@@ -127,9 +138,8 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_tables_MonetDBTable_getColum
 	LOADTABLEDATA
 	jint* fscales;
 	AFTERLOAD
-	fscales = GDKmalloc(ncols * sizeof(jint));
 
-	if(fscales == NULL) {
+	if (!(fscales = GDKmalloc(ncols * sizeof(jint)))) {
 		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 		return;
 	}
@@ -147,9 +157,8 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_tables_MonetDBTable_getColum
 	LOADTABLEDATA
 	jboolean* fnulls;
 	AFTERLOAD
-	fnulls = GDKmalloc(ncols * sizeof(jboolean));
 
-	if(fnulls == NULL) {
+	if (!(fnulls = GDKmalloc(ncols * sizeof(jboolean)))) {
 		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 		return;
 	}
@@ -170,19 +179,34 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_tables_MonetDBTable_getColum
 	for (n = tableData->columns.set->h; n; n = n->next) {
 		sql_column *col = n->data;
 		jstring defaultValue = (*env)->NewStringUTF(env, col->def);
+		if (!defaultValue) {
+			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
+			return;
+		}
 		(*env)->SetObjectArrayElement(env, result, col->colnr, defaultValue);
 		(*env)->DeleteLocalRef(env, defaultValue);
 	}
 }
 
 static jobject getColumnData(JNIEnv *env, sql_column *col) {
+	jobject res = NULL;
 	jstring sqlname = (*env)->NewStringUTF(env, col->type.type->sqlname);
 	jstring colname = (*env)->NewStringUTF(env, col->base.name);
 	jstring defaultValue = (*env)->NewStringUTF(env, col->def);
-	jobject res = (*env)->NewObject(env, getMonetDBTableColumnClassID(), getMonetDBTableColumnConstructorID(), sqlname, colname, col->type.digits, col->type.scale, defaultValue, (jboolean) col->null);
-	(*env)->DeleteLocalRef(env, sqlname);
-	(*env)->DeleteLocalRef(env, colname);
-	(*env)->DeleteLocalRef(env, defaultValue);
+
+	if (sqlname && colname  && defaultValue) {
+		res = (*env)->NewObject(env, getMonetDBTableColumnClassID(), getMonetDBTableColumnConstructorID(), sqlname, colname, col->type.digits, col->type.scale, defaultValue, (jboolean) col->null);
+		if (!res)
+			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
+	} else {
+		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
+	}
+	if (sqlname)
+		(*env)->DeleteLocalRef(env, sqlname);
+	if (colname)
+		(*env)->DeleteLocalRef(env, colname);
+	if (defaultValue)
+		(*env)->DeleteLocalRef(env, defaultValue);
 	return res;
 }
 
@@ -211,9 +235,8 @@ JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_tables_MonetDBTable_getCo
 	jobject res = NULL;
 	const char *col_name_tmp;
 	AFTERLOAD
-	col_name_tmp = (*env)->GetStringUTFChars(env, colname, NULL);
 
-	if(col_name_tmp == NULL) {
+	if (!(col_name_tmp = (*env)->GetStringUTFChars(env, colname, NULL))) {
 		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 		return NULL;
 	}
@@ -234,9 +257,8 @@ JNIEXPORT jobjectArray JNICALL Java_nl_cwi_monetdb_embedded_tables_MonetDBTable_
 	LOADTABLEDATA
 	jobjectArray result;
 	AFTERLOAD
-	result = (*env)->NewObjectArray(env, ncols, getMonetDBTableColumnClassID(), NULL);
 
-	if(result == NULL) {
+	if (!(result = (*env)->NewObjectArray(env, ncols, getMonetDBTableColumnClassID(), NULL))) {
 		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 		return NULL;
 	}
@@ -244,6 +266,10 @@ JNIEXPORT jobjectArray JNICALL Java_nl_cwi_monetdb_embedded_tables_MonetDBTable_
 	for (n = tableData->columns.set->h; n; n = n->next) {
 		sql_column *col = n->data;
 		jobject newColumn = getColumnData(env, col);
+		if ((*env)->ExceptionCheck(env) == JNI_TRUE) {
+			(*env)->DeleteLocalRef(env, result);
+			return NULL;
+		}
 		(*env)->SetObjectArrayElement(env, result, col->colnr, newColumn);
 		(*env)->DeleteLocalRef(env, newColumn);
 	}
@@ -271,22 +297,19 @@ JNIEXPORT jint JNICALL Java_nl_cwi_monetdb_embedded_tables_MonetDBTable_appendCo
 
 	AFTERLOAD
 
-	if((*env)->ExceptionCheck(env) == JNI_TRUE)
+	if ((*env)->ExceptionCheck(env) == JNI_TRUE)
 		return -1;
-	jindexes = (*env)->GetIntArrayElements(env, javaIndexes, NULL);
-	if(jindexes == NULL) {
+	if (!(jindexes = (*env)->GetIntArrayElements(env, javaIndexes, NULL))) {
 		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 		return -1;
 	}
-	columnDataZero = (*env)->GetObjectArrayElement(env, columnData, 0);
-	if(columnDataZero == NULL) {
+	if (!(columnDataZero = (*env)->GetObjectArrayElement(env, columnData, 0))) {
 		(*env)->ReleaseIntArrayElements(env, javaIndexes, jindexes, JNI_ABORT);
 		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 		return -1;
 	}
 	numberOfRows = (*env)->GetArrayLength(env, columnDataZero);
-	newdata = GDKmalloc(ncols * sizeof(bat*));
-	if(newdata == NULL) {
+	if (!(newdata = GDKmalloc(ncols * sizeof(bat*)))) {
 		(*env)->ReleaseIntArrayElements(env, javaIndexes, jindexes, JNI_ABORT);
 		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 		return -1;

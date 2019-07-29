@@ -162,11 +162,11 @@ static jobject generateQueryResultSet(JNIEnv *env, jobject jconnection, jlong co
 		}
 	}
 
-	if((*env)->ExceptionCheck(env) == JNI_TRUE) {
+	if ((*env)->ExceptionCheck(env) == JNI_TRUE) {
 		freeResultSet(thisResultSet);
 	} else {
 		(*env)->SetIntArrayRegion(env, typesIDs, 0, (jsize) numberOfColumns, copy);
-		if(prepareID) {
+		if (prepareID) {
 			//public PreparedQueryResultSet(MonetDBEmbeddedConnection connection, long structPointer, int numberOfColumns, int numberOfRows, int[] typesIDs, int preparedID)
 			result = (*env)->NewObject(env, getPreparedQueryResultSetClassID(), getPreparedQueryResultSetClassConstructorID(), jconnection,
 									   (jlong) thisResultSet, numberOfColumns, (jint) output->nrows, typesIDs, prepareID);
@@ -175,7 +175,7 @@ static jobject generateQueryResultSet(JNIEnv *env, jobject jconnection, jlong co
 			result = (*env)->NewObject(env, getQueryResultSetID(), getQueryResultSetConstructorID(), jconnection,
 									   (jlong) thisResultSet, numberOfColumns, (jint) output->nrows, typesIDs);
 		}
-		if(result == NULL)
+		if (result == NULL)
 			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 	}
 	GDKfree(copy);
@@ -253,23 +253,23 @@ JNIEXPORT jobject JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnec
 	char* other;
 
 	res = executeQuery(env, connectionPointer, query, execute, &output, &query_type, NULL, &rowCount, NULL);
-	if(res) {
+	if (res) {
 		return NULL;
 	} else if(query_type == Q_TABLE || query_type == Q_BLOCK || query_type == Q_PREPARE) {
 		retStatus = JNI_TRUE;
 		resultSet = generateQueryResultSet(env, jconnection, connectionPointer, output, query_type, 0);
 	} else {
-		if(query_type == Q_UPDATE) {
+		if (query_type == Q_UPDATE) {
 			returnValue = (jint) rowCount;
-		} else if(query_type == Q_SCHEMA) {
+		} else if (query_type == Q_SCHEMA) {
 			returnValue = -2;
 		}
-		if(output && (other = monetdb_cleanup_result((monetdb_connection) connectionPointer, output)) != MAL_SUCCEED)
+		if (output && (other = monetdb_cleanup_result((monetdb_connection) connectionPointer, output)) != MAL_SUCCEED)
 			freeException(other);
 	}
 	//public ExecResultSet(boolean status, QueryResultSet resultSet, int numberOfRows)
 	result = (*env)->NewObject(env, getExecResultSetClassID(), getExecResultSetClassConstructorID(), retStatus, resultSet, returnValue);
-	if(result == NULL)
+	if (result == NULL)
 		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 	return result;
 }
@@ -281,7 +281,7 @@ JNIEXPORT void JNICALL Java_nl_cwi_monetdb_embedded_env_MonetDBEmbeddedConnectio
 	(void) jconnection;
 
 	(void) executeQuery(env, connectionPointer, query, execute, &output, NULL, NULL, NULL, NULL);
-	if(output && (other = monetdb_cleanup_result((monetdb_connection) connectionPointer, output)) != MAL_SUCCEED)
+	if (output && (other = monetdb_cleanup_result((monetdb_connection) connectionPointer, output)) != MAL_SUCCEED)
 		freeException(other);
 }
 

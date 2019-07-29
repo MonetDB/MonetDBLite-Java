@@ -21,7 +21,7 @@
 		const JAVA_CAST* array = (const JAVA_CAST*) Tloc(b, 0); \
 		jboolean* aux = (jboolean*) GDKmalloc(sizeof(jboolean) * size); \
 		if(aux == NULL) { \
-			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
+			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL); \
 		} else { \
 			for(i = 0 ; i < size ; i++) \
 				aux[i] = (array[i] == NULL_CONST##_nil) ? JNI_TRUE : JNI_FALSE; \
@@ -54,7 +54,7 @@ CHECK_NULLS_LEVEL_ONE(Oid, oid, oid)
 		BATiter li = bat_iterator(b); \
 		jboolean* aux = (jboolean*) GDKmalloc(sizeof(jboolean) * size); \
 		if(aux == NULL) { \
-			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), "The system went out of memory"); \
+			(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL); \
 		} else { \
 			int i = 0; \
 			for (p = 0, q = (BUN) size; p < q; p++) { \
