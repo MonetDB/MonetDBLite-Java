@@ -230,7 +230,7 @@ qrs.getTimestampColumnByName("temporal", temporalValues); //got it by name
 
 boolean[] truthNullMappings = new boolean[numberOfRows];
 //get the null mappings of a column, in this case: [false, false, true]
-qrs.getColumnNullMappingsByName("counter", truthNullMappings);
+qrs.getNullMappingByName("counter", truthNullMappings);
 
 qrs.close(); //don't forget to close in the end!!! ;)
 ```
