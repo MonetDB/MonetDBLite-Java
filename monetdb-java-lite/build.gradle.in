@@ -62,7 +62,7 @@ jar {
 }
 
 wrapper { //Set the gradle wrapper, so users don't have to install Gradle
-    gradleVersion = '5.5'
+    gradleVersion = '6.6'
 }
 
 task javadocJar(type: Jar) { //Generate the javadocs jar
