@@ -21,7 +21,7 @@ MonetDBJavaLite jar (`monetdb-java-lite-<version>.jar`). The former can be used 
 connections are desired. The latter contains the embedded server code. For both Embedded API and Embedded JDBC
 connections, the second jar is also required in the `CLASSPATH`.
 
-> The current version for `monetdb-java-lite` is 2.38 and `monetdb-jdbc-new` is 2.36
+> The current version for `monetdb-java-lite` is 2.39 and `monetdb-jdbc-new` is 2.37
 
 > **IMPORTANT** The version of the JDBC driver for MonetDBJavaLite is not synced with the version of the original
 MonetDB JDBC driver.
@@ -41,7 +41,7 @@ Starting on version `2.30`, both jars can be obtained from Maven Central reposit
 <dependency>
   <groupId>monetdb</groupId>
   <artifactId>monetdb-jdbc-new</artifactId>
-  <version>2.36</version>
+  <version>2.37</version>
 </dependency>
 ```
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/monetdb/monetdb-java-lite/badge.svg)](https://maven-badges.herokuapp.com/maven-central/monetdb/monetdb-java-lite)
@@ -49,7 +49,7 @@ Starting on version `2.30`, both jars can be obtained from Maven Central reposit
 <dependency>
   <groupId>monetdb</groupId>
   <artifactId>monetdb-java-lite</artifactId>
-  <version>2.38</version>
+  <version>2.39</version>
 </dependency>
 ```
 
