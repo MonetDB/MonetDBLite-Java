@@ -16,7 +16,6 @@
 #include "gdk.h"
 #include "blob.h"
 #include "mtime.h"
-#include "sql.h"
 #include "sql_decimal.h"
 
 #define DO_NOTHING                        ;

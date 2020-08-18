@@ -13,7 +13,7 @@
 #include "monetdb_embedded.h"
 #include "jni.h"
 #include "gdk.h"
-#include "sql.h"
+#include "res_table.h"
 
 /*
  * Pedro Ferreira

@@ -11,7 +11,6 @@
 #include "monetdb_config.h"
 #include "jni.h"
 #include "javaids.h"
-#include "sql.h"
 #include "mtime.h"
 #include "blob.h"
 
