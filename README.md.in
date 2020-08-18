@@ -28,8 +28,7 @@ MonetDB JDBC driver.
 
 **`monetdb-jdbc-new-<version>.jar` is compatible with OpenJDK 7**, and is both CPU architecture and Operating System
 independent. In other hand, **`monetdb-java-lite-<version>.jar` requires OpenJDK 8 to run**, thus **only supports
-x86_x64/amd64 architectures on Windows, MacOS X and Linux**, and **aarch64/arm64 architectures on Linux (since version
-`2.39`)** due to JNI bindings.
+x86_x64/amd64 architectures on Windows, MacOS X and Linux**.
 
 Both jars can be obtained through the download section of our 
 [website](https://www.monetdb.org/downloads/Java-Experimental/).
@@ -456,7 +455,7 @@ Embedded connection, these wrappers are not used, so only Strings and byte[] are
 ## Changelog
 
 * 2.39
-    * Added support for Linux on aarch64/arm64 architecture.
+    * Fixed overflow bug on 'appendColumns' method.
 * 2.38
     * Fixed buffer in for batch execution in embedded JDBC connection.
     * Merged with MonetDB Aug2018 release.

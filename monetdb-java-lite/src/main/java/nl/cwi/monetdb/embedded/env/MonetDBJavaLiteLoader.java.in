@@ -19,7 +19,7 @@ import java.util.Locale;
  * Class responsible to load MonetDB's embedded library. On the resources directory of the JAR inside the libs directory
  * there is present a library file for each of the operating systems MonetDBLite-Java is compiled for.
  *
- * Currently we support Windows NT, Mac OS X for x86_64 and Linux on both x86_64 and arm64.
+ * Currently we support Windows NT, Mac OS X and Linux for x86_64.
  *
  * @author <a href="mailto:pedro.ferreira@monetdbsolutions.com">Pedro Ferreira</a>
  */
@@ -41,7 +41,7 @@ public final class MonetDBJavaLiteLoader {
 	 */
 	private enum SupportedArc {
 		X86_X64,
-		ARM64 //Only on Linux
+		ARM64 //Not yet used
 	}
 
 	/**
@@ -74,7 +74,7 @@ public final class MonetDBJavaLiteLoader {
 				}
 				return "/libs/macosx/x86x64/";
 			case Linux:
-				if(arc != SupportedArc.X86_X64 && arc != SupportedArc.ARM64) {
+				if(arc != SupportedArc.X86_X64/* && arc != SupportedArc.ARM64*/) {
 					throw new MonetDBEmbeddedException("Architecture not supported on Linux");
 				}
 				return "/libs/linux/" + (arc == SupportedArc.X86_X64 ? "x86x64" : "arm64") + "/";

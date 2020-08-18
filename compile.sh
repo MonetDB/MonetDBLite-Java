@@ -15,8 +15,9 @@ if [[ ! "$1" =~ ^(macosx|linux)$ ]]; then
     echo_and_exit "The first parameter must either be 'macosx' or 'linux'"
 fi
 
-if [[ ! "$2" =~ ^(amd64|x86_64|arm64|aarch64)$ ]]; then
-    echo_and_exit "The second parameter must either be 'arm64' or 'x86_64'"
+#if [[ ! "$2" =~ ^(amd64|x86_64|arm64|aarch64)$ ]]; then
+if [[ ! "$2" =~ ^(amd64|x86_64)$ ]]; then
+    echo_and_exit "The second parameter must either be 'x86_64'"
 fi
 
 if [[ ! "$3" =~ ^(Release|Debug)$ ]]; then
@@ -25,8 +26,8 @@ fi
 
 if [[ "$2" =~ ^(amd64|x86_64|x8664|x64)$ ]]; then
     ARCH_DIR="x86x64"
-elif [[ "$2" =~ ^(arm64|aarch64)$ ]]; then
-    ARCH_DIR="arm64"
+#elif [[ "$2" =~ ^(arm64|aarch64)$ ]]; then
+#    ARCH_DIR="arm64"
 else
     echo_and_exit "Unknown architecture"
 fi
