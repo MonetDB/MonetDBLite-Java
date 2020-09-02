@@ -287,7 +287,7 @@ JNIEXPORT jint JNICALL Java_nl_cwi_monetdb_embedded_tables_MonetDBTable_appendCo
 	LOADTABLEDATA
 
 	jint *jindexes;
-	bat* newdata;
+	bat* newdata = NULL;
 	jsize numberOfRows, nextSize;
 	sql_column *col;
 	int nextMonetDBIndex, nextColumnIndex, foundExc = 0, i = 0;
@@ -309,7 +309,7 @@ JNIEXPORT jint JNICALL Java_nl_cwi_monetdb_embedded_tables_MonetDBTable_appendCo
 		return -1;
 	}
 	numberOfRows = (*env)->GetArrayLength(env, columnDataZero);
-	if (!(newdata = GDKmalloc(ncols * sizeof(bat*)))) {
+	if (!(newdata = GDKzalloc(ncols * sizeof(bat*)))) {
 		(*env)->ReleaseIntArrayElements(env, javaIndexes, jindexes, JNI_ABORT);
 		(*env)->ThrowNew(env, getMonetDBEmbeddedExceptionClassID(), MAL_MALLOC_FAIL);
 		return -1;
@@ -414,7 +414,13 @@ JNIEXPORT jint JNICALL Java_nl_cwi_monetdb_embedded_tables_MonetDBTable_appendCo
 	if(!err)
 		err = monetdb_append((monetdb_connection) connectionPointer, tableData->s->base.name, tableData->base.name, newdata, ncols);
 	(*env)->ReleaseIntArrayElements(env, javaIndexes, jindexes, JNI_ABORT);
-	GDKfree(newdata);
+	if (newdata) {
+		for(int j = 0; j < ncols; j++) {
+			if (newdata[j])
+				BBPunfix(newdata[j]);
+		}
+		GDKfree(newdata);
+	}
 
 	if (err) {
 		while(err[i] && !foundExc) {
