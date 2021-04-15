@@ -2,6 +2,11 @@
 
 [![Build Status](https://travis-ci.org/hannesmuehleisen/MonetDBLite-Java.svg?branch=master)](https://travis-ci.org/hannesmuehleisen/MonetDBLite-Java)
 
+> **IMPORTANT** This repository will no longer maintained, since MonetDBe-Java has been released:
+https://github.com/MonetDBSolutions/MonetDBe-Java
+MonetDBe is the spiritual successor to MoneDBLite, which resulted from a further remodulation of MonetDB to accommodate
+embedded connections.
+
 > **IMPORTANT** Before any further reading, remember that this software might crash in JVM-native border crossing,
 although testing has been made on it :) To be 100% safe you can run MonetDBJavaLite in a sub-process inside the JVM, so
 if it crashes, your application in the main process will still be up!
