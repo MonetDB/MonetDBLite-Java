@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/hannesmuehleisen/MonetDBLite-Java.svg?branch=master)](https://travis-ci.org/hannesmuehleisen/MonetDBLite-Java)
 
-> **IMPORTANT** This repository will no longer maintained, since MonetDBe-Java has been released:
+> **IMPORTANT** This repository will no longer be maintained, since MonetDBe-Java has been released:
 https://github.com/MonetDBSolutions/MonetDBe-Java
 MonetDBe is the spiritual successor to MoneDBLite, which resulted from a further remodulation of MonetDB to accommodate
 embedded connections.
